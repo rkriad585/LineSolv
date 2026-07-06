@@ -65,6 +65,8 @@ var unitDB = map[string]unitInfo{
 	"celsius":      {"celsius", 0},
 	"f":            {"fahrenheit", 0},
 	"fahrenheit":   {"fahrenheit", 0},
+	// Currency rates are approximate and hardcoded.
+	// These values will drift over time and should be updated periodically.
 	"usd":          {"USD", 1},
 	"eur":          {"EUR", 1.08},
 	"euro":         {"EUR", 1.08},
@@ -78,6 +80,9 @@ var unitDB = map[string]unitInfo{
 	"chf":          {"CHF", 1.11},
 }
 
+// convertUnit converts a value from one unit to another.
+// Supports length, mass, volume, temperature (C/F), and currency conversions.
+// Currency rates are approximate and hardcoded.
 func convertUnit(val float64, from, to string) string {
 	f := strings.TrimSpace(strings.ToLower(from))
 	t := strings.TrimSpace(strings.ToLower(to))
@@ -119,6 +124,8 @@ func convertUnit(val float64, from, to string) string {
 	return fmt.Sprintf("%.4g %s", result, to)
 }
 
+// RegisterUnit adds a custom unit to the conversion database.
+// phrases is a comma-separated list of aliases; ratio is the conversion factor to SI.
 func (e *Engine) RegisterUnit(name string, phrases string, format string, ratio float64) {
 	lower := strings.ToLower(name)
 	unitDB[lower] = unitInfo{name: name, toSI: ratio}

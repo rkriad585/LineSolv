@@ -2,6 +2,16 @@ export interface Note {
   id: string;
   name: string;
   content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ContextMenuItem {
+  label: string;
+  icon?: string;
+  action?: () => void;
+  disabled?: boolean;
+  children?: ContextMenuItem[];
 }
 
 export interface AppCallbacks {

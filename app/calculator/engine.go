@@ -9,39 +9,53 @@ import (
 	"unicode"
 )
 
+// Engine evaluates natural-language arithmetic expressions.
+// It maintains a variable store, computation history, and last-result context.
 type Engine struct {
 	variables  map[string]float64
 	lastResult float64
 	history    []HistoryEntry
 }
 
+// HistoryEntry records a single evaluated input and its output.
 type HistoryEntry struct {
 	Input  string `json:"input"`
 	Output string `json:"output"`
 }
 
+// NewEngine creates a new Engine with an empty variable store.
 func NewEngine() *Engine {
 	return &Engine{
 		variables: make(map[string]float64),
 	}
 }
 
+// GetHistory returns a copy of the computation history.
 func (e *Engine) GetHistory() []HistoryEntry {
 	r := make([]HistoryEntry, len(e.history))
 	copy(r, e.history)
 	return r
 }
 
+// ClearHistory clears all stored history entries.
 func (e *Engine) ClearHistory() {
 	e.history = nil
 }
 
 // --- Line evaluation ---
 
+const maxInputLength = 10000
+
+// EvaluateLine evaluates a single line of natural-language arithmetic.
+// Returns the result string (or "" on failure) and an error.
+// Empty lines, comment lines (#, //), and label lines (ending with :) return empty strings.
 func (e *Engine) EvaluateLine(input string) (string, error) {
 	s := strings.TrimSpace(input)
-	if s == "" {
+	if s == "" || strings.HasPrefix(s, "#") || strings.HasPrefix(s, "//") || strings.HasSuffix(s, ":") {
 		return "", nil
+	}
+	if len(s) > maxInputLength {
+		return "", fmt.Errorf("input too long (max %d characters)", maxInputLength)
 	}
 
 	// Variable assignment: x = 5
@@ -73,6 +87,8 @@ func (e *Engine) EvaluateLine(input string) (string, error) {
 	return r, nil
 }
 
+// EvaluateAll evaluates each line of a multi-line input string.
+// Returns one result string per line. Variables persist across lines.
 func (e *Engine) EvaluateAll(input string) []string {
 	lines := strings.Split(input, "\n")
 	results := make([]string, len(lines))
@@ -135,12 +151,17 @@ func (e *Engine) evaluateExpr(input string) (string, error) {
 // --- Natural language pipeline ---
 
 func (e *Engine) naturalize(s string) string {
-	// 1. Strip leading query prefixes
-	s = prefixPattern.ReplaceAllString(s, "")
-	// 1b. Strip leading "add", "sum of"
-	s = leadingAddSumPattern.ReplaceAllString(s, "")
-	// 1c. Strip leading articles ("the", "a", "an")
-	s = leadingArticlePattern.ReplaceAllString(s, "")
+	// 1. Strip leading query prefixes (run multiple times for compound prefixes)
+	for {
+		prev := s
+		s = greetingPattern.ReplaceAllString(s, "")
+		s = prefixPattern.ReplaceAllString(s, "")
+		s = leadingArticlePattern.ReplaceAllString(s, "")
+		s = leadingAddSumPattern.ReplaceAllString(s, "")
+		if s == prev {
+			break
+		}
+	}
 	// 2. Strip trailing fluff
 	s = trailingFluffPattern.ReplaceAllString(s, "")
 	// 3. Replace word numbers with digits
@@ -177,8 +198,15 @@ func (e *Engine) substituteContext(s string) string {
 		return s
 	}
 	lastStr := formatNumber(e.lastResult)
-	// "of that", "of it", "of the result" → "of {lastResult}"
-	s = thatOfPattern.ReplaceAllString(s, "of "+lastStr)
+
+	// Entire line is just "that", "it", "of that" → returns lastResult
+	trimmed := strings.TrimSpace(s)
+	if matched, _ := regexp.MatchString(`(?i)^(?:of\s+)?(?:that|it)$`, trimmed); matched {
+		return lastStr
+	}
+
+	// "of that", "of it", "of the result" → replace with lastResult value
+	s = thatOfPattern.ReplaceAllString(s, lastStr)
 	// "then X" → "{lastResult} X"
 	if thenPattern.MatchString(s) {
 		s = thenPattern.ReplaceAllString(s, lastStr+" ")
@@ -186,10 +214,6 @@ func (e *Engine) substituteContext(s string) string {
 	// "result X" or "answer X" → "{lastResult} X"
 	if resultPattern.MatchString(s) {
 		s = resultPattern.ReplaceAllString(s, lastStr+" ")
-	}
-	// Entire line is just "that" or "it"
-	if matched, _ := regexp.MatchString(`(?i)^(?:that|it)$`, strings.TrimSpace(s)); matched {
-		s = lastStr
 	}
 	return s
 }
@@ -336,7 +360,8 @@ func evalNumberPhrase(words []string) float64 {
 
 // --- Regex patterns ---
 
-var prefixPattern = regexp.MustCompile(`(?i)^(?:what\s+(?:is|'s|are)|calculate|compute|find|solve|the\s+value\s+of|eval(?:uate)?|result\s+of|how\s+much\s+is|how\s+many\s+is)\s+`)
+var prefixPattern = regexp.MustCompile(`(?i)^(?:what\s+(?:is|'s|are)|calculate|compute|find|solve|value\s+of|eval(?:uate)?|result\s+of|how\s+much\s+is|how\s+many\s+is)\s+`)
+var greetingPattern = regexp.MustCompile(`(?i)^(?:hi|hello|hey)(?:\s+there)?\s+`)
 var leadingAddSumPattern = regexp.MustCompile(`(?i)^(?:add\b|sum\b(?:\s+of\b)?)\s+`)
 var leadingArticlePattern = regexp.MustCompile(`(?i)^(?:the|a|an)\s+`)
 var trailingFluffPattern = regexp.MustCompile(`(?i)\s+(?:please|thanks|thank you|pls)$`)
@@ -537,7 +562,7 @@ func (p *parser) parseMulDiv() (float64, error) {
 			if right == 0 {
 				return 0, fmt.Errorf("modulo by zero")
 			}
-			left = float64(int64(left) % int64(right))
+			left = math.Mod(left, right)
 		}
 	}
 	return left, nil
@@ -578,8 +603,13 @@ func (p *parser) parseUnary() (float64, error) {
 }
 
 // parseAtom → number | (expr) | ident [(args)]
+const maxExprDepth = 100
+
 func (p *parser) parseAtom() (float64, error) {
 	t := p.peek()
+	if p.pos > maxExprDepth {
+		return 0, fmt.Errorf("expression too deeply nested")
+	}
 
 	if t.kind == tokNum {
 		p.advance()

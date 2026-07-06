@@ -1,3 +1,5 @@
+import {escapeHtml} from '../utils/html';
+
 export class VariableExplorer {
   readonly el: HTMLElement;
   readonly contentEl: HTMLDivElement;
@@ -31,7 +33,7 @@ export class VariableExplorer {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, v]) => {
         const val = Number.isInteger(v) ? String(v) : parseFloat(v.toFixed(6));
-        return `<div class="flex justify-between text-xs py-1"><span style="color:var(--accent)">${this.escape(k)}</span><span style="color:var(--text-muted)">${val}</span></div>`;
+        return `<div class="flex justify-between text-xs py-1"><span style="color:var(--accent)">${escapeHtml(k)}</span><span style="color:var(--text-muted)">${val}</span></div>`;
       })
       .join('');
   }
@@ -50,9 +52,4 @@ export class VariableExplorer {
     return this.el.style.width !== '0px';
   }
 
-  private escape(t: string): string {
-    const d = document.createElement('div');
-    d.textContent = t;
-    return d.innerHTML;
-  }
 }

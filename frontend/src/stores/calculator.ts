@@ -17,6 +17,7 @@ export interface StoreState {
 
 type Listener = (state: StoreState) => void;
 
+/** Reactive store for calculator state (input, results, variables, history). */
 export class CalculatorStore {
   private state: StoreState = {
     input: '',

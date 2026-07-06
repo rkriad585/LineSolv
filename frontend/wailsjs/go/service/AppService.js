@@ -10,6 +10,14 @@ export function ClearVariables() {
   return window['go']['service']['AppService']['ClearVariables']();
 }
 
+export function CreateNote() {
+  return window['go']['service']['AppService']['CreateNote']();
+}
+
+export function DeleteNote(arg1) {
+  return window['go']['service']['AppService']['DeleteNote'](arg1);
+}
+
 export function EvaluateAll(arg1) {
   return window['go']['service']['AppService']['EvaluateAll'](arg1);
 }
@@ -18,10 +26,50 @@ export function EvaluateLine(arg1) {
   return window['go']['service']['AppService']['EvaluateLine'](arg1);
 }
 
+export function ExportNote(arg1, arg2) {
+  return window['go']['service']['AppService']['ExportNote'](arg1, arg2);
+}
+
+export function ExportNoteToFile(arg1, arg2) {
+  return window['go']['service']['AppService']['ExportNoteToFile'](arg1, arg2);
+}
+
+export function GetAllNotes() {
+  return window['go']['service']['AppService']['GetAllNotes']();
+}
+
+export function GetDataDir() {
+  return window['go']['service']['AppService']['GetDataDir']();
+}
+
+export function GetDeleteWithoutConfirm() {
+  return window['go']['service']['AppService']['GetDeleteWithoutConfirm']();
+}
+
 export function GetHistory() {
   return window['go']['service']['AppService']['GetHistory']();
 }
 
+export function GetNote(arg1) {
+  return window['go']['service']['AppService']['GetNote'](arg1);
+}
+
 export function GetVariables() {
   return window['go']['service']['AppService']['GetVariables']();
+}
+
+export function ImportNoteFromFile() {
+  return window['go']['service']['AppService']['ImportNoteFromFile']();
+}
+
+export function RenameNote(arg1, arg2) {
+  return window['go']['service']['AppService']['RenameNote'](arg1, arg2);
+}
+
+export function SaveNoteContent(arg1, arg2) {
+  return window['go']['service']['AppService']['SaveNoteContent'](arg1, arg2);
+}
+
+export function SetDeleteWithoutConfirm(arg1) {
+  return window['go']['service']['AppService']['SetDeleteWithoutConfirm'](arg1);
 }
