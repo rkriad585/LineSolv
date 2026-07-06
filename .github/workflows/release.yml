@@ -9,21 +9,29 @@ permissions:
   contents: write
 
 jobs:
-  goreleaser:
+  build:
     strategy:
       matrix:
         include:
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             goos: linux
             goarch: amd64
+            ext: ""
             tags: webkit2_41
-          - os: macos-15
+          - os: macos-latest
             goos: darwin
             goarch: amd64
+            ext: ""
             tags: ""
-          - os: macos-15
+          - os: macos-latest
             goos: darwin
             goarch: arm64
+            ext: ""
+            tags: ""
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            ext: ".exe"
             tags: ""
 
     runs-on: ${{ matrix.os }}
@@ -47,10 +55,15 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq libgtk-3-dev libwebkit2gtk-4.1-dev
 
+      - name: Install mingw (Windows)
+        if: matrix.goos == 'windows'
+        run: choco install mingw -y
+
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build
+        shell: bash
         run: |
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
           wails build -tags "${{ matrix.tags }}" \
@@ -59,15 +72,17 @@ jobs:
       - name: Package (Linux)
         if: matrix.goos == 'linux'
         run: |
-          mv build/bin/LineSolv LineSolv-${{ github.ref_name }}-linux-amd64
+          mv build/bin/LineSolv${{ matrix.ext }} \
+            LineSolv-${{ github.ref_name }}-linux-amd64${{ matrix.ext }}
           tar czf LineSolv-${{ github.ref_name }}-linux-amd64.tar.gz \
-            LineSolv-${{ github.ref_name }}-linux-amd64
+            LineSolv-${{ github.ref_name }}-linux-amd64${{ matrix.ext }}
 
       - name: Package (macOS)
         if: matrix.goos == 'darwin'
         run: |
           mkdir -p LineSolv.app/Contents/MacOS
-          mv build/bin/LineSolv LineSolv.app/Contents/MacOS/LineSolv
+          mv build/bin/LineSolv${{ matrix.ext }} \
+            LineSolv.app/Contents/MacOS/LineSolv
           cat > LineSolv.app/Contents/Info.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -90,6 +105,14 @@ jobs:
           EOF
           zip -r LineSolv-${{ github.ref_name }}-darwin-${{ matrix.goarch }}.zip LineSolv.app
 
+      - name: Package (Windows)
+        if: matrix.goos == 'windows'
+        run: |
+          move build\bin\LineSolv${{ matrix.ext }} \
+            LineSolv-${{ github.ref_name }}-windows-amd64${{ matrix.ext }}
+          7z a LineSolv-${{ github.ref_name }}-windows-amd64.zip \
+            LineSolv-${{ github.ref_name }}-windows-amd64${{ matrix.ext }}
+
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
@@ -97,4 +120,5 @@ jobs:
             LineSolv-${{ github.ref_name }}-linux-amd64.tar.gz
             LineSolv-${{ github.ref_name }}-darwin-amd64.zip
             LineSolv-${{ github.ref_name }}-darwin-arm64.zip
+            LineSolv-${{ github.ref_name }}-windows-amd64.zip
           generate_release_notes: true
