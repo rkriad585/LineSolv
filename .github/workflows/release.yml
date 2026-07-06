@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            goos: linux
+            goarch: amd64
+            tags: webkit2_41
+          - os: macos-15
+            goos: darwin
+            goarch: amd64
+            tags: ""
+          - os: macos-15
+            goos: darwin
+            goarch: arm64
+            tags: ""
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install system deps (Linux)
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build
+        run: |
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
+          wails build -tags "${{ matrix.tags }}" \
+            -ldflags "-X main.version=${{ github.ref_name }}"
+
+      - name: Package (Linux)
+        if: matrix.goos == 'linux'
+        run: |
+          mv build/bin/LineSolv LineSolv-${{ github.ref_name }}-linux-amd64
+          tar czf LineSolv-${{ github.ref_name }}-linux-amd64.tar.gz \
+            LineSolv-${{ github.ref_name }}-linux-amd64
+
+      - name: Package (macOS)
+        if: matrix.goos == 'darwin'
+        run: |
+          mkdir -p LineSolv.app/Contents/MacOS
+          mv build/bin/LineSolv LineSolv.app/Contents/MacOS/LineSolv
+          cat > LineSolv.app/Contents/Info.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key>
+            <string>LineSolv</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.linesolv.app</string>
+            <key>CFBundleName</key>
+            <string>LineSolv</string>
+            <key>CFBundleVersion</key>
+            <string>${{ github.ref_name }}</string>
+            <key>CFBundleShortVersionString</key>
+            <string>${{ github.ref_name }}</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+          zip -r LineSolv-${{ github.ref_name }}-darwin-${{ matrix.goarch }}.zip LineSolv.app
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            LineSolv-${{ github.ref_name }}-linux-amd64.tar.gz
+            LineSolv-${{ github.ref_name }}-darwin-amd64.zip
+            LineSolv-${{ github.ref_name }}-darwin-arm64.zip
+          generate_release_notes: true

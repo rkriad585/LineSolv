@@ -10,6 +10,8 @@ import (
 	"LineSolv/app/service"
 )
 
+var version = "dev"
+
 //go:embed all:frontend/dist
 var assets embed.FS
 
