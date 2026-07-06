@@ -1,0 +1,40 @@
+# Normalize line endings to LF
+* text=auto eol=lf
+
+# Go
+*.go text diff=golang
+
+# TypeScript / JavaScript
+*.ts text diff=typescript
+*.tsx text diff=typescript
+*.js text diff=javascript
+*.jsx text diff=javascript
+
+# Web
+*.html text
+*.css text diff=css
+*.json text
+
+# Markdown / docs
+*.md text diff=markdown
+
+# Shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Git files
+.gitattributes text
+.gitignore text
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.svg binary
+*.ico binary
+
+# Binaries
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
