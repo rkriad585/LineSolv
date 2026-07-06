@@ -45,6 +45,7 @@ jobs:
           mkdir -p "${PKG}/usr/share/icons/hicolor/256x256/apps"
 
           cp build/bin/LineSolv "${PKG}/usr/bin/linesolv"
+          # Use appicon directly (GitHub runners don't have ImageMagick for resize)
           cp build/appicon.png "${PKG}/usr/share/icons/hicolor/256x256/apps/linesolv.png"
 
           cat > "${PKG}/DEBIAN/control" <<ENDCTRL
