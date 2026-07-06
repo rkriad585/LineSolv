@@ -1,12 +1,31 @@
 # macOS
 .DS_Store
+*.swp
+*.swo
 
 # Alfred workflow archives
 *.alfredworkflow
 
-# Wails build output
+# Wails
 build/bin
+*.exe
+
+# Go
+*.o
+*.a
+*.so
+*.dll
+*.dylib
+go.work
 
 # Node
 node_modules
 frontend/dist
+
+# Editor
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+Thumbs.db
