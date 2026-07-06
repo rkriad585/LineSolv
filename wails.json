@@ -7,7 +7,14 @@
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "author": {
-    "name": "RK Riad Khan",
+    "name": "rkriad585",
     "email": "rkriad585@gmail.com"
+  },
+  "info": {
+    "companyName": "LineSolv",
+    "productName": "LineSolv",
+    "productVersion": "0.1.0",
+    "copyright": "LineSolv (c) 2026 rkriad585",
+    "comments": "Built using Wails (https://wails.io)"
   }
 }
