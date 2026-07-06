@@ -1,4 +1,5 @@
-import type {Note, AppCallbacks} from './types';
+import type {Note} from './types';
+import {CalculatorStore} from './stores/calculator';
 import {TitleBar} from './components/TitleBar';
 import {CalculatorInput} from './components/CalculatorInput';
 import {ResultDisplay} from './components/ResultDisplay';
@@ -7,6 +8,8 @@ import {VariableExplorer} from './components/VariableExplorer';
 import * as serviceBindings from '../wailsjs/go/service/AppService';
 
 export function renderApp(root: HTMLElement): void {
+  const store = new CalculatorStore();
+
   let notes: Note[] = [{id: '1', name: 'Untitled', content: ''}];
   let activeNoteId = '1';
   let darkMode = true;
@@ -32,6 +35,22 @@ export function renderApp(root: HTMLElement): void {
     return escapeHtml(r);
   }
 
+  function buildLineResults(lines: string[], res: string[]): string {
+    let html = '';
+    for (let i = 0; i < lines.length; i++) {
+      const t = lines[i].trim();
+      if (!t || t.startsWith('#') || t.startsWith('//') || t.endsWith(':')) {
+        html += '<div style="color:var(--text-subtle)">\u00A0</div>';
+      } else if (store.getState().evalState === 'loading') {
+        html += '<div style="color:var(--text-muted)">\u2026</div>';
+      } else {
+        const r = res[i];
+        html += `<div style="${r ? '' : 'color:var(--text-subtle)'}">${formatResult(r || '') || '\u00A0'}</div>`;
+      }
+    }
+    return html;
+  }
+
   async function evaluateAll(): Promise<void> {
     const version = ++evalVersion;
     const text = input.text;
@@ -41,28 +60,25 @@ export function renderApp(root: HTMLElement): void {
     const lines = text.split('\n');
     input.updateGutter(lines.length);
 
-    let resultsHtml = '';
-    for (const line of lines) {
-      const t = line.trim();
-      if (!t || t.startsWith('#') || t.startsWith('//') || t.endsWith(':')) {
-        resultsHtml += '<div style="color:var(--text-subtle)">\u00A0</div>';
-      } else {
-        resultsHtml += '<div style="color:var(--text-muted)">\u2026</div>';
-      }
-    }
-    results.setResults(resultsHtml);
+    store.setInput(text);
+    store.setEvalState('loading');
+    results.setResults(buildLineResults(lines, []));
 
     try {
       const res = await serviceBindings.EvaluateAll(text);
       if (version !== evalVersion) return;
 
-      resultsHtml = '';
+      store.setResults(res);
+      store.setEvalState('idle');
+      results.setResults(buildLineResults(lines, res));
+
       for (const r of res) {
-        resultsHtml += `<div style="${r ? '' : 'color:var(--text-subtle)'}">${formatResult(r) || '\u00A0'}</div>`;
+        if (r) store.pushHistory({input: text, output: r});
       }
-      results.setResults(resultsHtml);
     } catch {
-      // runtime not ready yet
+      if (version !== evalVersion) return;
+      store.setEvalState('error');
+      store.setError('Connection error');
     }
 
     updateVars();
@@ -74,6 +90,12 @@ export function renderApp(root: HTMLElement): void {
       pendingEval = null;
       evaluateAll();
     }, 150);
+  }
+
+  function forceEval(): void {
+    if (pendingEval) clearTimeout(pendingEval);
+    pendingEval = null;
+    evaluateAll();
   }
 
   function clearAndEval(): void {
@@ -88,11 +110,12 @@ export function renderApp(root: HTMLElement): void {
   async function updateVars(): Promise<void> {
     try {
       const v = await serviceBindings.GetVariables();
+      store.setVariables(v);
       varsPanel.render(v);
     } catch {}
   }
 
-  const cb: AppCallbacks = {
+  const cb = {
     onEvaluateAll: evaluateAll,
     onNewNote: () => {
       const id = String(Date.now());
@@ -128,6 +151,7 @@ export function renderApp(root: HTMLElement): void {
     },
     onClearAll: () => {
       input.text = '';
+      store.clearHistory();
       clearAndEval();
     },
     onThemeToggle: () => {
@@ -137,7 +161,7 @@ export function renderApp(root: HTMLElement): void {
     },
   };
 
-  // --- Build DOM (matching original working layout) ---
+  // --- Build DOM ---
   const titleBar = new TitleBar(cb);
   const input = new CalculatorInput();
   const results = new ResultDisplay();
@@ -183,6 +207,26 @@ export function renderApp(root: HTMLElement): void {
       ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(ta.selectionEnd);
       ta.selectionStart = ta.selectionEnd = start + 2;
       scheduleEval();
+      return;
+    }
+
+    if (e.shiftKey && e.key === 'Enter') {
+      e.preventDefault();
+      forceEval();
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      if (input.text.trim()) {
+        input.text = '';
+        activeNote().content = '';
+        forceEval();
+      } else if (notesPanel.isOpen()) {
+        notesPanel.close();
+      } else if (varsPanel.isOpen()) {
+        varsPanel.close();
+      }
+      return;
     }
   });
 
@@ -197,6 +241,29 @@ export function renderApp(root: HTMLElement): void {
     if (mod && e.key === 'i') { e.preventDefault(); cb.onToggleVars(); }
     if (mod && e.key === 'k') { e.preventDefault(); cb.onClearAll(); }
     if (mod && e.key === 'n') { e.preventDefault(); cb.onNewNote(); }
+
+    // History navigation
+    if (mod && e.key === 'ArrowUp') {
+      e.preventDefault();
+      const val = store.navigateHistory('up');
+      if (val !== null) {
+        input.text = val;
+        activeNote().content = val;
+        input.updateGutter(val.split('\n').length);
+      }
+    }
+    if (mod && e.key === 'ArrowDown') {
+      e.preventDefault();
+      const val = store.navigateHistory('down');
+      if (val !== null) {
+        input.text = val;
+        activeNote().content = val;
+        input.updateGutter(val.split('\n').length);
+      } else {
+        input.text = '';
+        activeNote().content = '';
+      }
+    }
   });
 
   window.addEventListener('resize', () => {
@@ -208,8 +275,8 @@ export function renderApp(root: HTMLElement): void {
   notesPanel.render(notes, activeNoteId);
   input.updateGutter(1);
   input.textarea.focus();
+  store.setEvalState('idle');
 
-  // Retry evaluation until Wails runtime is ready
   (async function init() {
     for (let i = 0; i < 20; i++) {
       try {

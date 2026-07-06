@@ -2,24 +2,16 @@ package service
 
 import (
 	"LineSolv/app/calculator"
-	"LineSolv/app/plugin"
 )
 
 type AppService struct {
 	engine *calculator.Engine
-	plugin *plugin.PluginRuntime
 }
 
 func NewAppService() *AppService {
-	eng := calculator.NewEngine()
 	return &AppService{
-		engine: eng,
-		plugin: plugin.NewPluginRuntime(eng),
+		engine: calculator.NewEngine(),
 	}
-}
-
-func (s *AppService) LoadPlugins(dirs []string) (int, error) {
-	return plugin.LoadPluginDirs(s.plugin, dirs)
 }
 
 func (s *AppService) EvaluateLine(input string) (string, error) {
@@ -36,4 +28,12 @@ func (s *AppService) GetVariables() map[string]float64 {
 
 func (s *AppService) ClearVariables() {
 	s.engine.ClearVariables()
+}
+
+func (s *AppService) GetHistory() []calculator.HistoryEntry {
+	return s.engine.GetHistory()
+}
+
+func (s *AppService) ClearHistory() {
+	s.engine.ClearHistory()
 }

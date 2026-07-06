@@ -53,31 +53,30 @@ The binary is written to `build/bin/LineSolv`.
 LineSolv/
 ├── app/
 │   ├── calculator/
-│   │   └── engine.go      # Arithmetic engine, parser, units, NL pipeline
-│   ├── plugin/
-│   │   ├── runtime.go      # Goja JS VM, linesolv API bindings
-│   │   └── loader.go       # Recursive .js file loader
+│   │   ├── engine.go       # Core engine, parser, NL pipeline, history
+│   │   ├── units.go         # Unit database + conversion
+│   │   ├── functions.go     # Built-in math functions
+│   │   └── variables.go     # Variable get/set/clear
 │   └── service/
-│       └── app.go          # Wails-bound service methods
+│       └── app.go           # Wails-bound service methods
 ├── frontend/
 │   ├── src/
-│   │   ├── App.ts          # Orchestrator
-│   │   ├── main.ts         # Entry point
-│   │   ├── types.ts        # Shared interfaces
-│   │   ├── style.css       # Tailwind + CSS custom properties
-│   │   └── components/     # UI components
+│   │   ├── App.ts           # Orchestrator
+│   │   ├── main.ts          # Entry point
+│   │   ├── types.ts         # Shared interfaces
+│   │   ├── style.css        # Tailwind + CSS custom properties
+│   │   ├── stores/
+│   │   │   └── calculator.ts  # Reactive state store
+│   │   └── components/      # UI components
 │   │       ├── TitleBar.ts
 │   │       ├── CalculatorInput.ts
 │   │       ├── ResultDisplay.ts
 │   │       ├── NotesPanel.ts
 │   │       └── VariableExplorer.ts
-│   ├── wailsjs/            # Auto-generated bindings (do not edit)
+│   ├── wailsjs/             # Auto-generated bindings (do not edit)
 │   └── index.html
-├── plugins/                # JavaScript plugin files
-│   ├── sample.js
-│   └── CommunityExtensions/ # 16 community extension plugins
-├── main.go                 # Entry point
-├── wails.json              # Wails configuration
+├── main.go                  # Entry point
+├── wails.json               # Wails configuration
 ├── go.mod
 └── package.json
 ```
@@ -89,12 +88,11 @@ LineSolv/
 - Follow `gofmt` formatting
 - No unused exports
 - Inject dependencies via constructor (`NewEngine`, `NewAppService`)
-- Methods bound to Wails must return `(T, error)`
 
 ### TypeScript
 
 - Strict mode enabled (`noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`)
-- No external state libraries — use module-level variables
+- State management via `CalculatorStore` (subscriber pattern)
 - All Wails calls wrapped in `async/await` + `try/catch`
 
 ### CSS
@@ -108,12 +106,6 @@ LineSolv/
 ```bash
 go test ./...
 ```
-
-Tests exist in `app/calculator/` and `app/plugin/`. Frontend testing is not yet set up.
-
-## Adding Plugins
-
-Drop a `.js` file into `plugins/`. See [plugin-system.md](plugin-system.md) for the API.
 
 ## Build Configuration
 

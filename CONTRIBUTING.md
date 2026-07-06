@@ -24,10 +24,6 @@ Contributions are welcome! Here's how you can help.
 3. If adding a feature, update the relevant documentation
 4. Ensure the project builds cleanly
 
-## Adding Plugins
-
-To add a new plugin, place a `.js` file in `plugins/`. It can use the `linesolv.addUnit()`, `linesolv.addFunction()`, and `linesolv.setVariable()` API. See existing plugins for examples.
-
 ## Questions?
 
 Open a [discussion](https://github.com/rkriad585/LineSolv/discussions) or issue.

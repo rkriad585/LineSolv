@@ -1,6 +1,13 @@
 # Calculator Engine
 
-The calculator engine (`app/calculator/engine.go`) is a complete natural-language arithmetic evaluator built in Go.
+The calculator engine (`app/calculator/`) is a complete natural-language arithmetic evaluator built in Go, split across four files for maintainability.
+
+| File | Responsibility |
+|---|---|
+| `engine.go` | Core Engine struct, PEMDAS recursive descent parser, lexer, naturalize pipeline, EvaluateLine/EvaluateAll, history tracking, helpers |
+| `units.go` | Unit conversion database (`unitDB`), `convertUnit`, `RegisterUnit` |
+| `functions.go` | Built-in math function dispatch (`sin`, `cos`, `sqrt`, etc.) |
+| `variables.go` | `GetVariables`, `SetVariable`, `ClearVariables` |
 
 ## Overview
 
@@ -116,8 +123,6 @@ Tokens: `+`, `-`, `*`, `/`, `^`, `%`, `(`, `)`, `,`, numbers (`tokNum`), identif
 | `log10(x)` | Base-10 logarithm |
 | `exp(x)` | e^x |
 
-Plugin-registered functions (e.g., `choose`, `permute`) are dispatched through the same `callBuiltinOrPlugin` path.
-
 ### Constants
 
 - `pi` / `π` — π (3.14159...)
@@ -130,6 +135,10 @@ Plugin-registered functions (e.g., `choose`, `permute`) are dispatched through t
 - Variables persist across lines until cleared (`⌘K`)
 - Case-insensitive names
 
+## History
+
+Each successful evaluation is recorded in the engine's history as a `HistoryEntry{Input, Output}`. Accessible via `GetHistory()` and `ClearHistory()` on the engine and service layer. The frontend provides `Cmd+↑` / `Cmd+↓` navigation through computed entries.
+
 ## Unit Database
 
 Built-in conversion for:
@@ -138,8 +147,6 @@ Built-in conversion for:
 - **Volume**: liter, milliliter, gallon, quart, cup
 - **Temperature**: Celsius, Fahrenheit
 - **Currency**: USD, EUR, GBP, JPY, CNY, INR, CAD, AUD, CHF
-
-Plugin-registered units extend this database at runtime.
 
 ## Error Handling
 

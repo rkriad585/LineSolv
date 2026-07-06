@@ -6,7 +6,7 @@
     <a href="https://github.com/rkriad585/LineSolv/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
     </a>
-    <img src="https://img.shields.io/badge/platform-linux%20|%20macOS-lightgrey" alt="Platform">
+    <img src="https://img.shields.io/badge/platform-linux%20|%20macOS%20|%20windows-lightgrey" alt="Platform">
   </p>
 </p>
 
@@ -22,12 +22,12 @@ Built with **Wails v2** (Go + WebView), **Vite**, **Tailwind CSS v4**, and **Typ
 - **Unit Conversion** — `10 inches in cm`, `5 kg in lb`, `100 USD in EUR`, `celsius to fahrenheit`
 - **Variables** — `x = 42`, then reference `x` on later lines
 - **Built-in Functions** — `sin`, `cos`, `sqrt`, `log`, `round`, and more
-- **Plugin System** — 16 community extensions loaded via Goja JS runtime (`choose`, `permute`, `stddev`, unit converters, etc.)
 - **Percentage Math** — `10% of 200`, `100 + 15%`
 - **Context Awareness** — `of that`, `then`, `result` reference the previous line
+- **Computation History** — navigate with `Cmd+↑` / `Cmd+↓`
 - **Dark / Light Theme** — toggle with one click
-- **Keyboard Shortcuts** — `⌘N` new note, `⌘B` / `⌘I` toggle sidebars, `⌘K` clear all
-- **Notepad-Style UI** — free-form textarea with live results column
+- **Keyboard Shortcuts** — `⌘N` new note, `⌘B` / `⌘I` toggle sidebars, `⌘K` clear all, `Shift+Enter` force evaluate, `Esc` clear / close panels
+- **Notepad-Style UI** — free-form textarea with live results column, loading indicators
 
 ## Installation
 
@@ -44,11 +44,13 @@ Requirements: WebKitGTK 4.1 (Ubuntu 26.04+ ships this by default).
 
 ### macOS
 
-*(Coming soon — requires a codesigned `.app` bundle.)*
+Download the latest `.dmg` for your architecture (Intel or Apple Silicon) from the [releases page](https://github.com/rkriad585/LineSolv/releases).
+
+> **Note:** macOS binaries are unsigned — you may need to right-click → Open to bypass Gatekeeper.
 
 ### Windows
 
-*(Not yet supported — contributions welcome.)*
+Download the latest `.exe` (NSIS installer) from the [releases page](https://github.com/rkriad585/LineSolv/releases).
 
 ## Building from Source
 
@@ -76,7 +78,7 @@ wails dev -tags "webkit2_41"
 
 ## Usage
 
-Type calculations naturally. Press **Enter** at the end of a line to force immediate evaluation.
+Type calculations naturally. `Shift+Enter` force-evaluates immediately. `Esc` clears input or closes sidebars. `Cmd+↑` / `Cmd+↓` navigates history.
 
 | Input | Output |
 |---|---|
@@ -86,22 +88,20 @@ Type calculations naturally. Press **Enter** at the end of a line to force immed
 | `x times pi` | `31.4159` |
 | `10 inches in cm` | `25.4 cm` |
 | `100 + 15%` | `115` |
-| `choose(5, 3)` | `10` |
 
 ## Architecture
 
 ```
 LineSolv/
 ├── app/
-│   ├── calculator/    # Arithmetic engine, parser, unit conversion
-│   ├── plugin/        # Goja JS plugin runtime
+│   ├── calculator/    # Arithmetic engine (engine.go, units.go, functions.go, variables.go)
 │   └── service/       # Wails-bound Go methods
 ├── frontend/
 │   └── src/
 │       ├── components/  # UI components (TitleBar, CalculatorInput, etc.)
+│       ├── stores/      # Reactive state store
 │       ├── App.ts       # Orchestrator
 │       └── style.css    # Tailwind v4 + CSS custom properties
-├── plugins/           # Community extensions
 └── main.go            # Entrypoint
 ```
 

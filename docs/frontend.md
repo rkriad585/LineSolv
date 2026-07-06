@@ -11,21 +11,37 @@ The frontend is a vanilla TypeScript application served in a Wails WebView. It u
 `App.ts` is the central controller. It:
 
 1. Creates and wires all UI components
-2. Manages application state (notes, active note, dark mode, eval version)
+2. Creates a `CalculatorStore` for reactive state management
 3. Schedules debounced (150ms) calls to `EvaluateAll` on each input change
-4. Implements keyboard shortcut handlers
+4. Handles keyboard shortcuts (global and textarea-specific)
 5. Runs a retry loop on startup (20 attempts, 100ms apart) waiting for the Wails runtime
 6. Handles stale-result detection via an `evalVersion` counter — if a new evaluation starts before the previous one completes, the old result is discarded
 
 ### State Management
 
-State is managed with simple module-level variables in `App.ts`:
-- `notes: Note[]` — all notes
-- `activeNoteId: string` — currently selected note
-- `darkMode: boolean` — theme toggle
-- `evalVersion: number` — incremented on each evaluation call
+State is managed through `CalculatorStore` (`stores/calculator.ts`), a reactive store with a subscriber pattern:
 
-No external state library is used.
+- **Input** — current textarea content
+- **Results** — per-line result strings
+- **Variables** — name → value map
+- **EvalState** — `'idle' | 'loading' | 'error'`
+- **Error** — error message string or null
+- **History** — array of `{input, output}` entries
+- **HistoryIndex** — current position in history nav
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `⌘N` / `Ctrl+N` | New note |
+| `⌘B` / `Ctrl+B` | Toggle notes sidebar |
+| `⌘I` / `Ctrl+I` | Toggle variables sidebar |
+| `⌘K` / `Ctrl+K` | Clear all (input + variables + history) |
+| `Shift+Enter` | Force-evaluate immediately |
+| `Esc` | Clear input; if empty, close open sidebar |
+| `⌘↑` / `Ctrl+↑` | Navigate history back |
+| `⌘↓` / `Ctrl+↓` | Navigate history forward |
+| `Tab` | Insert 2 spaces |
 
 ## UI Components
 
@@ -49,7 +65,11 @@ Wrapped in a flex row container (`#notepad`). The textarea emits `input` events 
 
 ### ResultDisplay
 
-A `<div>` column to the right of the textarea. Results are rendered as HTML with color-coded variable names (`--text-muted`) and values (`--accent`). The column scroll is synced with the textarea's scroll.
+A `<div>` column to the right of the textarea. Results are rendered as HTML with color-coded variable names (`--text-muted`) and values (`--accent`). The column scroll is synced with the textarea's scroll. Supports three display states:
+
+- **Loading** — shows `…` for each line during evaluation
+- **Empty** — shows non-breaking space for blank/comment lines
+- **Result** — formatted result or empty for errors
 
 ### NotesPanel
 
@@ -83,13 +103,11 @@ All theme colors are defined as CSS custom properties in `style.css`. The `:root
   --surface: #18181b;
   --surface-secondary: #27272a;
   --accent: #a78bfa;
-  /* ... */
 }
 
 :root.light {
   --surface: #fafafa;
   --accent: #7c3aed;
-  /* ... */
 }
 ```
 
@@ -98,18 +116,6 @@ The theme is toggled by adding/removing the `light` class on `<html>`.
 ### Custom Scrollbar
 
 Thin custom scrollbar (5px) using `::-webkit-scrollbar` pseudo-elements, colored with `--text-subtle` and `--text-muted`.
-
-## Key Bindings
-
-| Shortcut | Action |
-|---|---|
-| `⌘N` / `Ctrl+N` | New note |
-| `⌘B` / `Ctrl+B` | Toggle notes sidebar |
-| `⌘I` / `Ctrl+I` | Toggle variables sidebar |
-| `⌘K` / `Ctrl+K` | Clear all (input + variables) |
-| `Tab` | Insert 2 spaces |
-| `Resize < 700px` | Auto-close notes sidebar |
-| `Resize < 500px` | Auto-close variables sidebar |
 
 ## Wails Bindings
 
@@ -121,6 +127,8 @@ import * as serviceBindings from '../wailsjs/go/service/AppService';
 
 Available methods:
 - `serviceBindings.EvaluateAll(text)` → `string[]`
-- `serviceBindings.EvaluateLine(line)` → `string`
+- `serviceBindings.EvaluateLine(text)` → `string`
 - `serviceBindings.GetVariables()` → `Record<string, number>`
 - `serviceBindings.ClearVariables()` → `void`
+- `serviceBindings.GetHistory()` → `HistoryEntry[]`
+- `serviceBindings.ClearHistory()` → `void`

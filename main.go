@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"log"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -17,13 +16,6 @@ var assets embed.FS
 
 func main() {
 	svc := service.NewAppService()
-
-	pluginDirs := []string{"plugins", "plugins/CommunityExtensions"}
-	if n, err := svc.LoadPlugins(pluginDirs); err != nil {
-		log.Printf("Plugin load error: %v", err)
-	} else {
-		log.Printf("Loaded %d plugin(s)", n)
-	}
 
 	err := wails.Run(&options.App{
 		Title:  "LineSolv",

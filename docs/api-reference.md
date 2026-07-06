@@ -55,19 +55,26 @@ function ClearVariables(): Promise<void>
 
 Clears all stored variables and resets the last result tracker.
 
-## `LoadPlugins`
+## `GetHistory`
 
 ```typescript
-function LoadPlugins(dirs: string[]): Promise<number>
+interface HistoryEntry {
+  input: string;
+  output: string;
+}
+
+function GetHistory(): Promise<HistoryEntry[]>
 ```
 
-Loads JavaScript plugins from the specified directories. Called once at startup from `main.go`.
+Returns the evaluation history — each entry records the input line and its computed result.
 
-**Parameters:**
-- `dirs` — Array of directory paths relative to the binary
+## `ClearHistory`
 
-**Returns:**
-- Number of plugin files loaded.
+```typescript
+function ClearHistory(): Promise<void>
+```
+
+Clears all stored history entries.
 
 ## Usage from TypeScript
 
@@ -81,8 +88,13 @@ const results = await svc.EvaluateAll("42\n10 inches in cm\nx = 5");
 const vars = await svc.GetVariables();
 // vars: { x: 5 }
 
+// Get history
+const history = await svc.GetHistory();
+// history: [{ input: "42", output: "42" }, ...]
+
 // Clear everything
 await svc.ClearVariables();
+await svc.ClearHistory();
 ```
 
 ## Error Handling
