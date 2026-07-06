@@ -104,88 +104,11 @@ jobs:
           tag_name: ${{ needs.version.outputs.version }}
           files: linesolv-*.deb
 
-  macos-intel:
+  macos:
     needs: version
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.23"
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-
-      - name: Build
-        run: wails build -ldflags "-X main.version=${{ needs.version.outputs.version }}"
-
-      - name: Verify binary
-        run: test -f build/bin/LineSolv || { echo "Binary not found"; exit 1; }
-
-      - name: Package .app
-        run: |
-          VERSION="${{ needs.version.outputs.version }}"
-          VERSION="${VERSION#v}"
-          APP="LineSolv.app"
-          rm -rf "${APP}"
-          mkdir -p "${APP}/Contents/MacOS"
-          mkdir -p "${APP}/Contents/Resources"
-
-          cp build/bin/LineSolv "${APP}/Contents/MacOS/LineSolv"
-
-          cat > "${APP}/Contents/Info.plist" <<ENDPLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>CFBundlePackageType</key>
-            <string>APPL</string>
-            <key>CFBundleName</key>
-            <string>LineSolv</string>
-            <key>CFBundleExecutable</key>
-            <string>LineSolv</string>
-            <key>CFBundleIdentifier</key>
-            <string>com.linesolv.app</string>
-            <key>CFBundleVersion</key>
-            <string>${VERSION}</string>
-            <key>CFBundleShortVersionString</key>
-            <string>${VERSION}</string>
-            <key>CFBundleIconFile</key>
-            <string>iconfile</string>
-            <key>LSMinimumSystemVersion</key>
-            <string>10.13.0</string>
-            <key>NSHighResolutionCapable</key>
-            <true/>
-            <key>NSHumanReadableCopyright</key>
-            <string>LineSolv (c) 2026 rkriad585</string>
-          </dict>
-          </plist>
-          ENDPLIST
-
-          cp build/appicon.png "${APP}/Contents/Resources/iconfile.png"
-
-      - name: Create DMG
-        run: |
-          VERSION="${{ needs.version.outputs.version }}"
-          VERSION="${VERSION#v}"
-          hdiutil create -volname "LineSolv" \
-            -srcfolder LineSolv.app \
-            -ov -format UDZO \
-            "LineSolv-${VERSION}-darwin-amd64.dmg"
-
-      - name: Upload
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.version.outputs.version }}
-          files: LineSolv-*-darwin-amd64.dmg
-
-  macos-arm:
-    needs: version
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -202,10 +125,17 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build
-        run: wails build -ldflags "-X main.version=${{ needs.version.outputs.version }}"
+        run: |
+          GOARCH=${{ matrix.arch }} \
+          wails build -ldflags "-X main.version=${{ needs.version.outputs.version }}"
 
       - name: Verify binary
-        run: test -f build/bin/LineSolv || { echo "Binary not found"; exit 1; }
+        run: |
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            test -f build/bin/LineSolv.app/Contents/MacOS/LineSolv || { ls -la build/bin/; exit 1; }
+          else
+            test -f build/bin/LineSolv.app/Contents/MacOS/LineSolv || test -f build/bin/LineSolv || { ls -la build/bin/; exit 1; }
+          fi
 
       - name: Package .app
         run: |
@@ -213,10 +143,14 @@ jobs:
           VERSION="${VERSION#v}"
           APP="LineSolv.app"
           rm -rf "${APP}"
-          mkdir -p "${APP}/Contents/MacOS"
-          mkdir -p "${APP}/Contents/Resources"
 
-          cp build/bin/LineSolv "${APP}/Contents/MacOS/LineSolv"
+          # Wails v2 on macOS packages binary inside .app bundle
+          if [ -d build/bin/LineSolv.app ]; then
+            cp -R build/bin/LineSolv.app "${APP}"
+          else
+            mkdir -p "${APP}/Contents/MacOS"
+            cp build/bin/LineSolv "${APP}/Contents/MacOS/LineSolv"
+          fi
 
           cat > "${APP}/Contents/Info.plist" <<ENDPLIST
           <?xml version="1.0" encoding="UTF-8"?>
@@ -247,6 +181,7 @@ jobs:
           </plist>
           ENDPLIST
 
+          mkdir -p "${APP}/Contents/Resources"
           cp build/appicon.png "${APP}/Contents/Resources/iconfile.png"
 
       - name: Create DMG
@@ -256,13 +191,13 @@ jobs:
           hdiutil create -volname "LineSolv" \
             -srcfolder LineSolv.app \
             -ov -format UDZO \
-            "LineSolv-${VERSION}-darwin-arm64.dmg"
+            "LineSolv-${VERSION}-darwin-${{ matrix.arch }}.dmg"
 
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.version.outputs.version }}
-          files: LineSolv-*-darwin-arm64.dmg
+          files: LineSolv-*-darwin-*.dmg
 
   windows:
     needs: version
