@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Alfred workflow archives
+*.alfredworkflow
+
+# Wails build output
+build/bin
+
+# Node
+node_modules
+frontend/dist
