@@ -8,7 +8,7 @@ const dot = (u, v) => {
     return u.map((x, i) => u[i] * v[i]).reduce((m, n) => m + n);
 };
 
-numi.addFunction({ "id": "angle", "phrases": "angle" }, (values) => {
+linesolv.addFunction({ "id": "angle", "phrases": "angle" }, (values) => {
     if (values.length !== 2) {
         return;
     }
@@ -20,7 +20,7 @@ numi.addFunction({ "id": "angle", "phrases": "angle" }, (values) => {
     }
 });
 
-numi.addFunction({ "id": "dot", "phrases": "dot" }, (values) => {
+linesolv.addFunction({ "id": "dot", "phrases": "dot" }, (values) => {
     if (values.length !== 2) {
         return;
     }
@@ -29,7 +29,7 @@ numi.addFunction({ "id": "dot", "phrases": "dot" }, (values) => {
     return v.length === u.length ? dot(u, v) : null;
 });
 
-numi.addFunction({ "id": "vec", "phrases": "vec" }, (values) => {
+linesolv.addFunction({ "id": "vec", "phrases": "vec" }, (values) => {
     if (values.length >= 2 && values.length <= 3) {             // allow only 2d,3d vectors
         const argVector = values.map((obj) => obj.double);
 

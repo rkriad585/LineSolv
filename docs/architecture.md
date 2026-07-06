@@ -45,7 +45,7 @@ Wails-bound service layer exposing:
 The natural-language arithmetic engine. Recursive descent PEMDAS parser, unit conversion database, built-in math functions, variable storage, and natural language preprocessing pipeline.
 
 ### `app/plugin/`
-Goja-based JavaScript runtime that loads `.js` plugin files from `plugins/` and `plugins/CommunityExtensions/`. Each plugin is wrapped in an IIFE for scope isolation. Plugins register units, functions, and variables via the `numi` API object.
+Goja-based JavaScript runtime that loads `.js` plugin files from `plugins/` and `plugins/CommunityExtensions/`. Each plugin is wrapped in an IIFE for scope isolation. Plugins register units, functions, and variables via the `linesolv` API object.
 
 ## TypeScript Frontend
 
@@ -67,24 +67,24 @@ The frontend imports auto-generated TypeScript bindings from `frontend/wailsjs/g
 
 ## Plugin System
 
-Plugins are standard JavaScript files placed in `plugins/` or `plugins/CommunityExtensions/`. They use the `numi` global object:
+Plugins are standard JavaScript files placed in `plugins/` or `plugins/CommunityExtensions/`. They use the `linesolv` global object:
 
 ```js
-numi.addUnit({
+linesolv.addUnit({
   id: 'myunit',
   phrases: 'myunit,myu',
   format: 'MyUnit',
   ratio: 0.5
 });
 
-numi.addFunction({
+linesolv.addFunction({
   id: 'myfunc',
   description: 'My custom function'
 }, function(args) {
   return args[0].double * 2;
 });
 
-numi.setVariable('varname', 42);
+linesolv.setVariable('varname', 42);
 ```
 
 See [plugin-system.md](plugin-system.md) for details.

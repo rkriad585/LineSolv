@@ -1,6 +1,6 @@
 let basePx = 16;
 
-numi.addUnit({
+linesolv.addUnit({
   "id": "px",
   "phrases": "pixel, pixels, px",
   "baseUnitId": "px",
@@ -8,7 +8,7 @@ numi.addUnit({
   "ratio" : 1,
 });
 
-numi.addUnit({
+linesolv.addUnit({
   "id": "rem",
   "phrases": "rem",
   "baseUnitId": "px",
@@ -24,7 +24,7 @@ var calculate = function (original, base) {
   return (original / base);
 }
 
-numi.addFunction({ "id": "toRem", "phrases": "toRem, convertRem" }, function(values) {
+linesolv.addFunction({ "id": "toRem", "phrases": "toRem, convertRem" }, function(values) {
   if (typeof values[1] === 'object') {
     return {"double" : calculate (values[0].double, values[1].double)};
   }

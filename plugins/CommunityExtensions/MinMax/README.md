@@ -1,4 +1,4 @@
-# MinMax extension for Numi
+# MinMax extension for LineSolv
 
 ## What is this extension for? :mag_right:
 
@@ -6,7 +6,7 @@ This extension allows you to determine the minimum or the maximum number in a se
 
 ## Installation :floppy_disk:
 
-Simply download the .js file to your numi extensions directory.
+Simply download the .js file to your LineSolv plugins directory.
 
 ## How to use it :wrench:
 

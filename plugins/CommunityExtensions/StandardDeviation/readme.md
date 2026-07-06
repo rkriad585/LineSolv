@@ -1,4 +1,4 @@
-# Standard Deviation Extension for Numi
+# Standard Deviation Extension for LineSolv
 
 ## What is this extension for?
 
@@ -6,7 +6,7 @@ This extension allows you to easily calculate the standard deviation of a datase
 
 ## Installation
 
-Simple download the .js file to your numi extensions directory.
+Simple download the .js file to your LineSolv plugins directory.
 
 ## How to use it
 

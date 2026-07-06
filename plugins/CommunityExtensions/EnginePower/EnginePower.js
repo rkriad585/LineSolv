@@ -1,4 +1,4 @@
-numi.addUnit({
+linesolv.addUnit({
    "id": "horsepower",
    "phrases": "hp, horsepower",
    "baseUnitId": "second",
@@ -6,7 +6,7 @@ numi.addUnit({
    "ratio" : 1,
 });
 
-numi.addUnit({
+linesolv.addUnit({
    "id": "kw",
    "phrases": "kw, KW, kilowatts",
    "baseUnitId": "w",

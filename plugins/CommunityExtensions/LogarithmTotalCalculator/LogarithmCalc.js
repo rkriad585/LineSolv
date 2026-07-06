@@ -3,7 +3,7 @@ function getBaseLog(x, y) {
     return res !== Infinity ? res : 1;
 };
 
-numi.addFunction({ "id": "log", "phrases": "log" }, function(values) {
+linesolv.addFunction({ "id": "log", "phrases": "log" }, function(values) {
     if (values.length === 1) {
         return { "double": getBaseLog(values[0].double, 2) };
     } else if(values.length === 2 ) {

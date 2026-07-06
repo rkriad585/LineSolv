@@ -6,7 +6,7 @@ for (let unit of UNITS){
     let phrase1 = unit.substring(0,1) + "bps";
     let phrase2 = unit + "bits per second";
     let format = unit + "bits/s";
-    numi.addUnit({
+    linesolv.addUnit({
         "id": id,
         "phrases": phrase1 + ", " + phrase2,
         "baseUnitId": "second",
@@ -18,7 +18,7 @@ for (let unit of UNITS){
     phrase1 = unit.substring(0,1) + "Bps";
     phrase2 = unit + "bytes per second";
     format = unit + "bytes/s";
-    numi.addUnit({
+    linesolv.addUnit({
         "id": id,
         "phrases": phrase1 + ", " + phrase2,
         "baseUnitId": "second",
@@ -37,7 +37,7 @@ for (let unit of UNITS){
     let phrase1 = unit.substring(0,2) + "bps";
     let phrase2 = unit + "bits per second";
     let format = unit + "bits/s";
-    numi.addUnit({
+    linesolv.addUnit({
         "id": id,
         "phrases": phrase1 + ", " + phrase2,
         "baseUnitId": "second",
@@ -49,7 +49,7 @@ for (let unit of UNITS){
     phrase1 = unit.substring(0,2) + "Bps";
     phrase2 = unit + "bytes per second";
     format = unit + "bytes/s";
-    numi.addUnit({
+    linesolv.addUnit({
         "id": id,
         "phrases": phrase1 + ", " + phrase2,
         "baseUnitId": "second",

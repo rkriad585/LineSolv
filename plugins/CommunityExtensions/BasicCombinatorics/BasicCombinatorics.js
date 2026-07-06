@@ -17,6 +17,6 @@ function choose(values) {
   return {double: permute(values).double / fact(r.double)};
 }
 
-numi.addFunction({id: 'choose', phrases: 'choose'}, choose);
+linesolv.addFunction({id: 'choose', phrases: 'choose'}, choose);
 
-numi.addFunction({id: 'permute', phrases: 'permute'}, permute);
+linesolv.addFunction({id: 'permute', phrases: 'permute'}, permute);

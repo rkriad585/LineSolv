@@ -1,4 +1,4 @@
-# Find loarithm Extension for Numi
+# Find loarithm Extension for LineSolv
 
 ## What is this extension for? :mag_right:
 
@@ -6,7 +6,7 @@ This extension allows you to easily calculate a logarithm with any base
 
 ## Installation :floppy_disk:
 
-Simply download the .js file to your numi extensions directory.
+Simply download the .js file to your LineSolv plugins directory.
 
 
 ## How to use it :wrench:

@@ -1,10 +1,10 @@
-# Vector calculator extension for Numi
+# Vector calculator extension for LineSolv
 
 ## What is this extension for?
 This extension allows you to find the dot product and calculate the angle between two vectors.
 
 ## Installation
-Simply download the .js file to your numi extensions directory.
+Simply download the .js file to your LineSolv plugins directory.
 
 ## How to use it
 Create a vector using the `vec` function. Use `;` to seperate numbers. 

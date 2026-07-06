@@ -1,4 +1,4 @@
-numi.addFunction({
+linesolv.addFunction({
 	"id": "clamp",
 	"phrases": "clamp"
 }, function (values) {

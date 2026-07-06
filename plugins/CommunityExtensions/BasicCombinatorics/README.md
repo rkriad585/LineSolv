@@ -1,4 +1,4 @@
-# Basic Combinatorics Extension for Numi :tada
+# Basic Combinatorics Extension for LineSolv :tada
 
 ## What is this extension for? :mag_right
 
@@ -6,7 +6,7 @@ This extension allows you to easily calculate the `nPr` and `nCr` of two numbers
 
 ## Installation :floppy_disk
 
-Simply download the .js file and copy it to your Numi extensions directory (i.e., `~/Library/Application Support/com.dmitrynikolaev.numi/extensions`).
+Simply download the .js file and copy it to your LineSolv plugins directory (i.e., `~/Library/Application Support/com.dmitrynikolaev.LineSolv/extensions`).
 
 ## How to use it :wrench
 

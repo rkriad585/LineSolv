@@ -1,4 +1,4 @@
-numi.addUnit({
+linesolv.addUnit({
     "id": "FiveCents",
     "phrases": "nickel, Nickel, nickels, Nickels, FiveCent, FiveCents",
     "baseUnitId": "CAD",
@@ -6,7 +6,7 @@ numi.addUnit({
     "ratio" : 0.05,
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "TenCents",
     "phrases": "dime, Dime, dimes, Dimes, TenCent, TenCents",
     "baseUnitId": "CAD",
@@ -14,7 +14,7 @@ numi.addUnit({
     "ratio" : 0.1,
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "TwentyFiveCents",
     "phrases": "quarter, Quarter, quarters, Quarters, TwentyFiveCent, TwentyFiveCents",
     "baseUnitId": "CAD",
@@ -22,7 +22,7 @@ numi.addUnit({
     "ratio" : 0.25,
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "OneDollars",
     "phrases": "loonie, Loonie, loonies, Loonies, OneDollar, OneDollars",
     "baseUnitId": "CAD",
@@ -30,7 +30,7 @@ numi.addUnit({
     "ratio" : 1,
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "TwoDollars",
     "phrases": "toonie, Toonie, toonies, Toonies, TwoDollar, TwoDollars",
     "baseUnitId": "CAD",

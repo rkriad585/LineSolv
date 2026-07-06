@@ -1,4 +1,4 @@
-numi.addFunction({ "id": "pc", "phrases": "pc" }, (values) => {
+linesolv.addFunction({ "id": "pc", "phrases": "pc" }, (values) => {
     if (values.length !== 2) {
         return;
     }

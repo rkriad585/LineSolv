@@ -1,5 +1,5 @@
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "bar",
     "phrases": "bar",
     "baseUnitId": "m2",
@@ -7,7 +7,7 @@ numi.addUnit({
     "ratio": 1
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "millibar",
     "phrases": "millibar",
     "baseUnitId": "m2",
@@ -15,7 +15,7 @@ numi.addUnit({
     "ratio": 0.001
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "pascal",
     "phrases": "pascal, Pa",
     "baseUnitId": "m2",
@@ -23,7 +23,7 @@ numi.addUnit({
     "ratio": 0.00001
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "kilopascal",
     "phrases": "kilopascal, kPa",
     "baseUnitId": "m2",
@@ -31,7 +31,7 @@ numi.addUnit({
     "ratio": 0.01
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "hectopascal",
     "phrases": "hectopascal, hPa",
     "baseUnitId": "m2",
@@ -39,7 +39,7 @@ numi.addUnit({
     "ratio": 0.001
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "megapascal",
     "phrases": "megapascal, MPa",
     "baseUnitId": "m2",
@@ -47,7 +47,7 @@ numi.addUnit({
     "ratio": 10
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "megapascal",
     "phrases": "megapascal, MPa",
     "baseUnitId": "m2",
@@ -55,7 +55,7 @@ numi.addUnit({
     "ratio": 10
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "newton per square meter",
     "phrases": "newton per m2, N/m2, newton per square meter",
     "baseUnitId": "m2",
@@ -63,7 +63,7 @@ numi.addUnit({
     "ratio": 0.00001
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "standard atmosphere",
     "phrases": "atm",
     "baseUnitId": "m2",
@@ -71,7 +71,7 @@ numi.addUnit({
     "ratio": 1.0132533539
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "millimeter of mercury",
     "phrases": "mmHg, millimeter of mercury, millimeters of mercury",
     "baseUnitId": "m2",
@@ -79,7 +79,7 @@ numi.addUnit({
     "ratio": 0.0013332238
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "Pound-force per square inch",
     "phrases": "psi, Pound-force per square inch",
     "baseUnitId": "m2",

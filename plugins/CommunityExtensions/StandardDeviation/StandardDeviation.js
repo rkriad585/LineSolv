@@ -18,6 +18,6 @@ var variance = function (arr) {
 	return average(arr.map(function (v) {return squaredDist(v, mean);}));
 };
 
-numi.addFunction({ "id": "stddev", "phrases": "stddev, sd" }, function(values) {
+linesolv.addFunction({ "id": "stddev", "phrases": "stddev, sd" }, function(values) {
 	return { "double": Math.sqrt(variance(values.map(function (v) {return v.double;}))) };
 });

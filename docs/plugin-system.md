@@ -22,9 +22,9 @@ The loader recurses into subdirectories automatically.
 
 ## Plugin API
 
-Plugins interact with the engine through the global `numi` object.
+Plugins interact with the engine through the global `linesolv` object.
 
-### `numi.addUnit(options)`
+### `linesolv.addUnit(options)`
 
 Register a new unit for conversion.
 
@@ -36,7 +36,7 @@ Register a new unit for conversion.
 | `ratio` | number | Conversion factor to SI (or base) unit |
 
 ```js
-numi.addUnit({
+linesolv.addUnit({
   id: 'fl_oz',
   phrases: 'fl oz,fl_oz,fluid ounce,fluid ounces,fluid_ounce',
   format: 'fl oz',
@@ -46,7 +46,7 @@ numi.addUnit({
 
 After registration: `10 fl oz in ml` → `295.735 ml`
 
-### `numi.addFunction(options, callback)`
+### `linesolv.addFunction(options, callback)`
 
 Register a custom function callable in expressions.
 
@@ -58,7 +58,7 @@ Register a custom function callable in expressions.
 The callback receives an array of argument objects with `{double: value}` shape and must return a number or `{double: value}`.
 
 ```js
-numi.addFunction({
+linesolv.addFunction({
   id: 'choose',
   description: 'Combinations: n choose k'
 }, function(args) {
@@ -77,12 +77,12 @@ numi.addFunction({
 
 After registration: `choose(5, 3)` → `10`
 
-### `numi.setVariable(name, value)`
+### `linesolv.setVariable(name, value)`
 
 Set a variable in the calculator engine.
 
 ```js
-numi.setVariable('pi', 3.141592653589793);
+linesolv.setVariable('pi', 3.141592653589793);
 ```
 
 ## Included Plugins
@@ -111,7 +111,7 @@ LineSolv ships with 16 community extension plugins covering:
 ## Adding a Plugin
 
 1. Create a `.js` file in `plugins/` (or a subdirectory)
-2. Use `numi.addUnit()`, `numi.addFunction()`, or `numi.setVariable()` as needed
+2. Use `linesolv.addUnit()`, `linesolv.addFunction()`, or `linesolv.setVariable()` as needed
 3. Rebuild: `wails build -tags "webkit2_41"`
 
 ## Limitations

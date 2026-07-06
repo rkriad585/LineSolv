@@ -1,4 +1,4 @@
-# Screen Units Extension for Numi
+# Screen Units Extension for LineSolv
 
 ## What is this extension for? :mag_right:
 
@@ -8,7 +8,7 @@ As well, we have a function for easy manipulation of the base value.
 
 ## Installation :floppy_disk:
 
-Simply download the .js file to your numi extensions directory.
+Simply download the .js file to your LineSolv plugins directory.
 
 ## How to use it :wrench:
 

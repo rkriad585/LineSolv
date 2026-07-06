@@ -1,4 +1,4 @@
-# Find a Nett Total of a Gross Amount (including tax) Extension for Numi
+# Find a Nett Total of a Gross Amount (including tax) Extension for LineSolv
 
 ## What is this extension for? :mag_right:
 
@@ -6,7 +6,7 @@ This extension allows you to easily calculate a nett figure from a gross amount.
 
 ## Installation :floppy_disk:
 
-Simply download the .js file to your numi extensions directory.
+Simply download the .js file to your LineSolv plugins directory.
 
 
 ## How to use it :wrench:

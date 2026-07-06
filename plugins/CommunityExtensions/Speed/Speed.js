@@ -1,4 +1,4 @@
-numi.addUnit({
+linesolv.addUnit({
     "id": "kmh",
     "phrases": "kmh, kmph, khm, kph, klicks, kilometers per hour",
     "baseUnitId": "second",
@@ -6,7 +6,7 @@ numi.addUnit({
     "ratio": 1
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "mph",
     "phrases": "mph, miles per hour",
     "baseUnitId": "second",
@@ -14,7 +14,7 @@ numi.addUnit({
     "ratio": 1.609344
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "meterspersecond",
     "phrases": "mps, meters per second",
     "baseUnitId": "second",
@@ -22,7 +22,7 @@ numi.addUnit({
     "ratio": 3.6
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "feetpersecond", // allow for "frames per second" elsewhere
     "phrases": "fps, ftps, ft per sec, ft per second, feet per second",
     "baseUnitId": "second",
@@ -30,7 +30,7 @@ numi.addUnit({
     "ratio": 1.097
 });
 
-numi.addUnit({
+linesolv.addUnit({
     "id": "knots",
     "phrases": "kts, knots",
     "baseUnitId": "second",

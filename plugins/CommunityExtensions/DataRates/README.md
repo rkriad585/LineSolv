@@ -8,7 +8,7 @@ It supports both [SI units](https://en.wikipedia.org/wiki/International_System_o
 
 ## Installation :floppy_disk:
 
-Simply download the .js file to your Numi extensions directory.
+Simply download the .js file to your LineSolv plugins directory.
 
 ## How to use it :wrench:
 

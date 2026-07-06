@@ -55,7 +55,7 @@ LineSolv/
 │   ├── calculator/
 │   │   └── engine.go      # Arithmetic engine, parser, units, NL pipeline
 │   ├── plugin/
-│   │   ├── runtime.go      # Goja JS VM, numi API bindings
+│   │   ├── runtime.go      # Goja JS VM, linesolv API bindings
 │   │   └── loader.go       # Recursive .js file loader
 │   └── service/
 │       └── app.go          # Wails-bound service methods

@@ -23,11 +23,11 @@ func NewPluginRuntime(engine *calculator.Engine) *PluginRuntime {
 		funcs:  make(map[string]goja.Callable),
 	}
 
-	numiObj := rt.vm.NewObject()
-	numiObj.Set("addUnit", rt.addUnit)
-	numiObj.Set("addFunction", rt.addFunction)
-	numiObj.Set("setVariable", rt.setVariable)
-	rt.vm.Set("numi", numiObj)
+	lsObj := rt.vm.NewObject()
+	lsObj.Set("addUnit", rt.addUnit)
+	lsObj.Set("addFunction", rt.addFunction)
+	lsObj.Set("setVariable", rt.setVariable)
+	rt.vm.Set("linesolv", lsObj)
 
 	return rt
 }

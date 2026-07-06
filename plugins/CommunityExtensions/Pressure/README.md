@@ -1,4 +1,4 @@
-# Pressure Extension for Numi
+# Pressure Extension for LineSolv
 
 ## What is this extension for? :mag_right:
 
@@ -6,7 +6,7 @@ This extension allows you to easily transform speed from Pascal (Pa) to bar, New
 
 ## Installation :floppy_disk:
 
-Simply download the .js file to your numi extensions directory.
+Simply download the .js file to your LineSolv plugins directory.
 
 ## How to use it :wrench:
 ```

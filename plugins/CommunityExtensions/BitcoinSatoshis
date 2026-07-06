@@ -1,7 +1,7 @@
 // Satoshi to BTC extension
 // Author: mattk8 
 
-numi.addUnit({
+linesolv.addUnit({
    "id": "sats",
    "phrases": "sats, satoshis, Satoshi, Satoshis, Sats, SATS",
    "baseUnitId": "BTC",
