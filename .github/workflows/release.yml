@@ -4,12 +4,36 @@ on:
   push:
     tags:
       - "v*"
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: write
 
+env:
+  VERSION: ""
+
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: get-version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=v$(cat .version)" >> $GITHUB_OUTPUT
+          fi
+
   linux:
+    needs: version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,11 +55,11 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build
-        run: wails build -tags "webkit2_41" -ldflags "-X main.version=${{ github.ref_name }}"
+        run: wails build -tags "webkit2_41" -ldflags "-X main.version=${{ needs.version.outputs.version }}"
 
       - name: Package .deb
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ needs.version.outputs.version }}"
           VERSION="${VERSION#v}"
           PKG="linesolv_${VERSION}_amd64"
 
@@ -45,7 +69,6 @@ jobs:
           mkdir -p "${PKG}/usr/share/icons/hicolor/256x256/apps"
 
           cp build/bin/LineSolv "${PKG}/usr/bin/linesolv"
-          # Use appicon directly (GitHub runners don't have ImageMagick for resize)
           cp build/appicon.png "${PKG}/usr/share/icons/hicolor/256x256/apps/linesolv.png"
 
           cat > "${PKG}/DEBIAN/control" <<ENDCTRL
@@ -81,6 +104,7 @@ jobs:
           files: linesolv-*.deb
 
   macos:
+    needs: version
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -102,11 +126,11 @@ jobs:
       - name: Build
         run: |
           GOARCH=${{ matrix.arch }} \
-          wails build -ldflags "-X main.version=${{ github.ref_name }}"
+          wails build -ldflags "-X main.version=${{ needs.version.outputs.version }}"
 
       - name: Package .app
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ needs.version.outputs.version }}"
           VERSION="${VERSION#v}"
           ARCH="${{ matrix.arch }}"
           APP="LineSolv.app"
@@ -116,7 +140,6 @@ jobs:
 
           cp build/bin/LineSolv "${APP}/Contents/MacOS/LineSolv"
 
-          # Write a clean Info.plist (the source template uses Go placeholders)
           cat > "${APP}/Contents/Info.plist" <<ENDPLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -150,7 +173,7 @@ jobs:
 
       - name: Create DMG
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ needs.version.outputs.version }}"
           VERSION="${VERSION#v}"
           ARCH="${{ matrix.arch }}"
           hdiutil create -volname "LineSolv" \
@@ -164,6 +187,7 @@ jobs:
           files: LineSolv-*.dmg
 
   windows:
+    needs: version
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -186,17 +210,15 @@ jobs:
         run: |
           $env:GOOS = "windows"
           $env:GOARCH = "amd64"
-          wails build -nsis -webview2 embed -ldflags "-X main.version=${{ github.ref_name }}"
+          wails build -nsis -webview2 embed -ldflags "-X main.version=${{ needs.version.outputs.version }}"
 
       - name: Rename artifacts
         shell: bash
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ needs.version.outputs.version }}"
           VERSION="${VERSION#v}"
           mv "build/bin/LineSolv.exe" "LineSolv-${VERSION}-windows-amd64.exe"
-          # NSIS installer may be in build/bin
           mv "build/bin/LineSolv-amd64-installer.exe" "LineSolv-${VERSION}-windows-amd64-installer.exe" 2>/dev/null || true
-          # Also check parent directory (wails v2 sometimes puts it there)
           mv "LineSolv-amd64-installer.exe" "LineSolv-${VERSION}-windows-amd64-installer.exe" 2>/dev/null || true
 
       - name: Upload
