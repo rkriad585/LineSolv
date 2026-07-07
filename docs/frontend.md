@@ -16,6 +16,8 @@ The frontend is a vanilla TypeScript application served in a Wails WebView. It u
 4. Handles keyboard shortcuts (global and textarea-specific)
 5. Runs a retry loop on startup (20 attempts, 100ms apart) waiting for the Wails runtime
 6. Handles stale-result detection via an `evalVersion` counter — if a new evaluation starts before the previous one completes, the old result is discarded
+7. Loads settings (theme, font, shortcuts) on startup and applies them
+8. Applies theme by setting a `theme-{name}` class on `<html>`
 
 ### State Management
 
@@ -36,12 +38,9 @@ State is managed through `CalculatorStore` (`stores/calculator.ts`), a reactive 
 | `Tab` | Insert 2 spaces |
 | `Shift+Enter` | Force-evaluate immediately |
 | `Esc` | Clear input; if empty, close open panel |
+| `F11` | Toggle fullscreen |
 | `Ctrl/Cmd + Z` | Undo (native) |
 | `Ctrl/Cmd + Y` | Redo (native) |
-| `Ctrl/Cmd + X` | Cut (native) |
-| `Ctrl/Cmd + C` | Copy (native) |
-| `Ctrl/Cmd + V` | Paste (native) |
-| `Ctrl/Cmd + A` | Select all (native) |
 | `Ctrl/Cmd + D` | Duplicate line or selection |
 | `Ctrl/Cmd + L` | Select current line |
 | `Ctrl/Cmd + Shift + K` | Delete current line |
@@ -57,6 +56,7 @@ State is managed through `CalculatorStore` (`stores/calculator.ts`), a reactive 
 | `Ctrl/Cmd + I` | Toggle variables sidebar |
 | `Ctrl/Cmd + H` | Toggle history sidebar |
 | `Ctrl/Cmd + K` | Clear all (input + variables + history) |
+| `Ctrl/Cmd + ,` | Open settings |
 | `Ctrl/Cmd + ↑` | Navigate history back |
 | `Ctrl/Cmd + ↓` | Navigate history forward |
 | `Ctrl/Cmd + /` | Show keyboard shortcut reference |
@@ -66,13 +66,15 @@ State is managed through `CalculatorStore` (`stores/calculator.ts`), a reactive 
 ### TitleBar
 
 Frameless drag region at the top of the window. Contains:
-- **LineSolv** title (uppercase, tracked)
-- **Theme toggle** button (moon/sun SVG icon)
+- **Window controls**: Close, Minimize, Maximize
+- **LineSolv** title (uppercase, tracked) centered in the drag region
 - **Notes** button (clipboard SVG, toggles sidebar)
 - **Variables** button (code SVG, toggles sidebar)
 - **History** button (clock SVG, toggles sidebar)
+- **Settings** button (gear SVG, opens settings)
+- **Double-click** on the drag region toggles fullscreen
 
-Uses `--wails-draggable:drag` CSS property for frameless window dragging.
+Uses `--wails-draggable:drag` CSS property for frameless window dragging. No theme toggle button — themes are managed exclusively in Settings.
 
 ### CalculatorInput
 
@@ -137,7 +139,16 @@ Keyboard shortcut reference overlay:
 - Shows a table of all keyboard shortcuts with key bindings and descriptions
 - Triggered by `Ctrl/Cmd+/`
 - Closes on Escape or clicking the backdrop
-- Submenu items have hover highlight
+
+### SettingsModal
+
+4-tab settings panel:
+- **General** — font family and font size with live preview
+- **Theme** — 7 color themes with color swatch thumbnails
+- **Keyboard Shortcuts** — view and rebind all shortcuts
+- **About** — version info, author, repo links, check for updates
+
+Opened via `Ctrl/Cmd+,` or the gear icon in the title bar. Settings are saved to the backend and persisted in `config.toml`.
 
 ## Styling
 
@@ -147,7 +158,7 @@ Configured via the `@tailwindcss/vite` Vite plugin in `vite.config.ts`. No `tail
 
 ### CSS Custom Properties
 
-All theme colors are defined as CSS custom properties in `style.css`. The `:root` block defines the dark theme, and `:root.light` overrides for light mode:
+All theme colors are defined as CSS custom properties in `style.css`. The `:root` block defines the dark theme defaults, and each `.theme-*` class overrides for its palette:
 
 ```css
 :root {
@@ -156,13 +167,18 @@ All theme colors are defined as CSS custom properties in `style.css`. The `:root
   --accent: #a78bfa;
 }
 
-:root.light {
+:root.theme-light {
   --surface: #fafafa;
   --accent: #7c3aed;
 }
+
+:root.theme-neon {
+  --surface: #0a0a0a;
+  --accent: #00ff41;
+}
 ```
 
-The theme is toggled by adding/removing the `light` class on `<html>`.
+The active theme is set by adding a `theme-{name}` class to `<html>`. Font settings (`--calc-font-size`, `--calc-font-family`) are applied as inline style properties.
 
 ### Custom Scrollbar
 
@@ -195,3 +211,7 @@ Available methods:
 - `serviceBindings.ImportNoteFromFile()` → `Note`
 - `serviceBindings.GetDeleteWithoutConfirm()` → `bool`
 - `serviceBindings.SetDeleteWithoutConfirm(val)` → `void`
+- `serviceBindings.GetSettings()` → `SettingsData`
+- `serviceBindings.SaveSettings(settings)` → `void`
+- `serviceBindings.GetAppVersion()` → `string`
+- `serviceBindings.CheckForUpdate()` → `UpdateInfo`

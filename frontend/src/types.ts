@@ -22,11 +22,12 @@ export interface AppCallbacks {
   onToggleHistory: () => void;
   onSwitchNote: (id: string) => void;
   onClearAll: () => void;
-  onThemeToggle: () => void;
+  onToggleFullscreen: () => void;
   onToggleSettings: () => void;
 }
 
 export interface SettingsData {
+  theme: string;
   font_size: string;
   font_family: string;
   shortcut_overrides: string;

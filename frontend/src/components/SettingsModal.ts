@@ -36,9 +36,17 @@ const ALL_SHORTCUTS: ShortcutEntry[] = [
 
 const APP_REPO = 'https://github.com/rkriad585/LineSolv';
 
-const SUN_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+const CHECK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 
-const MOON_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const THEMES = [
+  {id: 'dark',       label: 'Dark',       bg: '#18181b', accent: '#a78bfa', text: '#f4f4f5'},
+  {id: 'light',      label: 'Light',     bg: '#fafafa', accent: '#7c3aed', text: '#18181b'},
+  {id: 'neon',       label: 'Neon',       bg: '#0a0a0a', accent: '#00ff41', text: '#e0e0e0'},
+  {id: 'red',        label: 'Red',        bg: '#1a0a0a', accent: '#e53935', text: '#f0e0e0'},
+  {id: 'obsidian',   label: 'Obsidian',  bg: '#0d0d0d', accent: '#d4a043', text: '#d4c5a9'},
+  {id: 'plasma',     label: 'Plasma',    bg: '#0d0d1a', accent: '#bb86fc', text: '#e0dff0'},
+  {id: 'blood',      label: 'Blood',      bg: '#0a0505', accent: '#b71c1c', text: '#e8d0d0'},
+];
 
 const EDIT_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
 
@@ -76,22 +84,19 @@ export class SettingsModal {
   private tabBtns: HTMLButtonElement[] = [];
   private tabPanels: HTMLDivElement[] = [];
 
-  private onThemeToggle: () => void;
   private onApply: (s: SettingsData) => void;
-  private currentTheme: 'dark' | 'light';
+  private selectedTheme: string;
 
   private fontSizeInput!: HTMLInputElement;
   private fontFamilySelect!: CustomSelect;
-  private themeBtn!: HTMLButtonElement;
   private previewEl!: HTMLDivElement;
   private updateStatusEl!: HTMLDivElement;
   private checkBtn!: HTMLButtonElement;
   private overrides: Record<string, string> = {};
   private shortcutKbds: Map<string, HTMLElement> = new Map();
 
-  constructor(onThemeToggle: () => void, initialTheme: 'dark' | 'light', onApply: (s: SettingsData) => void) {
-    this.onThemeToggle = onThemeToggle;
-    this.currentTheme = initialTheme;
+  constructor(initialTheme: string, onApply: (s: SettingsData) => void) {
+    this.selectedTheme = initialTheme;
     this.onApply = onApply;
 
     this.el = document.createElement('div');
@@ -148,7 +153,7 @@ export class SettingsModal {
     const bar = document.createElement('div');
     bar.style.cssText = 'display:flex;gap:4px;padding:14px 22px 0;';
 
-    ['General', 'Keyboard Shortcuts', 'About'].forEach((label, i) => {
+    ['General', 'Theme', 'Keyboard Shortcuts', 'About'].forEach((label, i) => {
       const btn = document.createElement('button');
       btn.textContent = label;
       btn.style.cssText =
@@ -180,6 +185,12 @@ export class SettingsModal {
     this.buildGeneral(generalPanel);
     panels.push(generalPanel);
     area.appendChild(generalPanel);
+
+    const themePanel = document.createElement('div');
+    themePanel.style.display = 'none';
+    this.buildTheme(themePanel);
+    panels.push(themePanel);
+    area.appendChild(themePanel);
 
     const shortcutsPanel = document.createElement('div');
     shortcutsPanel.style.display = 'none';
@@ -344,26 +355,6 @@ export class SettingsModal {
   private buildGeneral(panel: HTMLDivElement): void {
     panel.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
 
-    // Theme
-    const themeRow = this.fieldRow('Theme', () => {
-      const btn = document.createElement('button');
-      this.themeBtn = btn;
-      btn.style.cssText =
-        'display:flex;align-items:center;gap:6px;padding:5px 14px;' +
-        'border:1px solid var(--border);border-radius:6px;' +
-        'background:var(--surface-secondary);color:var(--text);font-size:13px;cursor:pointer;' +
-        'transition:border-color .15s,background .15s;';
-      btn.addEventListener('mouseenter', () => { btn.style.borderColor = 'var(--accent)'; });
-      btn.addEventListener('mouseleave', () => { btn.style.borderColor = 'var(--border)'; });
-      this.updateThemeBtn();
-      btn.addEventListener('click', () => {
-        this.onThemeToggle();
-        this.currentTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
-        this.updateThemeBtn();
-      });
-      return btn;
-    });
-
     // Font Family
     const familyRow = this.fieldRow('Font Family', () => {
       const sel = this.styledSelect([
@@ -437,7 +428,93 @@ export class SettingsModal {
 
     previewSection.append(previewLabel, this.previewEl);
 
-    panel.append(themeRow, familyRow, sizeRow, previewSection);
+    panel.append(familyRow, sizeRow, previewSection);
+  }
+
+  private buildTheme(panel: HTMLDivElement): void {
+    panel.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
+
+    const note = document.createElement('p');
+    note.textContent = 'Select a color theme for the app.';
+    note.style.cssText = 'font-size:12px;color:var(--text-muted);margin:0 0 12px;user-select:none;';
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;';
+
+    const thumbnails: Map<string, HTMLDivElement> = new Map();
+
+    THEMES.forEach((t) => {
+      const card = document.createElement('div');
+      card.tabIndex = 0;
+      card.style.cssText =
+        'border:2px solid var(--border);border-radius:8px;cursor:pointer;' +
+        'overflow:hidden;transition:border-color .15s;outline:none;';
+      card.addEventListener('mouseenter', () => {
+        if (t.id !== this.selectedTheme) card.style.borderColor = 'var(--text-muted)';
+      });
+      card.addEventListener('mouseleave', () => {
+        if (t.id !== this.selectedTheme) card.style.borderColor = 'var(--border)';
+      });
+
+      const swatch = document.createElement('div');
+      swatch.style.cssText = 'height:48px;display:flex;align-items:center;justify-content:center;gap:6px;';
+      swatch.style.background = t.bg;
+      swatch.style.color = t.accent;
+
+      const sampleText = document.createElement('span');
+      sampleText.textContent = 'Aa';
+      sampleText.style.cssText = 'font-size:16px;font-weight:700;';
+      sampleText.style.color = t.accent;
+
+      const sampleBody = document.createElement('span');
+      sampleBody.textContent = '123';
+      sampleBody.style.cssText = 'font-size:11px;opacity:0.7;';
+      sampleBody.style.color = t.text;
+
+      const check = document.createElement('span');
+      check.innerHTML = CHECK_ICON;
+      check.style.cssText = 'display:none;';
+      check.style.color = t.accent;
+
+      swatch.append(sampleText, sampleBody, check);
+
+      const label = document.createElement('div');
+      label.textContent = t.label;
+      label.style.cssText =
+        'padding:6px 10px;font-size:12px;font-weight:500;' +
+        'background:var(--surface-secondary);color:var(--text);user-select:none;';
+
+      card.append(swatch, label);
+      grid.appendChild(card);
+      thumbnails.set(t.id, card);
+
+      card.addEventListener('click', () => {
+        this.selectedTheme = t.id;
+        thumbnails.forEach((c, id) => {
+          c.style.borderColor = id === t.id ? 'var(--accent)' : 'var(--border)';
+          const chk = c.querySelector('span:last-child') as HTMLElement;
+          if (chk) chk.style.display = id === t.id ? '' : 'none';
+        });
+      });
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          card.click();
+        }
+      });
+    });
+
+    // Apply initial selection
+    requestAnimationFrame(() => {
+      const initial = thumbnails.get(this.selectedTheme);
+      if (initial) {
+        initial.style.borderColor = 'var(--accent)';
+        const chk = initial.querySelector('span:last-child') as HTMLElement;
+        if (chk) chk.style.display = '';
+      }
+    });
+
+    panel.append(note, grid);
   }
 
   private fieldRow(label: string, makeCtrl: () => HTMLElement): HTMLDivElement {
@@ -450,13 +527,6 @@ export class SettingsModal {
 
     row.append(lbl, makeCtrl());
     return row;
-  }
-
-  private updateThemeBtn(): void {
-    if (this.themeBtn) {
-      this.themeBtn.innerHTML =
-        (this.currentTheme === 'dark' ? MOON_ICON + ' Dark' : SUN_ICON + ' Light');
-    }
   }
 
   private updatePreview(): void {
@@ -574,14 +644,32 @@ export class SettingsModal {
     divider.style.cssText = 'width:60px;height:1px;background:var(--border);margin:6px 0;';
 
     const authorEl = document.createElement('div');
-    authorEl.innerHTML =
-      'Author: <a href="https://github.com/rkriad585" target="_blank" style="color:var(--accent);text-decoration:none;">rkriad585</a>';
     authorEl.style.cssText = 'font-size:13px;color:var(--text-muted);user-select:none;';
+    const authorLink = document.createElement('a');
+    authorLink.href = '#';
+    authorLink.textContent = 'rkriad585';
+    authorLink.style.cssText = 'color:var(--accent);text-decoration:none;';
+    authorLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      try { (window as any).runtime.BrowserOpenURL('https://www.google.com/search?q=rkriad585'); } catch {}
+    });
+    authorEl.append('Author: ', authorLink);
+
+    const emailEl = document.createElement('div');
+    emailEl.textContent = 'Email: rkriad585@gmail.com';
+    emailEl.style.cssText = 'font-size:13px;color:var(--text-muted);user-select:none;';
 
     const repoEl = document.createElement('div');
-    repoEl.innerHTML =
-      `<a href="${APP_REPO}" target="_blank" style="color:var(--accent);text-decoration:none;">${APP_REPO}</a>`;
     repoEl.style.cssText = 'font-size:13px;user-select:none;';
+    const repoLink = document.createElement('a');
+    repoLink.href = '#';
+    repoLink.textContent = APP_REPO;
+    repoLink.style.cssText = 'color:var(--accent);text-decoration:none;';
+    repoLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      try { (window as any).runtime.BrowserOpenURL(APP_REPO); } catch {}
+    });
+    repoEl.appendChild(repoLink);
 
     const updateSection = document.createElement('div');
     updateSection.style.cssText = 'margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:8px;';
@@ -599,7 +687,7 @@ export class SettingsModal {
     this.updateStatusEl.style.cssText = 'font-size:12px;color:var(--text-muted);text-align:center;user-select:none;';
 
     updateSection.append(this.checkBtn, this.updateStatusEl);
-    center.append(logo, nameEl, versionEl, divider, authorEl, repoEl, updateSection);
+    center.append(logo, nameEl, versionEl, divider, authorEl, emailEl, repoEl, updateSection);
     panel.appendChild(center);
   }
 
@@ -630,6 +718,7 @@ export class SettingsModal {
 
   private async save(): Promise<void> {
     const settings: SettingsData = {
+      theme: this.selectedTheme,
       font_size: this.fontSizeInput.value,
       font_family: this.fontFamilySelect.value,
       shortcut_overrides: JSON.stringify(this.overrides),
@@ -659,12 +748,28 @@ export class SettingsModal {
         }
       } catch { this.overrides = {}; }
 
+      this.selectedTheme = settings.theme || 'dark';
       this.fontSizeInput.value = settings.font_size || '16';
       const fontFamily = settings.font_family || '';
       if (this.fontFamilySelect.options.some(o => o === fontFamily)) {
         this.fontFamilySelect.value = fontFamily;
       }
       this.updatePreview();
+
+      // Update theme thumbnail highlights
+      const thumbGrid = this.el.querySelector('div[style*="grid-template-columns:1fr 1fr"]');
+      if (thumbGrid) {
+        const cards = thumbGrid.children;
+        for (let i = 0; i < cards.length; i++) {
+          const card = cards[i] as HTMLDivElement;
+          const label = card.querySelector('div:last-child');
+          const themeId = label ? THEMES.find(t => t.label === label.textContent)?.id : null;
+          const isActive = themeId === this.selectedTheme;
+          card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+          const chk = card.querySelector('span:last-child') as HTMLElement;
+          if (chk) chk.style.display = isActive ? '' : 'none';
+        }
+      }
 
       const verEl = this.el.querySelector('#settings-version');
       if (verEl) verEl.textContent = `Version ${version}`;

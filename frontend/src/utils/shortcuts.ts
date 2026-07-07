@@ -12,7 +12,10 @@ export interface ShortcutMap {
   onInput: () => void;
   onToggleShortcuts: () => void;
   onToggleSettings: () => void;
+  onToggleFullscreen: () => void;
 }
+
+let fullscreen = false;
 
 export function installGlobalShortcuts(
   textarea: HTMLTextAreaElement,
@@ -138,7 +141,15 @@ export function installGlobalShortcuts(
     if (!mod && e.key === 'Escape') {
       cmds.onEscape();
     }
+
   });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F11') {
+      e.preventDefault();
+      cmds.onToggleFullscreen();
+    }
+  }, {capture: true});
 }
 
 function getLineInfo(ta: HTMLTextAreaElement): {line: number; col: number; lineStart: number; lineEnd: number} {
@@ -235,4 +246,15 @@ function moveLineDown(ta: HTMLTextAreaElement): void {
   ta.value = lines.join('\n');
   const newPos = lineStart + nextLine.length + 1 + (lineEnd - lineStart);
   ta.setSelectionRange(newPos, newPos);
+}
+
+export function toggleFullscreen(): void {
+  fullscreen = !fullscreen;
+  try {
+    if (fullscreen) {
+      (window as any).runtime.WindowFullscreen();
+    } else {
+      (window as any).runtime.WindowUnfullscreen();
+    }
+  } catch {}
 }

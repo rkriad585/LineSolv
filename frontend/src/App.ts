@@ -12,10 +12,16 @@ import {ShortcutModal} from './components/ShortcutModal';
 import {SettingsModal} from './components/SettingsModal';
 import {HistoryPanel} from './components/HistoryPanel';
 import {buildLineResults} from './utils/format';
-import {installGlobalShortcuts} from './utils/shortcuts';
+import {installGlobalShortcuts, toggleFullscreen} from './utils/shortcuts';
 import * as serviceBindings from '../wailsjs/go/service/AppService';
 
 let saveContentTimer: number | null = null;
+function applyTheme(theme: string): void {
+  const valid = ['dark', 'light', 'neon', 'red', 'obsidian', 'plasma', 'blood'];
+  const cls = valid.includes(theme) ? theme : 'dark';
+  document.documentElement.className = 'theme-' + cls;
+}
+
 function applyFontSettings(settings: SettingsData): void {
   const size = settings.font_size || '16';
   document.documentElement.style.setProperty('--calc-font-size', size + 'px');
@@ -37,7 +43,6 @@ export function renderApp(root: HTMLElement): void {
   const store = new CalculatorStore();
   const notesMgr = new NotesManager();
 
-  let darkMode = true;
   let pendingEval: number | null = null;
   let evalVersion = 0;
 
@@ -291,6 +296,7 @@ export function renderApp(root: HTMLElement): void {
         settingsModal.open();
       }
     },
+    onToggleFullscreen: toggleFullscreen,
   };
 
   // --- Callbacks for components ---
@@ -310,12 +316,6 @@ export function renderApp(root: HTMLElement): void {
     importNote: handleImportNote,
   };
 
-  const handleThemeToggle = () => {
-    darkMode = !darkMode;
-    document.documentElement.classList.toggle('light', !darkMode);
-    titleBar.updateThemeIcon(darkMode);
-  };
-
   const cb = {
     onEvaluateAll: evaluateAll,
     onNewNote: handleNewNote,
@@ -324,7 +324,7 @@ export function renderApp(root: HTMLElement): void {
     onToggleHistory: shortcuts.onToggleHistory,
     onSwitchNote: switchNote,
     onClearAll: shortcuts.onClearAll,
-    onThemeToggle: handleThemeToggle,
+    onToggleFullscreen: toggleFullscreen,
     onToggleSettings: shortcuts.onToggleSettings,
   };
 
@@ -345,9 +345,11 @@ export function renderApp(root: HTMLElement): void {
   const shortcutModal = new ShortcutModal();
 
   const settingsModal = new SettingsModal(
-    handleThemeToggle,
-    darkMode ? 'dark' : 'light',
-    (settings) => applyFontSettings(settings),
+    'dark',
+    (settings) => {
+      applyTheme(settings.theme || 'dark');
+      applyFontSettings(settings);
+    },
   );
 
   const historyPanel = new HistoryPanel((inputText) => {
@@ -413,6 +415,7 @@ export function renderApp(root: HTMLElement): void {
     }
     try {
       const settings = await serviceBindings.GetSettings();
+      applyTheme(settings.theme || 'dark');
       applyFontSettings(settings);
     } catch { /* ignore */ }
     evaluateAll();

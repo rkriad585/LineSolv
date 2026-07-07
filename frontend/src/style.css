@@ -19,7 +19,7 @@
   --calc-font-color: #ffffff;
 }
 
-:root.light {
+:root.theme-light {
   --surface: #fafafa;
   --surface-secondary: #e4e4e7;
   --surface-hover: #d4d4d8;
@@ -34,6 +34,91 @@
   --note-hover: #d4d4d8;
   --note-text: #3f3f46;
   --calc-font-color: #18181b;
+}
+
+:root.theme-neon {
+  --surface: #0a0a0a;
+  --surface-secondary: #111122;
+  --surface-hover: #1a1a33;
+  --border: #0f3460;
+  --text: #e0e0e0;
+  --text-muted: #536878;
+  --text-subtle: #222244;
+  --accent: #00ff41;
+  --error: #ff0040;
+  --btn-hover: #00ff41;
+  --note-bg: #111122;
+  --note-hover: #1a1a33;
+  --note-text: #b0b0c0;
+  --calc-font-color: #ffffff;
+}
+
+:root.theme-red {
+  --surface: #1a0a0a;
+  --surface-secondary: #2a1414;
+  --surface-hover: #3a1a1a;
+  --border: #4a2020;
+  --text: #f0e0e0;
+  --text-muted: #805050;
+  --text-subtle: #4a3030;
+  --accent: #e53935;
+  --error: #ff1744;
+  --btn-hover: #e53935;
+  --note-bg: #2a1414;
+  --note-hover: #3a1a1a;
+  --note-text: #d0b0b0;
+  --calc-font-color: #ffffff;
+}
+
+:root.theme-obsidian {
+  --surface: #0d0d0d;
+  --surface-secondary: #1a1a1a;
+  --surface-hover: #262626;
+  --border: #333333;
+  --text: #d4c5a9;
+  --text-muted: #665d4d;
+  --text-subtle: #2a2a2a;
+  --accent: #d4a043;
+  --error: #c0392b;
+  --btn-hover: #d4a043;
+  --note-bg: #1a1a1a;
+  --note-hover: #262626;
+  --note-text: #bfb099;
+  --calc-font-color: #d4c5a9;
+}
+
+:root.theme-plasma {
+  --surface: #0d0d1a;
+  --surface-secondary: #1a1a30;
+  --surface-hover: #2a2a45;
+  --border: #3a3a55;
+  --text: #e0dff0;
+  --text-muted: #6a6090;
+  --text-subtle: #2a2a44;
+  --accent: #bb86fc;
+  --error: #cf6679;
+  --btn-hover: #bb86fc;
+  --note-bg: #1a1a30;
+  --note-hover: #2a2a45;
+  --note-text: #c0bfd0;
+  --calc-font-color: #ffffff;
+}
+
+:root.theme-blood {
+  --surface: #0a0505;
+  --surface-secondary: #1a0a0a;
+  --surface-hover: #2a0f0f;
+  --border: #3f1515;
+  --text: #e8d0d0;
+  --text-muted: #803030;
+  --text-subtle: #3a1515;
+  --accent: #b71c1c;
+  --error: #f44336;
+  --btn-hover: #b71c1c;
+  --note-bg: #1a0a0a;
+  --note-hover: #2a0f0f;
+  --note-text: #d0b0b0;
+  --calc-font-color: #ffcccc;
 }
 
 html {

@@ -11,6 +11,26 @@ Just start typing any math expression or question. Results appear to the right o
 ### What platforms are supported?
 Linux (.deb), macOS (.dmg), and Windows (.exe with NSIS installer). Any platform with WebKit2GTK 4.1+ (Linux) or a modern Chromium-based WebView (macOS/Windows) works.
 
+### How do I update LineSolv?
+Open **Settings > About** and click "Check for Updates". If a new version is available, a download link will appear. Alternatively, check the [releases page](https://github.com/rkriad585/LineSolv/releases).
+
+### How do I uninstall LineSolv?
+
+**Linux (deb)**
+```bash
+sudo dpkg -r linesolv
+rm -rf ~/.config/neostore/linesolv
+```
+
+**macOS**
+```bash
+rm -rf /Applications/LineSolv.app
+rm -rf ~/.config/neostore/linesolv
+```
+
+**Windows**
+Uninstall via Settings > Apps, then delete `%APPDATA%/neostore/linesolv` to remove user data.
+
 ## Input & Expressions
 
 ### What kind of input does LineSolv understand?
@@ -62,7 +82,7 @@ Type `X fromUnit in toUnit`. Examples:
 ## Notes
 
 ### How do I create a new note?
-Press `Ctrl/Cmd+N` or click the + button in the notes sidebar. Each note gets an auto-generated fancy name like "🐒 Curious Dinosaur".
+Press `Ctrl/Cmd+N` or click the + button in the notes sidebar. Each note gets an auto-generated fancy name.
 
 ### How do I rename a note?
 Right-click a note in the sidebar and select **Rename**. Type the new name and press Enter.
@@ -81,6 +101,22 @@ Right-click a note, go to **Export**, and choose a format. A native Save As dial
 ### How do I import a note?
 Right-click any note in the sidebar and select **Import**. A native Open file dialog will appear. Supported format: `.json` (with `name` and `content` fields).
 
+## Themes
+
+### What themes are available?
+LineSolv comes with 7 color themes: Dark, Light, Neon, Red, Obsidian, Plasma, and Blood. Open **Settings > Theme** to browse and apply them.
+
+### How do I change the theme?
+Press `Ctrl/Cmd+,` or click the gear icon in the title bar, then go to the **Theme** tab. Click a theme thumbnail and press Save.
+
+### My theme preference isn't persisting across restarts
+The theme is stored in `~/.config/neostore/linesolv/config.toml` under `[app] -> theme`. If the config file is deleted or corrupted, the app falls back to the Dark theme.
+
+## Fullscreen
+
+### How do I enter/exit fullscreen?
+Press `F11` or double-click the title bar to toggle fullscreen mode.
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action |
@@ -98,11 +134,30 @@ Right-click any note in the sidebar and select **Import**. A native Open file di
 | `Ctrl/Cmd + ↑` | History: restore previous input |
 | `Ctrl/Cmd + ↓` | History: restore next input |
 | `Ctrl/Cmd + /` | Show keyboard shortcuts |
+| `Ctrl/Cmd + ,` | Open settings |
 | `Shift + Enter` | Force evaluate immediately |
 | `Escape` | Close modal / clear input / close panel |
+| `F11` | Toggle fullscreen |
 | `Tab` | Insert 2 spaces |
 
-Press `Ctrl/Cmd+/` or `?` at any time to view the shortcut reference modal.
+Press `Ctrl/Cmd+/` at any time to view the shortcut reference modal. You can rebind any shortcut in **Settings > Keyboard Shortcuts**.
+
+## Settings
+
+### How do I open Settings?
+Press `Ctrl/Cmd+,` or click the gear icon in the title bar.
+
+### What settings can I change?
+- **General**: Font family, font size
+- **Theme**: Choose from 7 color themes
+- **Keyboard Shortcuts**: View and rebind all shortcuts
+- **About**: Version info, check for updates
+
+### Where are settings stored?
+All settings are stored in `~/.config/neostore/linesolv/config.toml`. This includes theme, font settings, and shortcut overrides.
+
+### Can I reset settings to defaults?
+Delete `~/.config/neostore/linesolv/config.toml` and restart the app. A new default config will be created.
 
 ## Troubleshooting
 
@@ -126,6 +181,7 @@ This preference is stored in `~/.config/neostore/linesolv/config.toml`. If you d
   - `[app]` section: theme, version
   - `[notes]` section: last_active, sort_by
   - `[behavior]` section: delete_without_confirm
+  - `[settings]` section: font_size, font_family, shortcut_overrides
 
 ## Support
 

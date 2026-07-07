@@ -35,8 +35,8 @@ Results appear to the right of each line. Empty lines and comment lines (startin
 
 ### Title Bar
 - **Window controls**: Close (red), Minimize, Maximize
-- **Drag region**: Click and drag the title text to move the window
-- **Buttons**: Notes (⌘B), Variables (⌘I), History (⌘H), Theme toggle
+- **Drag region**: Click and drag the title text to move the window; double-click to toggle fullscreen
+- **Buttons**: Notes (⌘B), Variables (⌘I), History (⌘H), Settings (⌘,)
 
 ### Notes Panel (left)
 Manage multiple calculation notebooks. Each note is independent with its own content and variables.
@@ -173,7 +173,7 @@ result / 2              →  47
 ## Managing Notes
 
 ### Creating Notes
-Press `Ctrl/Cmd+N` or click the + button in the notes sidebar. Each new note gets a randomly generated fancy name like "🐒 Curious Dinosaur".
+Press `Ctrl/Cmd+N` or click the + button in the notes sidebar. Each new note gets a randomly generated fancy name.
 
 ### Switching Notes
 Click any note in the sidebar to switch to it.
@@ -207,40 +207,65 @@ Right-click a note → **Share** copies the note name and content to your clipbo
 | `Tab` | Insert 2 spaces |
 | `Shift + Enter` | Force evaluate immediately |
 | `Escape` | Close modal / clear input / close panel |
+| `F11` | Toggle fullscreen |
 | `Ctrl/Cmd + Z` | Undo |
 | `Ctrl/Cmd + Y` | Redo |
-| `Ctrl/Cmd + A` | Select all |
-| `Ctrl/Cmd + X` | Cut |
-| `Ctrl/Cmd + C` | Copy |
-| `Ctrl/Cmd + V` | Paste |
 | `Ctrl/Cmd + D` | Duplicate current line or selection |
 | `Ctrl/Cmd + L` | Select current line |
 | `Ctrl/Cmd + Shift + K` | Delete current line |
 | `Alt + Shift` | Toggle case (lowercase → UPPERCASE → Title Case) |
 | `Alt + ↑ / ↓` | Move current line up/down |
-| `Alt + ← / →` | Jump word left/right |
-| `Home / End` | Start / end of current line |
-| `Ctrl/Cmd + Home / End` | Start / end of all text |
-| `Page Up / Page Down` | Scroll one page |
-| `↑ / ↓ / ← / →` | Cursor navigation |
 | `Ctrl/Cmd + B` | Toggle notes sidebar |
 | `Ctrl/Cmd + I` | Toggle variables panel |
 | `Ctrl/Cmd + H` | Toggle history panel |
 | `Ctrl/Cmd + K` | Clear all (input, history, variables) |
 | `Ctrl/Cmd + N` | Create new note |
+| `Ctrl/Cmd + ,` | Open settings |
+| `Ctrl/Cmd + /` | Show keyboard shortcut reference |
 | `Ctrl/Cmd + ↑` | Restore previous input from history |
 | `Ctrl/Cmd + ↓` | Restore next input from history |
-| `Ctrl/Cmd + /` | Show keyboard shortcut reference |
 
 Press `Ctrl/Cmd+/` at any time to see the full shortcut list in a modal overlay.
+
+## Settings
+
+Open Settings with `Ctrl/Cmd+,` or click the gear icon in the title bar.
+
+### General tab
+- **Font Family** — choose from a list of system fonts
+- **Font Size** — adjustable from 10px to 32px
+- **Preview** — see font changes live before saving
+
+### Theme tab
+Choose from 7 color themes:
+- **Dark** — deep zinc-based dark theme (default)
+- **Light** — clean light theme
+- **Neon** — dark with vibrant green accents
+- **Red** — dark with red accents
+- **Obsidian** — near-black with warm amber/gold accents
+- **Plasma** — dark purple with vibrant purple accents
+- **Blood** — deep crimson with blood-red accents
+
+Each theme shows a color swatch preview. Click a theme and press Save to apply.
+
+### Keyboard Shortcuts tab
+View all shortcuts and customize key bindings. Click a binding or the edit icon to remap.
+
+### About tab
+- Version information
+- Author and repository links
+- Check for updates
 
 ## Customization
 
 ### Theme
-Click the moon/sun icon in the title bar to toggle between dark and light themes. Your preference is stored and persists across sessions.
+Open **Settings > Theme** to choose from 7 color themes. Your preference is stored in `config.toml` and persists across sessions.
 
-### "Don't ask again" for Deletion
-When deleting a note, you can check "Don't ask again" to permanently skip the confirmation dialog. This preference is stored in `config.toml` and persists across sessions. Reset it by deleting `~/.config/neostore/linesolv/config.toml`.
+### Font
+Open **Settings > General** to change the font family and size for the calculator input and results.
+
+### Shortcut Overrides
+Open **Settings > Keyboard Shortcuts** to rebind any keyboard shortcut. Click a key binding or the edit icon, then press your desired key combination.
 
 ## Data Storage
 
@@ -251,5 +276,10 @@ Your notes and preferences are stored locally:
   - `[app]` — theme, version
   - `[notes]` — last active note, sort order
   - `[behavior]` — delete confirmation preference
+  - `[settings]` — font size, font family, shortcut overrides
 
 Deleting the config directory (`~/.config/neostore/linesolv/`) will reset all preferences but keep your notes database. Deleting the database file will remove all notes.
+
+## Troubleshooting
+
+See the [FAQ](faq.md) for common issues and solutions.

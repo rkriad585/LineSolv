@@ -232,6 +232,7 @@ func (s *AppService) ImportNoteFromFile() (*storage.Note, error) {
 const appVersion = "0.1.45"
 
 type SettingsData struct {
+	Theme             string `json:"theme"`
 	FontSize          string `json:"font_size"`
 	FontFamily        string `json:"font_family"`
 	ShortcutOverrides string `json:"shortcut_overrides"`
@@ -250,6 +251,7 @@ func (s *AppService) GetSettings() (*SettingsData, error) {
 		return nil, err
 	}
 	return &SettingsData{
+		Theme:             cfg.App.Theme,
 		FontSize:          cfg.Settings.FontSize,
 		FontFamily:        cfg.Settings.FontFamily,
 		ShortcutOverrides: cfg.Settings.ShortcutOverrides,
@@ -261,6 +263,7 @@ func (s *AppService) SaveSettings(settings *SettingsData) error {
 	if err != nil {
 		return err
 	}
+	cfg.App.Theme = settings.Theme
 	cfg.Settings.FontSize = settings.FontSize
 	cfg.Settings.FontFamily = settings.FontFamily
 	cfg.Settings.ShortcutOverrides = settings.ShortcutOverrides

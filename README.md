@@ -16,6 +16,73 @@ LineSolv is a natural-language calculator that understands phrases like `$20 in 
 
 Built with **Wails v2** (Go + WebView), **Vite**, **Tailwind CSS v4**, and **TypeScript**.
 
+## Quick Start
+
+### Download
+
+Grab the latest release for your platform from the [releases page](https://github.com/rkriad585/LineSolv/releases).
+
+| Platform | Package |
+|---|---|
+| Linux | `.deb` (Debian/Ubuntu) or standalone binary |
+| macOS | `.dmg` (Intel & Apple Silicon) |
+| Windows | `.exe` (NSIS installer) |
+
+### Install
+
+**Linux (Debian/Ubuntu)**
+
+```bash
+sudo dpkg -i linesolv-*.deb
+linesolv
+```
+
+Or run the standalone binary:
+
+```bash
+chmod +x LineSolv
+./LineSolv
+```
+
+**macOS**
+
+Mount the `.dmg` and drag LineSolv into Applications. You may need to right-click -> Open to bypass Gatekeeper on first launch.
+
+**Windows**
+
+Run the NSIS installer. LineSolv will be available from the Start menu.
+
+### Uninstall
+
+**Linux (deb)**
+
+```bash
+sudo dpkg -r linesolv
+```
+
+To also remove user data:
+
+```bash
+rm -rf ~/.config/neostore/linesolv
+```
+
+**macOS**
+
+```bash
+rm -rf /Applications/LineSolv.app
+rm -rf ~/.config/neostore/linesolv
+```
+
+**Windows**
+
+Uninstall via Settings > Apps, then delete `%APPDATA%/neostore/linesolv` to remove user data.
+
+### Requirements
+
+- **Linux**: WebKit2GTK 4.1+ (Ubuntu 24.10+, Fedora 40+, Arch)
+- **macOS**: macOS 12+
+- **Windows**: Windows 10+
+
 ## Features
 
 - **Natural Language Input** — type `twenty five times pi`, `add 5 plus 3`, `as = 10 * 5`
@@ -24,10 +91,14 @@ Built with **Wails v2** (Go + WebView), **Vite**, **Tailwind CSS v4**, and **Typ
 - **Built-in Functions** — `sin`, `cos`, `sqrt`, `log`, `round`, and more
 - **Percentage Math** — `10% of 200`, `100 + 15%`
 - **Context Awareness** — `of that`, `then`, `result` reference the previous line
-- **Computation History** — navigate with `Cmd+↑` / `Cmd+↓`
-- **Dark / Light Theme** — toggle with one click
-- **Keyboard Shortcuts** — `⌘N` new note, `⌘B` / `⌘I` toggle sidebars, `⌘K` clear all, `Shift+Enter` force evaluate, `Esc` clear / close panels
+- **Computation History** — navigate with `Ctrl/Cmd+↑` / `Ctrl/Cmd+↓`
+- **7 Color Themes** — Dark, Light, Neon, Red, Obsidian, Plasma, Blood — choose in Settings
+- **Multiple Notes** — create, rename, delete, export, import calculation notebooks
+- **Keyboard Shortcuts** — full shortcut reference available via `Ctrl/Cmd+/`
+- **Configurable Font** — font family and size adjustable in Settings
+- **Customizable Shortcuts** — rebind any keyboard shortcut in Settings
 - **Notepad-Style UI** — free-form textarea with live results column, loading indicators
+- **Delete Confirmation** — optional "Don't ask again" preference stored in config.toml
 
 ## Installation
 
@@ -78,7 +149,7 @@ wails dev -tags "webkit2_41"
 
 ## Usage
 
-Type calculations naturally. `Shift+Enter` force-evaluates immediately. `Esc` clears input or closes sidebars. `Cmd+↑` / `Cmd+↓` navigates history.
+Type calculations naturally. `Shift+Enter` force-evaluates immediately. `Esc` clears input or closes sidebars. `Ctrl/Cmd+↑` / `Ctrl/Cmd+↓` navigates history.
 
 | Input | Output |
 |---|---|
@@ -104,6 +175,18 @@ LineSolv/
 │       └── style.css    # Tailwind v4 + CSS custom properties
 └── main.go            # Entrypoint
 ```
+
+## Documentation
+
+| Guide | Description |
+|---|---|
+| [User Guide](docs/user-guide.md) | Full user documentation with input syntax, themes, shortcuts, and notes |
+| [FAQ & Troubleshooting](docs/faq.md) | Frequently asked questions and common issues |
+| [Architecture](docs/architecture.md) | High-level architecture and component overview |
+| [Frontend](docs/frontend.md) | Frontend component structure and styling guide |
+| [Development](docs/development.md) | Development setup, build, and code standards |
+| [API Reference](docs/api-reference.md) | Wails-bound Go method reference |
+| [Calculator Engine](docs/calculator-engine.md) | How the natural-language calculation engine works |
 
 ## License
 

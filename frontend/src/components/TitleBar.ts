@@ -4,7 +4,6 @@ export class TitleBar {
   readonly el: HTMLElement;
   readonly toggleNotesBtn: HTMLButtonElement;
   readonly toggleVarsBtn: HTMLButtonElement;
-  readonly themeBtn: HTMLButtonElement;
   readonly settingsBtn: HTMLButtonElement;
 
   constructor(cb: AppCallbacks) {
@@ -23,6 +22,7 @@ export class TitleBar {
       `<line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/>` +
       `<line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>` +
       `<span style="font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted)">LineSolv</span>`;
+    dragRegion.addEventListener('dblclick', () => cb.onToggleFullscreen());
 
     const winBtn = (icon: string, title: string, action: () => void, isClose = false): HTMLButtonElement => {
       const b = document.createElement('button');
@@ -72,10 +72,6 @@ export class TitleBar {
       return [b, b];
     };
 
-    const [themeBtnEl, _t] = iconBtn(
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
-      'Toggle theme'
-    );
     const [notesBtnEl, _n] = iconBtn(
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
       'Notes (⌘B)'
@@ -93,32 +89,22 @@ export class TitleBar {
       'Settings'
     );
 
-    [themeBtnEl, notesBtnEl, varsBtnEl, historyBtnEl, settingsBtnEl].forEach(b => {
+    [notesBtnEl, varsBtnEl, historyBtnEl, settingsBtnEl].forEach(b => {
       b.addEventListener('mouseenter', () => b.style.background = 'var(--border)');
       b.addEventListener('mouseleave', () => b.style.background = 'transparent');
     });
 
-    btnRow.append(notesBtnEl, varsBtnEl, historyBtnEl, themeBtnEl, settingsBtnEl);
+    btnRow.append(notesBtnEl, varsBtnEl, historyBtnEl, settingsBtnEl);
     this.el.append(btnRow);
 
-    this.themeBtn = themeBtnEl;
     this.settingsBtn = settingsBtnEl;
     this.toggleNotesBtn = notesBtnEl;
     this.toggleVarsBtn = varsBtnEl;
 
     notesBtnEl.addEventListener('click', () => cb.onToggleNotes());
     varsBtnEl.addEventListener('click', () => cb.onToggleVars());
-    themeBtnEl.addEventListener('click', () => cb.onThemeToggle());
     historyBtnEl.addEventListener('click', () => cb.onToggleHistory());
     settingsBtnEl.addEventListener('click', () => cb.onToggleSettings());
   }
 
-  updateThemeIcon(dark: boolean): void {
-    const icon = this.themeBtn.querySelector('svg');
-    if (icon) {
-      icon.innerHTML = dark
-        ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
-        : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
-    }
-  }
 }
