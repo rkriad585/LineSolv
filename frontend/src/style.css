@@ -14,6 +14,9 @@
   --note-bg: #27272a;
   --note-hover: #27272a;
   --note-text: #d4d4d8;
+  --calc-font-size: 16px;
+  --calc-font-family: monospace;
+  --calc-font-color: #ffffff;
 }
 
 :root.light {
@@ -30,6 +33,7 @@
   --note-bg: #e4e4e7;
   --note-hover: #d4d4d8;
   --note-text: #3f3f46;
+  --calc-font-color: #18181b;
 }
 
 html {
@@ -58,6 +62,37 @@ body {
   display: none !important;
 }
 
+/* Calculator font (overrides Tailwind font-mono/text-sm) */
+#input-area {
+  font-family: var(--calc-font-family, monospace) !important;
+  font-size: var(--calc-font-size, 16px) !important;
+  color: var(--calc-font-color, var(--text)) !important;
+}
+#gutter {
+  font-family: var(--calc-font-family, monospace) !important;
+  font-size: var(--calc-font-size, 16px) !important;
+}
+#results-column {
+  font-family: var(--calc-font-family, monospace) !important;
+  font-size: var(--calc-font-size, 16px) !important;
+}
+
+/* Settings modal */
+#settings-modal kbd {
+  transition: background 0.15s, color 0.15s;
+}
+#settings-modal input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+#settings-modal input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+#settings-modal select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
 .drag {
   -webkit-app-region: drag;
 }
@@ -78,4 +113,20 @@ body {
   height: 14px;
   flex-shrink: 0;
   color: var(--text-muted);
+}
+
+/* History panel */
+.history-item:hover {
+  background: var(--surface-hover);
+}
+.history-item:focus {
+  background: var(--surface-hover);
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
+/* Notes panel */
+.note-item:focus {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
 }

@@ -19,7 +19,29 @@ export interface AppCallbacks {
   onNewNote: () => void;
   onToggleNotes: () => void;
   onToggleVars: () => void;
+  onToggleHistory: () => void;
   onSwitchNote: (id: string) => void;
   onClearAll: () => void;
   onThemeToggle: () => void;
+  onToggleSettings: () => void;
+}
+
+export interface SettingsData {
+  font_size: string;
+  font_family: string;
+  font_color: string;
+  shortcut_overrides: string;
+}
+
+export interface UpdateInfo {
+  update_available: boolean;
+  current_version: string;
+  latest_version: string;
+  download_url: string;
+}
+
+export interface ShortcutDef {
+  id: string;
+  keys: string;
+  desc: string;
 }

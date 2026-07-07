@@ -5,6 +5,8 @@ import (
 	"LineSolv/app/calculator"
 	"LineSolv/app/storage"
 	"encoding/json"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -225,4 +227,71 @@ func (s *AppService) ImportNoteFromFile() (*storage.Note, error) {
 	}
 
 	return s.storage.CreateNoteWithContent(name, content)
+}
+
+const appVersion = "0.1.45"
+
+type SettingsData struct {
+	FontSize          string `json:"font_size"`
+	FontFamily        string `json:"font_family"`
+	FontColor         string `json:"font_color"`
+	ShortcutOverrides string `json:"shortcut_overrides"`
+}
+
+type UpdateInfo struct {
+	UpdateAvailable bool   `json:"update_available"`
+	CurrentVersion  string `json:"current_version"`
+	LatestVersion   string `json:"latest_version"`
+	DownloadURL     string `json:"download_url"`
+}
+
+func (s *AppService) GetSettings() (*SettingsData, error) {
+	cfg, err := storage.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+	return &SettingsData{
+		FontSize:          cfg.Settings.FontSize,
+		FontFamily:        cfg.Settings.FontFamily,
+		FontColor:         cfg.Settings.FontColor,
+		ShortcutOverrides: cfg.Settings.ShortcutOverrides,
+	}, nil
+}
+
+func (s *AppService) SaveSettings(settings *SettingsData) error {
+	cfg, err := storage.LoadConfig()
+	if err != nil {
+		return err
+	}
+	cfg.Settings.FontSize = settings.FontSize
+	cfg.Settings.FontFamily = settings.FontFamily
+	cfg.Settings.FontColor = settings.FontColor
+	cfg.Settings.ShortcutOverrides = settings.ShortcutOverrides
+	return storage.SaveConfig(cfg)
+}
+
+func (s *AppService) GetAppVersion() string {
+	return appVersion
+}
+
+func (s *AppService) CheckForUpdate() (*UpdateInfo, error) {
+	resp, err := http.Get("https://raw.githubusercontent.com/rkriad585/LineSolv/refs/heads/main/.version")
+	if err != nil {
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, nil
+	}
+	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
+	if err != nil || len(data) == 0 {
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, nil
+	}
+	latest := strings.TrimSpace(string(data))
+	if latest == "" {
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, nil
+	}
+	return &UpdateInfo{
+		UpdateAvailable: latest != appVersion,
+		CurrentVersion:  appVersion,
+		LatestVersion:   latest,
+		DownloadURL:     "https://github.com/rkriad585/LineSolv/releases/latest",
+	}, nil
 }

@@ -1,4 +1,5 @@
 import type {ShortcutMap} from './utils/shortcuts';
+import type {SettingsData} from './types';
 import {CalculatorStore} from './stores/calculator';
 import {NotesManager} from './stores/notes';
 import {TitleBar} from './components/TitleBar';
@@ -7,11 +8,29 @@ import {ResultDisplay} from './components/ResultDisplay';
 import {NotesPanel} from './components/NotesPanel';
 import {VariableExplorer} from './components/VariableExplorer';
 import {ConfirmDialog} from './components/ConfirmDialog';
+import {ShortcutModal} from './components/ShortcutModal';
+import {SettingsModal} from './components/SettingsModal';
+import {HistoryPanel} from './components/HistoryPanel';
 import {buildLineResults} from './utils/format';
 import {installGlobalShortcuts} from './utils/shortcuts';
 import * as serviceBindings from '../wailsjs/go/service/AppService';
 
 let saveContentTimer: number | null = null;
+let lastSettings: SettingsData | null = null;
+
+function applyFontSettings(settings: SettingsData): void {
+  lastSettings = settings;
+  const size = settings.font_size || '16';
+  document.documentElement.style.setProperty('--calc-font-size', size + 'px');
+  document.documentElement.style.setProperty('--calc-font-family', settings.font_family || 'monospace');
+
+  const fc = (settings.font_color || '').toLowerCase();
+  if (fc === '#ffffff' || fc === '#18181b' || fc === '') {
+    document.documentElement.style.removeProperty('--calc-font-color');
+  } else {
+    document.documentElement.style.setProperty('--calc-font-color', fc);
+  }
+}
 
 function scheduleSaveContent(noteId: string, content: string): void {
   if (saveContentTimer) clearTimeout(saveContentTimer);
@@ -215,16 +234,16 @@ export function renderApp(root: HTMLElement): void {
       if (notesPanel.isOpen()) {
         notesPanel.close();
       } else {
-        notesPanel.open();
         refreshNotesUI();
+        notesPanel.open();
       }
     },
     onToggleVars: () => {
       if (varsPanel.isOpen()) {
         varsPanel.close();
       } else {
-        varsPanel.open();
         updateVars();
+        varsPanel.open();
       }
     },
     onClearAll: () => {
@@ -241,12 +260,18 @@ export function renderApp(root: HTMLElement): void {
       return store.navigateHistory('down');
     },
     onEscape: () => {
-      if (input.text.trim()) {
+      if (settingsModal.isOpen()) {
+        settingsModal.close();
+      } else if (shortcutModal.isOpen()) {
+        shortcutModal.close();
+      } else if (input.text.trim()) {
         input.text = '';
         if (notesMgr.activeNote()) notesMgr.activeNote().content = '';
         forceEval();
       } else if (notesPanel.isOpen()) {
         notesPanel.close();
+      } else if (historyPanel.isOpen()) {
+        historyPanel.close();
       } else if (varsPanel.isOpen()) {
         varsPanel.close();
       }
@@ -258,6 +283,22 @@ export function renderApp(root: HTMLElement): void {
       if (notesMgr.activeNote()) {
         notesMgr.activeNote().content = input.text;
         scheduleSaveContent(notesMgr.activeNote().id, input.text);
+      }
+    },
+    onToggleShortcuts: () => shortcutModal.open(),
+    onToggleHistory: () => {
+      if (historyPanel.isOpen()) {
+        historyPanel.close();
+      } else {
+        historyPanel.render(store.getState().history);
+        historyPanel.open();
+      }
+    },
+    onToggleSettings: () => {
+      if (settingsModal.isOpen()) {
+        settingsModal.close();
+      } else {
+        settingsModal.open();
       }
     },
   };
@@ -279,18 +320,24 @@ export function renderApp(root: HTMLElement): void {
     importNote: handleImportNote,
   };
 
+  const handleThemeToggle = () => {
+    darkMode = !darkMode;
+    document.documentElement.classList.toggle('light', !darkMode);
+    titleBar.updateThemeIcon(darkMode);
+    document.documentElement.style.removeProperty('--calc-font-color');
+    if (lastSettings) applyFontSettings(lastSettings);
+  };
+
   const cb = {
     onEvaluateAll: evaluateAll,
     onNewNote: handleNewNote,
     onToggleNotes: shortcuts.onToggleNotes,
     onToggleVars: shortcuts.onToggleVars,
+    onToggleHistory: shortcuts.onToggleHistory,
     onSwitchNote: switchNote,
     onClearAll: shortcuts.onClearAll,
-    onThemeToggle: () => {
-      darkMode = !darkMode;
-      document.documentElement.classList.toggle('light', !darkMode);
-      titleBar.updateThemeIcon(darkMode);
-    },
+    onThemeToggle: handleThemeToggle,
+    onToggleSettings: shortcuts.onToggleSettings,
   };
 
   // --- Build DOM ---
@@ -307,12 +354,26 @@ export function renderApp(root: HTMLElement): void {
   notepad.appendChild(input.el);
   notepad.appendChild(results.el);
 
+  const shortcutModal = new ShortcutModal();
+
+  const settingsModal = new SettingsModal(
+    handleThemeToggle,
+    darkMode ? 'dark' : 'light',
+    (settings) => applyFontSettings(settings),
+  );
+
+  const historyPanel = new HistoryPanel((inputText) => {
+    input.text = inputText;
+    forceEval();
+  });
+
   const main = document.createElement('div');
   main.className = 'flex-1 flex flex-col min-w-0';
   main.appendChild(notepad);
 
   const content = document.createElement('div');
   content.className = 'flex flex-1 min-h-0';
+  content.appendChild(historyPanel.el);
   content.appendChild(notesPanel.el);
   content.appendChild(main);
   content.appendChild(varsPanel.el);
@@ -334,10 +395,17 @@ export function renderApp(root: HTMLElement): void {
 
   window.addEventListener('resize', () => {
     if (window.innerWidth < 700 && notesPanel.isOpen()) notesPanel.close();
+    if (window.innerWidth < 700 && historyPanel.isOpen()) historyPanel.close();
     if (window.innerWidth < 500 && varsPanel.isOpen()) varsPanel.close();
   });
 
   installGlobalShortcuts(input.textarea, shortcuts);
+
+  store.subscribe((state) => {
+    if (historyPanel.isOpen()) {
+      historyPanel.render(state.history);
+    }
+  });
 
   // --- Init ---
 
@@ -350,13 +418,15 @@ export function renderApp(root: HTMLElement): void {
       try {
         await serviceBindings.EvaluateAll(input.text);
         await loadNotes();
-        evaluateAll();
-        return;
+        break;
       } catch {
         await new Promise(r => setTimeout(r, 100));
       }
     }
-    await loadNotes();
+    try {
+      const settings = await serviceBindings.GetSettings();
+      applyFontSettings(settings);
+    } catch { /* ignore */ }
     evaluateAll();
   })();
 }

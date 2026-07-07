@@ -21,6 +21,12 @@ type Config struct {
 	Behavior struct {
 		DeleteWithoutConfirm string `toml:"delete_without_confirm"`
 	} `toml:"behavior"`
+	Settings struct {
+		FontSize          string `toml:"font_size"`
+		FontFamily        string `toml:"font_family"`
+		FontColor         string `toml:"font_color"`
+		ShortcutOverrides string `toml:"shortcut_overrides"`
+	} `toml:"settings"`
 }
 
 func DefaultConfig() *Config {
@@ -29,6 +35,10 @@ func DefaultConfig() *Config {
 	c.App.Version = "0.1.45"
 	c.Notes.SortBy = "updated"
 	c.Behavior.DeleteWithoutConfirm = "false"
+	c.Settings.FontSize = "16"
+	c.Settings.FontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+	c.Settings.FontColor = "#ffffff"
+	c.Settings.ShortcutOverrides = "{}"
 	return c
 }
 
@@ -64,6 +74,11 @@ func SaveConfig(cfg *Config) error {
 	buf.WriteString(fmt.Sprintf("sort_by = %q\n", cfg.Notes.SortBy))
 	buf.WriteString("\n[behavior]\n")
 	buf.WriteString(fmt.Sprintf("delete_without_confirm = %q\n", cfg.Behavior.DeleteWithoutConfirm))
+	buf.WriteString("\n[settings]\n")
+	buf.WriteString(fmt.Sprintf("font_size = %q\n", cfg.Settings.FontSize))
+	buf.WriteString(fmt.Sprintf("font_family = %q\n", cfg.Settings.FontFamily))
+	buf.WriteString(fmt.Sprintf("font_color = %q\n", cfg.Settings.FontColor))
+	buf.WriteString(fmt.Sprintf("shortcut_overrides = %q\n", cfg.Settings.ShortcutOverrides))
 	return os.WriteFile(dir, []byte(buf.String()), 0644)
 }
 
@@ -105,6 +120,17 @@ func parseConfigTOML(data string, cfg *Config) {
 			switch key {
 			case "delete_without_confirm":
 				cfg.Behavior.DeleteWithoutConfirm = val
+			}
+		case "settings":
+			switch key {
+			case "font_size":
+				cfg.Settings.FontSize = val
+			case "font_family":
+				cfg.Settings.FontFamily = val
+			case "font_color":
+				cfg.Settings.FontColor = val
+			case "shortcut_overrides":
+				cfg.Settings.ShortcutOverrides = val
 			}
 		default:
 			switch key {

@@ -20,6 +20,7 @@ export class VariableExplorer {
     this.contentEl = document.createElement('div');
     this.contentEl.id = 'vars-content';
     this.contentEl.className = 'flex-1 overflow-y-auto p-4';
+    this.contentEl.tabIndex = -1;
     this.el.appendChild(this.contentEl);
   }
 
@@ -41,6 +42,7 @@ export class VariableExplorer {
   open(): void {
     this.el.style.width = '180px';
     this.el.style.borderLeftWidth = '1px';
+    this.contentEl.focus();
   }
 
   close(): void {

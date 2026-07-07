@@ -9,12 +9,17 @@ LineSolv is a cross-platform desktop application built with the **Wails v2** fra
 │  Wails v2 (Go)                                          │
 │  ┌─────────────────────────────────────────────────────┐│
 │  │  main.go                                            ││
-│  │  └─ service.AppService (bound to frontend)          ││
-│  │      └─ app/calculator.Engine                       ││
-│  │          ├─ engine.go  — parser, pipeline, history  ││
-│  │          ├─ units.go   — unit DB + conversion       ││
-│  │          ├─ functions.go — built-in math functions  ││
-│  │          └─ variables.go — get/set/clear variables  ││
+│  │  ├─ service.AppService (16 Wails-bound methods)     ││
+│  │  │   └─ app/calculator.Engine                       ││
+│  │  │       ├─ engine.go  — parser, pipeline, history  ││
+│  │  │       ├─ units.go   — unit DB + conversion       ││
+│  │  │       ├─ functions.go — built-in math functions  ││
+│  │  │       └─ variables.go — get/set/clear variables  ││
+│  │  └─ storage/                                        ││
+│  │      ├─ db.go          — SQLite notes CRUD          ││
+│  │      ├─ config.go      — config.toml parse/save     ││
+│  │      ├─ exporter.go    — Export/import note files   ││
+│  │      └─ fancyname.go   — "{emoji} {Adj} {Noun}"    ││
 │  └─────────────────────────────────────────────────────┘│
 │                                                         │
 │  Frontend (WebView)                                     │
@@ -22,7 +27,11 @@ LineSolv is a cross-platform desktop application built with the **Wails v2** fra
 │  │  TypeScript + Vite                                  ││
 │  │  ├─ App.ts (orchestrator)                          ││
 │  │  ├─ stores/ (CalculatorStore — reactive state)      ││
-│  │  ├─ components/ (TitleBar, CalculatorInput, etc)    ││
+│  │  ├─ components/ (TitleBar, CalculatorInput,         ││
+│  │  │              ResultDisplay, HistoryPanel,         ││
+│  │  │              NotesPanel, VariableExplorer,        ││
+│  │  │              ContextMenu, ConfirmDialog,          ││
+│  │  │              ShortcutModal)                       ││
 │  │  ├─ style.css (Tailwind v4 + CSS vars)              ││
 │  │  └─ wailsjs/go/service/ (auto-generated bindings)   ││
 │  └─────────────────────────────────────────────────────┘│
@@ -51,6 +60,14 @@ The natural-language arithmetic engine, split into four files:
 - **`functions.go`** — Built-in math function dispatch (`sin`, `cos`, `sqrt`, etc.)
 - **`variables.go`** — `GetVariables`, `SetVariable`, `ClearVariables`
 
+### `app/storage/`
+Persistent storage layer with four modules:
+
+- **`db.go`** — SQLite database connection and CRUD operations for notes (`notes` table)
+- **`config.go`** — Parsing and saving `config.toml` with `[app]`, `[notes]`, `[behavior]` sections
+- **`exporter.go`** — Export notes to `.lv`, `.txt`, `.md`, `.json`, `.toml` and import from `.json`
+- **`fancyname.go`** — Random name generator (`"{emoji} {Adjective} {Noun}"`) for new notes
+
 ## TypeScript Frontend
 
 ### `App.ts`
@@ -60,11 +77,15 @@ Orchestrator that wires all UI components, uses `CalculatorStore` for reactive s
 Reactive store with subscriber pattern. Holds input, results, variables, eval state (idle/loading/error), error message, and computation history. Components subscribe to state changes.
 
 ### Components
-- **TitleBar** — Frameless drag region with app title and action buttons (theme, notes, variables)
+- **TitleBar** — Frameless drag region with app title and action buttons (theme, notes, variables, history)
 - **CalculatorInput** — Textarea with synchronized line-number gutter
 - **ResultDisplay** — Right-aligned results column synced with input scroll, shows loading indicator and empty state
-- **NotesPanel** — Collapsible sidebar for managing multiple calculation notes
+- **NotesPanel** — Collapsible sidebar for managing multiple calculation notes, with right-click context menu (rename, delete, export, import, share)
 - **VariableExplorer** — Collapsible sidebar showing defined variables
+- **HistoryPanel** — Collapsible sidebar showing evaluation history, click to restore input
+- **ContextMenu** — Reusable right-click menu with submenus and SVG icons
+- **ConfirmDialog** — Modal confirmation dialog with "Don't ask again" option
+- **ShortcutModal** — Keyboard shortcut reference overlay
 
 ### Theming
 Dark/light mode via CSS custom properties on `:root` / `:root.light`. No Tailwind `dark:` variant used — all colors are driven by `--surface`, `--text`, `--accent`, etc.

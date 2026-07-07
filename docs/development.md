@@ -57,24 +57,46 @@ LineSolv/
 │   │   ├── units.go         # Unit database + conversion
 │   │   ├── functions.go     # Built-in math functions
 │   │   └── variables.go     # Variable get/set/clear
-│   └── service/
-│       └── app.go           # Wails-bound service methods
+│   ├── service/
+│   │   └── app.go           # Wails-bound service methods (16 methods)
+│   └── storage/
+│       ├── db.go            # SQLite notes CRUD
+│       ├── config.go        # config.toml parse/save
+│       ├── exporter.go      # Export/import: .lv, .txt, .md, .json, .toml
+│       └── fancyname.go     # Random name generator
 ├── frontend/
 │   ├── src/
-│   │   ├── App.ts           # Orchestrator
+│   │   ├── App.ts           # Orchestrator (~335 lines)
 │   │   ├── main.ts          # Entry point
 │   │   ├── types.ts         # Shared interfaces
 │   │   ├── style.css        # Tailwind + CSS custom properties
 │   │   ├── stores/
-│   │   │   └── calculator.ts  # Reactive state store
-│   │   └── components/      # UI components
+│   │   │   ├── calculator.ts  # Reactive state store
+│   │   │   └── notes.ts       # Note manager
+│   │   ├── utils/
+│   │   │   ├── html.ts       # escapeHtml()
+│   │   │   ├── shortcuts.ts  # Keyboard shortcut handler
+│   │   │   └── format.ts     # Result formatting helpers
+│   │   └── components/
 │   │       ├── TitleBar.ts
 │   │       ├── CalculatorInput.ts
 │   │       ├── ResultDisplay.ts
 │   │       ├── NotesPanel.ts
-│   │       └── VariableExplorer.ts
+│   │       ├── VariableExplorer.ts
+│   │       ├── HistoryPanel.ts
+│   │       ├── ContextMenu.ts
+│   │       ├── ConfirmDialog.ts
+│   │       └── ShortcutModal.ts
 │   ├── wailsjs/             # Auto-generated bindings (do not edit)
 │   └── index.html
+├── docs/
+│   ├── architecture.md      # Architecture overview
+│   ├── api-reference.md     # Wails-bound method reference
+│   ├── calculator-engine.md # How the calculation engine works
+│   ├── frontend.md          # Frontend architecture guide
+│   ├── development.md       # Development setup and workflow
+│   ├── faq.md               # FAQ and troubleshooting
+│   └── user-guide.md        # User-facing documentation
 ├── main.go                  # Entry point
 ├── wails.json               # Wails configuration
 ├── go.mod

@@ -33,15 +33,33 @@ State is managed through `CalculatorStore` (`stores/calculator.ts`), a reactive 
 
 | Shortcut | Action |
 |---|---|
-| `⌘N` / `Ctrl+N` | New note |
-| `⌘B` / `Ctrl+B` | Toggle notes sidebar |
-| `⌘I` / `Ctrl+I` | Toggle variables sidebar |
-| `⌘K` / `Ctrl+K` | Clear all (input + variables + history) |
-| `Shift+Enter` | Force-evaluate immediately |
-| `Esc` | Clear input; if empty, close open sidebar |
-| `⌘↑` / `Ctrl+↑` | Navigate history back |
-| `⌘↓` / `Ctrl+↓` | Navigate history forward |
 | `Tab` | Insert 2 spaces |
+| `Shift+Enter` | Force-evaluate immediately |
+| `Esc` | Clear input; if empty, close open panel |
+| `Ctrl/Cmd + Z` | Undo (native) |
+| `Ctrl/Cmd + Y` | Redo (native) |
+| `Ctrl/Cmd + X` | Cut (native) |
+| `Ctrl/Cmd + C` | Copy (native) |
+| `Ctrl/Cmd + V` | Paste (native) |
+| `Ctrl/Cmd + A` | Select all (native) |
+| `Ctrl/Cmd + D` | Duplicate line or selection |
+| `Ctrl/Cmd + L` | Select current line |
+| `Ctrl/Cmd + Shift + K` | Delete current line |
+| `Alt + Shift` | Toggle case (lower → UPPER → Title) |
+| `Alt + ↑ / ↓` | Move line up/down |
+| `Alt + ← / →` | Jump word left/right (native) |
+| `Home / End` | Start/end of line (native) |
+| `Ctrl/Cmd + Home / End` | Start/end of text (native) |
+| `Page Up / Page Down` | Scroll page (native) |
+| `↑ / ↓ / ← / →` | Cursor navigation (native) |
+| `Ctrl/Cmd + N` | New note |
+| `Ctrl/Cmd + B` | Toggle notes sidebar |
+| `Ctrl/Cmd + I` | Toggle variables sidebar |
+| `Ctrl/Cmd + H` | Toggle history sidebar |
+| `Ctrl/Cmd + K` | Clear all (input + variables + history) |
+| `Ctrl/Cmd + ↑` | Navigate history back |
+| `Ctrl/Cmd + ↓` | Navigate history forward |
+| `Ctrl/Cmd + /` | Show keyboard shortcut reference |
 
 ## UI Components
 
@@ -52,8 +70,9 @@ Frameless drag region at the top of the window. Contains:
 - **Theme toggle** button (moon/sun SVG icon)
 - **Notes** button (clipboard SVG, toggles sidebar)
 - **Variables** button (code SVG, toggles sidebar)
+- **History** button (clock SVG, toggles sidebar)
 
-Uses `data-wails-drag` attribute for frameless window dragging.
+Uses `--wails-draggable:drag` CSS property for frameless window dragging.
 
 ### CalculatorInput
 
@@ -67,7 +86,7 @@ Wrapped in a flex row container (`#notepad`). The textarea emits `input` events 
 
 A `<div>` column to the right of the textarea. Results are rendered as HTML with color-coded variable names (`--text-muted`) and values (`--accent`). The column scroll is synced with the textarea's scroll. Supports three display states:
 
-- **Loading** — shows `…` for each line during evaluation
+- **Loading** — shows `…` for each line during evaluation (pulsing disabled)
 - **Empty** — shows non-breaking space for blank/comment lines
 - **Result** — formatted result or empty for errors
 
@@ -87,6 +106,38 @@ Collapsible sidebar (right side) showing defined variables:
 - Shows "No variables" when empty
 - Opens/closes via width animation (0px ↔ 180px)
 - Keyboard shortcut: `⌘I`
+
+### HistoryPanel
+
+Collapsible sidebar (left side, before notes) showing evaluation history:
+- Each entry shows the input text (monospace, truncated at 40 chars) and its result
+- Click any entry to restore its input into the textarea and re-evaluate
+- Opens/closes via width animation (0px ↔ 200px)
+- Keyboard shortcut: `⌘H`
+- Automatically subscribes to store changes and re-renders when open
+
+### ContextMenu
+
+Reusable right-click context menu with submenu support:
+- Renders at cursor position, closes on outside click or right-click
+- Submenus use 100ms show / 200ms hide hover delays
+- Items can have optional SVG icons rendered via `innerHTML` in a `.ctx-icon` span
+- All label text is escaped via `escapeHtml()`
+
+### ConfirmDialog
+
+Modal confirmation dialog for destructive actions:
+- Shows a title, message, Cancel and Confirm buttons
+- Optional "Don't ask again" checkbox (preference stored in backend `config.toml`)
+- Supports async callbacks for confirm/cancel actions
+
+### ShortcutModal
+
+Keyboard shortcut reference overlay:
+- Shows a table of all keyboard shortcuts with key bindings and descriptions
+- Triggered by `Ctrl/Cmd+/`
+- Closes on Escape or clicking the backdrop
+- Submenu items have hover highlight
 
 ## Styling
 
@@ -132,3 +183,15 @@ Available methods:
 - `serviceBindings.ClearVariables()` → `void`
 - `serviceBindings.GetHistory()` → `HistoryEntry[]`
 - `serviceBindings.ClearHistory()` → `void`
+- `serviceBindings.GetAllNotes()` → `Note[]`
+- `serviceBindings.CreateNote()` → `Note`
+- `serviceBindings.CreateNoteWithContent(content)` → `Note`
+- `serviceBindings.RenameNote(id, name)` → `void`
+- `serviceBindings.DeleteNote(id)` → `void`
+- `serviceBindings.SaveNoteContent(id, content)` → `void`
+- `serviceBindings.GetNote(id)` → `Note`
+- `serviceBindings.ExportNote(id, format)` → `string`
+- `serviceBindings.ExportNoteToFile(id, format)` → `void`
+- `serviceBindings.ImportNoteFromFile()` → `Note`
+- `serviceBindings.GetDeleteWithoutConfirm()` → `bool`
+- `serviceBindings.SetDeleteWithoutConfirm(val)` → `void`

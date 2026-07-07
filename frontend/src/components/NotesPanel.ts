@@ -39,7 +39,31 @@ export class NotesPanel {
     this.listEl = document.createElement('div');
     this.listEl.id = 'notes-list';
     this.listEl.className = 'flex-1 overflow-y-auto py-1';
+    this.listEl.tabIndex = -1;
     this.el.appendChild(this.listEl);
+
+    this.listEl.addEventListener('keydown', (e) => {
+      const items = this.listEl.querySelectorAll<HTMLElement>('.note-item');
+      if (items.length === 0) return;
+      const focused = this.listEl.querySelector<HTMLElement>('.note-item:focus');
+
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        let idx = focused ? Array.from(items).indexOf(focused) : -1;
+        idx = e.key === 'ArrowDown' ? Math.min(idx + 1, items.length - 1) : Math.max(idx - 1, 0);
+        items[idx].focus();
+        items[idx].scrollIntoView?.({block: 'nearest'});
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (focused) {
+          const nid = focused.getAttribute('data-note-id');
+          if (nid) this.callback(nid);
+        }
+      }
+    });
 
     this.newNoteBtn = document.createElement('button');
     this.newNoteBtn.className = 'mx-3 mb-3 mt-2 py-1.5 text-xs rounded transition-colors shrink-0';
@@ -56,7 +80,7 @@ export class NotesPanel {
     this.listEl.innerHTML = notes
       .map(
         n =>
-          `<div class="note-item px-3 py-1.5 text-sm cursor-pointer" data-note-id="${n.id}" style="color:${n.id === activeId ? 'var(--text)' : 'var(--text-muted)'};background:${n.id === activeId ? 'var(--note-bg)' : 'transparent'}">${escapeHtml(n.name)}</div>`
+          `<div class="note-item px-3 py-1.5 text-sm cursor-pointer" tabindex="-1" data-note-id="${n.id}" style="color:${n.id === activeId ? 'var(--text)' : 'var(--text-muted)'};background:${n.id === activeId ? 'var(--note-bg)' : 'transparent'}">${escapeHtml(n.name)}</div>`
       )
       .join('');
     this.listEl.querySelectorAll('.note-item').forEach(el => {
@@ -167,6 +191,8 @@ export class NotesPanel {
   open(): void {
     this.el.style.width = '200px';
     this.el.style.borderRightWidth = '1px';
+    this.listEl.focus();
+    setTimeout(() => this.listEl.focus(), 0);
   }
 
   close(): void {

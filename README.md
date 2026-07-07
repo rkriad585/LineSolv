@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="build/appicon.png" alt="LineSolv" width="128" height="128">
+  <img src="logo.svg" alt="LineSolv" width="128" height="128">
   <h1 align="center">LineSolv</h1>
   <p align="center">A cross-platform desktop natural-language calculator</p>
   <p align="center">

@@ -5,17 +5,24 @@ export class TitleBar {
   readonly toggleNotesBtn: HTMLButtonElement;
   readonly toggleVarsBtn: HTMLButtonElement;
   readonly themeBtn: HTMLButtonElement;
+  readonly settingsBtn: HTMLButtonElement;
 
   constructor(cb: AppCallbacks) {
     this.el = document.createElement('header');
-    this.el.className =
-      'flex items-center shrink-0 px-2 gap-1';
     this.el.style.cssText =
-      'background:var(--surface);border-bottom:1px solid var(--border);height:34px;';
+      'display:flex;align-items:center;justify-content:center;' +
+      'background:var(--surface);border-bottom:1px solid var(--border);height:34px;position:relative;';
 
     const dragRegion = document.createElement('div');
-    dragRegion.style.cssText = 'flex:1;height:100%;--wails-draggable:drag;-webkit-user-select:none;';
-    dragRegion.innerHTML = `<span class="text-[11px] font-semibold tracking-[0.15em] uppercase ml-2" style="color:var(--text-muted);pointer-events:none">LineSolv</span>`;
+    dragRegion.style.cssText =
+      'display:flex;align-items:center;justify-content:center;gap:6px;height:100%;' +
+      '--wails-draggable:drag;-webkit-user-select:none;pointer-events:none;';
+    dragRegion.innerHTML =
+      `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">` +
+      `<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/>` +
+      `<line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/>` +
+      `<line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>` +
+      `<span style="font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted)">LineSolv</span>`;
 
     const winBtn = (icon: string, title: string, action: () => void, isClose = false): HTMLButtonElement => {
       const b = document.createElement('button');
@@ -45,13 +52,15 @@ export class TitleBar {
     const maxBtn = winBtn(maxIcon, 'Maximize', () => { try { (window as any).runtime.WindowToggleMaximise(); } catch {}; });
 
     const controls = document.createElement('div');
-    controls.style.cssText = 'display:flex;align-items:center;height:100%;';
+    controls.style.cssText =
+      'display:flex;align-items:center;height:100%;position:absolute;left:4px;top:0;z-index:1;';
     controls.append(minBtn, maxBtn, closeBtn);
 
     this.el.append(controls, dragRegion);
 
     const btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex;align-items:center;gap:4px;padding-right:4px;';
+    btnRow.style.cssText =
+      'display:flex;align-items:center;gap:4px;padding-right:4px;position:absolute;right:0;top:0;height:100%;z-index:1;';
 
     const iconBtn = (svg: string, title: string): [HTMLButtonElement, HTMLButtonElement] => {
       const b = document.createElement('button');
@@ -75,22 +84,33 @@ export class TitleBar {
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>',
       'Variables (⌘I)'
     );
+    const [historyBtnEl, _h] = iconBtn(
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+      'History (⌘H)'
+    );
+    const [settingsBtnEl, _s] = iconBtn(
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+      'Settings'
+    );
 
-    [themeBtnEl, notesBtnEl, varsBtnEl].forEach(b => {
+    [themeBtnEl, notesBtnEl, varsBtnEl, historyBtnEl, settingsBtnEl].forEach(b => {
       b.addEventListener('mouseenter', () => b.style.background = 'var(--border)');
       b.addEventListener('mouseleave', () => b.style.background = 'transparent');
     });
 
-    btnRow.append(notesBtnEl, varsBtnEl, themeBtnEl);
+    btnRow.append(notesBtnEl, varsBtnEl, historyBtnEl, themeBtnEl, settingsBtnEl);
     this.el.append(btnRow);
 
     this.themeBtn = themeBtnEl;
+    this.settingsBtn = settingsBtnEl;
     this.toggleNotesBtn = notesBtnEl;
     this.toggleVarsBtn = varsBtnEl;
 
     notesBtnEl.addEventListener('click', () => cb.onToggleNotes());
     varsBtnEl.addEventListener('click', () => cb.onToggleVars());
     themeBtnEl.addEventListener('click', () => cb.onThemeToggle());
+    historyBtnEl.addEventListener('click', () => cb.onToggleHistory());
+    settingsBtnEl.addEventListener('click', () => cb.onToggleSettings());
   }
 
   updateThemeIcon(dark: boolean): void {

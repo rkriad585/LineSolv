@@ -20,6 +20,9 @@ var version = "dev"
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed build/appicon.png
+var appIcon []byte
+
 func main() {
 	db, err := storage.NewDB()
 	if err != nil {
@@ -48,6 +51,7 @@ func main() {
 		},
 		Linux: &linux.Options{
 			WindowIsTranslucent: true,
+			Icon:               appIcon,
 		},
 		Windows: &windows.Options{
 			WebviewIsTransparent: true,
