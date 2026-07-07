@@ -153,6 +153,11 @@ func (p *parser) callBuiltinOrPlugin(name string, args []float64) (float64, erro
 			return -1, nil
 		}
 		return 0, nil
+	case "ncr", "choose":
+		if len(args) != 2 {
+			return 0, fmt.Errorf("nCr expects 2 arguments, got %d", len(args))
+		}
+		return nCr(int64(args[0]), int64(args[1])), nil
 	case "trunc":
 		if len(args) != 1 {
 			return 0, fmt.Errorf("trunc expects 1 argument, got %d", len(args))
@@ -259,4 +264,21 @@ func lcm(a, b int64) int64 {
 		return 0
 	}
 	return a / gcd(a, b) * b
+}
+
+func nCr(n, r int64) float64 {
+	if r < 0 || r > n {
+		return 0
+	}
+	if r == 0 || r == n {
+		return 1
+	}
+	if r > n-r {
+		r = n - r
+	}
+	result := float64(1)
+	for i := int64(1); i <= r; i++ {
+		result = result * float64(n-r+i) / float64(i)
+	}
+	return result
 }

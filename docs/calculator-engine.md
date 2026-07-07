@@ -20,22 +20,32 @@ Input → Naturalize → Pattern Matching → Recursive Descent Parser → Resul
 Before arithmetic parsing, the input is preprocessed through a multi-step pipeline:
 
 | Step | What it does | Example |
-|---|---|---|---|
-| 1. Prefix stripping | Removes query prefixes | `what is 2+2` → `2+2` |
-| 2. Leading commands | Strips `add`, `sum of` | `add 2 plus 2` → `2 plus 2` |
-| 3. Leading articles | Strips `the`, `a`, `an` | `the just plus five` → `just plus five` |
-| 4. Trailing fluff | Removes `please`, `thanks` | `2+2 please` → `2+2` |
-| 5. Fraction words | Converts fraction words to decimals | `one half` → `0.5` |
-| 6. Word-to-number | Converts word numbers to digits | `twenty five` → `25` |
-| 7. Context references | Replaces `that`, `then`, `result` | `then * 2` → `42 * 2` |
-| 8. Multiplicative prefixes | Handles `double`, `twice`, `half of` | `double 5` → `2 * 5` |
-| 9. Power words | Converts `squared`, `cubed` | `5 squared` → `5 ^ 2` |
-| 10. Complex phrases | Comparison, division, multiplication phrases | `10 increased by 5` → `10 + 5` |
-| 11. Natural functions | Converts `square root of X` to `sqrt(X)` | `square root of 144` → `sqrt(144)` |
-| 12. Word operators | Replaces English operators with symbols | `plus` → `+`, `divided by` → `/` |
-| 13. Percent word | Converts `percent` → `%` | `10 percent of 200` → `10% of 200` |
-| 14. Comma cleanup | Removes commas from numbers | `1,000` → `1000` |
-| 15. Trailing punctuation | Strips `?` and `.` | `42?` → `42` |
+|---|---|---|---|---|
+| 1. Prefix stripping | Removes query prefixes (loop) | `what is 2+2` → `2+2` |
+| 2. Trailing fluff | Removes `please`, `thanks` | `2+2 please` → `2+2` |
+| 3. Currency conversion | Strips symbols, handles cross-rates, code prefixes | `$5k in EUR` → `5000 usd in EUR`, `BTC5k in USD` → `5k btc in USD` |
+| 3b. Compact time | Expands `h`/`m` notation | `2h30m` → `(2 + 30/60.0)` |
+| 4. Fraction words | Converts fraction words to decimals | `one half` → `0.5` |
+| 5. Word-to-number | Converts word numbers to digits | `twenty five` → `25` |
+| 6. Ordinal suffixes | Strips `st`, `nd`, `rd`, `th` | `1st` → `1` |
+| 7. "how many times" | Division via how-many-times (before SI) | `how many times does 5 go into 20` → `20 / 5` |
+| 8. SI notation | Expands `k`/`M`/`B`/`T` suffixes | `5k` → `5000` (computed value) |
+| 8b. Mixed numbers | Whole + fraction → addition | `2 1/2` → `2 + (1/2)` |
+| 9. Possessive plurals | Expands plural number words | `3 tens` → `(3 * 10)` |
+| 10. Context references | Replaces `that`, `then`, `result` | `then * 2` → `42 * 2` |
+| 11. Multiplicative prefixes | Handles `double`, `twice`, `half of` | `double 5` → `2 * 5` |
+| 12. Power words | Converts `squared`, `cubed` | `5 squared` → `5 ^ 2` |
+| 13. Complex phrases | Comparison, division, multiplication phrases | `10 increased by 5` → `10 + 5` |
+| 14. Natural functions | Converts `square root of X` to `sqrt(X)` | `square root of 144` → `sqrt(144)` |
+| 15. Word operators | Replaces English operators with symbols | `plus` → `+`, `divided by` → `/` |
+| 16. "X from Y" | Converts subtraction-by-from (after word operators) | `10 from 100` → `100 - 10` |
+| 17. Percentage relations | `is what percent of`, `as a percentage of`, `% of what is` | `10 is what % of 50` → `((10 / 50) * 100)` |
+| 18. Advanced math phrases | `log base`, `choose` | `log base 2 of 8` → `(ln(8)/ln(2))` |
+| 19. Percent word | Converts `percent` → `%` | `10 percent of 200` → `10% of 200` |
+| 20. Date math | `today + N days`, `March 1 + 30 days` | `today + 14 days` → `2026-07-21` (before final cleanup) |
+| 21. Comma cleanup | Removes commas from numbers | `1,000` → `1000` |
+| 22. Trailing punctuation | Strips `?` and `.` | `42?` → `42` |
+| 23. Collapse spaces | Normalises multiple spaces to one | `5  +   3` → `5 + 3` |
 
 ### Query Prefixes
 
@@ -49,6 +59,54 @@ Supports numbers from zero through billions:
 - Large: `two million three hundred thousand` → `2300000`
 - Hyphenated: `twenty-one` → `21`
 - "And" is ignored: `one hundred and five` → `105`
+
+Collective nouns are mapped in `wordNumMap` and handled by the word-to-number step:
+```
+a couple  →  2
+a dozen   →  12
+a score   →  20
+```
+
+### Phase 1 — Prefix / Suffix / Notation Patterns
+
+These patterns clean up formatting and expand common shorthand before arithmetic parsing:
+
+| Pattern | Step | Example |
+|---|---|---|
+| Currency conversion | 3 | `$10` → `10`, `$5k in EUR` → `5000 usd in EUR`, `BTC5k in USD` → `5k btc in USD` |
+| Compact time notation | 3b | `2h30m` → `(2 + 30/60.0)`, `2h` → `2` |
+| Mixed numbers | 8b | `2 1/2` → `2 + (1/2)`, `3 3/4` → `3 + (3/4)` |
+| Ordinal suffix stripping | 6 | `1st` → `1`, `2nd` → `2`, `3rd` → `3`, `4th` → `4` |
+| SI notation expansion | 8 | `5k` → `5000`, `3M` → `3000000`, `2B` → `2000000000` |
+| Possessive plurals | 9 | `3 tens` → `(3 * 10)`, `2 dozens` → `(2 * 12)`, `5 scores` → `(5 * 20)` |
+| "X from Y" subtraction | 16 | `10 from 100` → `100 - 10` |
+
+SI notation uses case‑sensitive matching: `k`/`K` = thousand, `M` = million, `B` = billion, `T` = trillion. Lowercase `m` is NOT treated as SI (it would conflict with meters in unit conversion). Unlike the old parenthesized form `(5 * 1000)`, SI now expands to the computed numeric value (`5000`) so that subsequent currency conversion can match the complete number.
+
+The "how many times" pattern runs **before** SI expansion so that `5k`, `3M`, etc. are captured as a single token and expanded after substitution. The number capture groups accept an optional SI suffix (`[kKMBT]`).
+
+### Phase 2 — Percentage Relationship Phrases
+
+These patterns answer relational percentage questions without needing to set up the formula manually:
+
+| Phrase | Transformation | Example |
+|---|---|---|
+| `X is what percent of Y` (or `%`) | `(X / Y) * 100` | `10 is what percent of 50` → `20` |
+| `X as a percentage of Y` | `(X / Y) * 100` | `10 as a percentage of 50` → `20` |
+| `X percent of what is Y` (or `%`) | `(Y / X) * 100` | `50 percent of what is 25` → `50` |
+
+### Phase 3 — Advanced Math Phrases
+
+These patterns provide natural‑language access to advanced mathematical operations:
+
+| Phrase | Transformation | Example |
+|---|---|---|
+| `X!` (postfix `!`) | `factorial(X)` | `5!` → `120` |
+| `log base X of Y` | `ln(Y) / ln(X)` | `log base 2 of 8` → `3` |
+| `X choose Y` | `nCr(X, Y)` | `5 choose 3` → `10` |
+| `how many times does X go into Y` | `Y / X` | `how many times does 5 go into 20` → `4` |
+
+The factorial `!` operator is parsed at the lexer level as a `tokBang` token and applied in the parser's `parseAtom` — it binds tighter than all binary operators. The `nCr` function is registered in the built‑in function table. `log base` and `choose` are substituted before word operators so they don't conflict with other patterns. The "how many times" pattern runs before SI expansion (step 7) to handle SI suffixed numbers like `5k`.
 
 ### Context References
 
@@ -110,7 +168,9 @@ parseAtom    → number | (expr) | ident[(args...)]
 
 ### Lexer (tokenizer)
 
-Tokens: `+`, `-`, `*`, `/`, `^`, `%`, `(`, `)`, `,`, numbers (`tokNum`), identifiers (`tokIdent`), EOF.
+Tokens: `+`, `-`, `*`, `/`, `^`, `%`, `(`, `)`, `,`, `!`, numbers (`tokNum`), identifiers (`tokIdent`), EOF.
+
+The postfix factorial operator `!` (tokBang) binds tighter than all binary operators and is handled during atom parsing.
 
 ### Built-in Functions
 
@@ -139,7 +199,8 @@ Tokens: `+`, `-`, `*`, `/`, `^`, `%`, `(`, `)`, `,`, numbers (`tokNum`), identif
 | `log2(x)` | Base-2 logarithm |
 | `exp(x)` | e^x |
 | `pow(x, y)` | x^y |
-| `fact(x)` / `factorial(x)` | Factorial |
+| `fact(x)` / `factorial(x)` | Factorial | `fact(5)` → 120 |
+| `nCr(n, r)` | Combinations (n choose r) | `nCr(5, 3)` → 10 |
 | `gcd(a, b)` | Greatest common divisor |
 | `lcm(a, b)` | Least common multiple |
 | `rand()` | Random [0, 1) |
@@ -174,7 +235,8 @@ Built-in conversion for:
 - **Mass**: gram, kilogram, pound, ounce
 - **Volume**: liter, milliliter, gallon, quart, cup
 - **Temperature**: Celsius, Fahrenheit
-- **Currency**: USD, EUR, GBP, JPY, CNY, INR, CAD, AUD, CHF
+- **Time**: second, minute, hour, day
+- **Currency**: USD, EUR, GBP, JPY, CNY, INR, CAD, AUD, CHF, KRW, RUB, BRL, MXN, ZAR, NZD, SEK, NOK, PLN, HKD, SGD, THB, ILS, VND, PHP, UAH, KZT, PYG, GHS, TRY, AZN, GEL, BDT, PKR, LKR, NPR, MYR, IDR, TWD, SAR, AED, KWD, EGP, NGN, COP, CLP, ARS, PEN, MAD, BTC, XAU, XAG
 
 ## Error Handling
 

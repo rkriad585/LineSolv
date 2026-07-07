@@ -90,6 +90,21 @@ LineSolv understands:
 - Division phrases: `X over Y`, `X out of Y`, `ratio of X to Y`
 - Natural functions: `square root of X`, `cube root of X`, `absolute value of X`
 - Convert prefix: `convert X to Y`, `change X to Y`
+- Currency conversion: `$10 in EUR`, `€5k in USD`, `₿5k in GBP`, `BTC5k in USD`
+- Ordinal suffixes: `1st`, `2nd`, `3rd`, `4th` — stripped for math use
+- SI notation: `5k`, `3M`, `2B`, `1.5K` — shorthand for thousands/millions/billions
+- Date math: `today + 14 days`, `March 1 + 30 days`, `Dec 25 2026 + 7 days`
+- Time/duration: `2h30m` → `2.5`, `90 minutes in hours` → `1.5 hours`
+- Mixed numbers: `2 1/2` → `2.5`, `2 1/2 + 1.5` → `4`
+- Possessive plurals: `3 tens`, `2 hundreds`, `5 thousands`, `2 dozens`
+- Collective nouns: `a couple`, `a dozen`, `a score`
+- Subtraction with "from": `10 from 100` → `90`
+- Percentage relationships: `10 is what percent of 50`, `10 is what % of 50`, `50% of what is 25`
+- Factorial operator: `5!` → `120`
+- Log base: `log base 2 of 8` → `3`
+- Combinations: `5 choose 3` → `10`
+- Division as "how many times": `how many times does 5 go into 20` → `4`
+- Mix-and-match: `how many times does 25 go into 5k`, `5 choose 2 + 3!`
 
 ### Fraction Words
 ```
@@ -146,6 +161,147 @@ convert 10 inches to cm  →  25.4 cm
 change 100 c to f        →  212.0 °F
 ```
 
+### Currency Conversion
+Currency symbols and codes are recognized and can be converted between currencies:
+```
+$10 in EUR             →  8.77 EUR
+€5 in USD              →  5.70 USD
+£20 in JPY             →  3992.26 JPY
+¥1000 in USD           →  6.15 USD
+$5k in EUR             →  4385.96 EUR
+₿5k in USD             →  320000000.00 USD
+BTC5k in USD           →  320000000.00 USD
+€5M in USD             →  5700000.00 USD
+```
+
+### Ordinal Suffixes
+Ordinal indicators (`st`, `nd`, `rd`, `th`) after numbers are removed for calculation:
+```
+1st                    →  1
+2nd                    →  2
+3rd                    →  3
+4th                    →  4
+1st + 2                →  3
+```
+
+### SI Notation
+Common shorthand for large numbers — case-sensitive (`k`/`K` = thousand, `M` = million, `B` = billion, `T` = trillion; lowercase `m` is NOT SI, preserving meter in unit conversions):
+```
+5k                     →  5000
+3M                     →  3000000
+2B                     →  2000000000
+1.5K                   →  1500
+```
+
+### Date Math
+Perform date arithmetic using `today`, `now`, or specific dates:
+```
+today + 14 days        →  2026-07-21
+today + 2 weeks        →  2026-07-21
+today + 3 months       →  2026-10-07
+today - 7 days         →  2026-06-30
+March 1 + 30 days      →  March 31
+Dec 25 2026 + 7 days   →  Jan 01 2027
+```
+
+### Time / Duration
+Compact time notation and unit conversion for durations:
+```
+2h30m                  →  2.5
+2h + 1h15m             →  3.25
+1 hour in seconds      →  3600 seconds
+90 minutes in hours    →  1.5 hours
+```
+
+### Mixed Numbers
+Whole numbers combined with fractions are treated as addition:
+```
+2 1/2                  →  2.5
+3 3/4                  →  3.75
+2 1/2 + 1.5            →  4
+```
+
+### Possessive Plurals
+Plural number words following a digit are treated as multiplication:
+```
+3 tens                 →  30
+2 hundreds             →  200
+5 thousands            →  5000
+2 dozens               →  24
+3 scores               →  60
+```
+
+### Collective Nouns
+Word-number mapped nouns used in phrases:
+```
+a couple               →  2
+a dozen                →  12
+a score                →  20
+```
+
+### Subtraction with "from"
+The phrase `X from Y` evaluates to `Y - X`:
+```
+10 from 100            →  90
+5 from 20              →  15
+```
+
+### Percentage Relationship Questions
+Ask percentage questions in plain English (`%` and `percent` both work):
+```
+10 is what percent of 50         →  20
+10 is what % of 50               →  20
+10 as a percentage of 50         →  20
+50 percent of what is 25         →  50
+50% of what is 25                →  50
+```
+
+### Factorial Operator
+The postfix `!` computes the factorial:
+```
+5!                     →  120
+0!                     →  1
+3! + 2                 →  8
+```
+
+### Log Base
+Compute logarithms with an arbitrary base:
+```
+log base 2 of 8        →  3
+log base 10 of 100     →  2
+```
+
+### Combinations (n Choose r)
+Compute combinations using "choose":
+```
+5 choose 3             →  10
+10 choose 2            →  45
+```
+
+### How Many Times
+Express division as a "how many times" question (SI notation like `5k` works):
+```
+how many times does 5 go into 20      →  4
+how many times does 3 go in 15        →  5
+how many times does 25 go into 5k     →  200
+how many times does 2 go into 1M      →  500000
+```
+
+### Putting It All Together
+Mix patterns across all three phases in a single line:
+```
+$100 + €20                                 →  120
+2B / 5k                                    →  400000
+a dozen + 3 scores                          →  72
+how many times does 25 go into 5k           →  200
+5 choose 2 + 3!                             →  16
+log base 10 of 100 + 3 squared              →  11
+10 is what % of 50 + $20                    →  40
+$5k in EUR                                  →  4385.96 EUR
+double a dozen                              →  24
+3 tens from 5 hundreds                      →  470
+```
+
 ### Unit Conversion
 Use the pattern `X fromUnit toUnit` or `X fromUnit in toUnit` or `convert/change X to Y`:
 
@@ -166,7 +322,8 @@ convert 10 inches to cm →  25.4 cm
 | Mass | gram, kilogram, pound, ounce |
 | Volume | liter, milliliter, gallon, quart, cup |
 | Temperature | Celsius, Fahrenheit |
-| Currency | USD, EUR, GBP, JPY, CNY, INR, CAD, AUD, CHF |
+| Time | second, minute, hour, day |
+| Currency | USD, EUR, GBP, JPY, CNY, INR, CAD, AUD, CHF, KRW, RUB, BRL, MXN, ZAR, NZD, SEK, NOK, PLN, HKD, SGD, THB, ILS, VND, PHP, UAH, KZT, PYG, GHS, TRY, AZN, GEL, BDT, PKR, LKR, NPR, MYR, IDR, TWD, SAR, AED, KWD, EGP, NGN, COP, CLP, ARS, PEN, MAD, BTC, XAU (gold), XAG (silver) |
 
 ### Percentages
 ```
@@ -229,6 +386,7 @@ result / 2              →  47
 | `exp(x)` | e^x | `exp(1)` → 2.71828 |
 | `pow(x, y)` | x^y | `pow(2, 10)` → 1024 |
 | `fact(x)` / `factorial(x)` | Factorial | `fact(5)` → 120 |
+| `nCr(n, r)` | Combinations | `nCr(5, 3)` → 10 |
 | `gcd(a, b)` | Greatest common divisor | `gcd(12, 8)` → 4 |
 | `lcm(a, b)` | Least common multiple | `lcm(12, 8)` → 24 |
 | `rand()` | Random [0, 1) | `rand()` → 0.123... |

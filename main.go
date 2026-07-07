@@ -5,14 +5,14 @@ import (
 	"log"
 	"os"
 
+	"LineSolv/app/service"
+	"LineSolv/app/storage"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
-	"LineSolv/app/service"
-	"LineSolv/app/storage"
 )
 
 var version = "dev"
@@ -68,7 +68,7 @@ func main() {
 		},
 		Linux: &linux.Options{
 			WindowIsTranslucent: true,
-			Icon:               appIcon,
+			Icon:                appIcon,
 		},
 		Windows: &windows.Options{
 			WebviewIsTransparent: true,

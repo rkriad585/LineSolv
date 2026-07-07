@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -101,7 +102,14 @@ func (e *Engine) EvaluateAll(input string) []string {
 }
 
 func (e *Engine) evaluateExpr(input string) (string, error) {
-	s := e.naturalize(strings.TrimSpace(input))
+	raw := strings.TrimSpace(input)
+
+	// Date math (before naturalize to preserve date keywords)
+	if result := computeDateMath(raw); result != raw {
+		return result, nil
+	}
+
+	s := e.naturalize(raw)
 
 	// "convert X to Y" / "change X to Y" unit conversion
 	{
@@ -123,7 +131,15 @@ func (e *Engine) evaluateExpr(input string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("invalid number: %s", match[1])
 		}
-		return convertUnit(val, match[2], match[3]), nil
+		from := strings.TrimSpace(match[2])
+		to := strings.TrimSpace(match[3])
+		// If from-unit is empty and to is a known currency, default from to USD
+		if from == "" {
+			if _, ok := unitDB[strings.ToLower(to)]; ok {
+				from = "usd"
+			}
+		}
+		return convertUnit(val, from, to), nil
 	}
 
 	// "X% of Y"
@@ -205,21 +221,45 @@ func (e *Engine) naturalize(s string) string {
 	}
 	// 2. Strip trailing fluff
 	s = trailingFluffPattern.ReplaceAllString(s, "")
-	// 3. Replace fraction words with decimals
+	// 3. Convert mixed currencies (or strip if single currency)
+	s = convertCurrencies(s)
+	// 3b. Compact time notation ("2h30m", "90m", "2h")
+	s = timeCompactPattern.ReplaceAllStringFunc(s, func(m string) string {
+		parts := timeCompactPattern.FindStringSubmatch(m)
+		if len(parts) < 3 {
+			return m
+		}
+		mins := parts[2]
+		if mins == "" {
+			return parts[1]
+		}
+		return fmt.Sprintf("(%s + %s/60.0)", parts[1], mins)
+	})
+	// 4. Replace fraction words with decimals
 	s = fractionPattern.ReplaceAllStringFunc(s, evalFraction)
-	// 4. Replace word numbers with digits
+	// 5. Replace word numbers with digits
 	s = wordsToNumbers(s)
-	// 5. Replace "that" / "then" / "result" context references
+	// 6. Strip ordinal suffixes ("1st", "2nd", "3rd", "4th" → "1", "2", "3", "4")
+	s = ordinalPattern.ReplaceAllString(s, "$1")
+	// 7. "how many times" (before SI expansion so "5k" works)
+	s = howManyTimesPattern.ReplaceAllString(s, "$2 / $1")
+	// 8. Expand SI notation ("5k", "3M", "2B" → "(5 * 1000)", "(3 * 1000000)", "(2 * 1000000000)")
+	s = expandSINotation(s)
+	// 8b. Mixed numbers ("2 1/2" → "2 + 1/2")
+	s = mixedNumberPattern.ReplaceAllString(s, "$1 + ($2/$3)")
+	// 9. Expand possessive plurals ("3 tens" → "(3 * 10)", "2 dozens" → "(2 * 12)")
+	s = expandPossessivePlural(s)
+	// 10. Replace "that" / "then" / "result" context references
 	s = e.substituteContext(s)
-	// 6. Multiplicative prefixes
+	// 11. Multiplicative prefixes
 	s = doublePrefixPattern.ReplaceAllString(s, "2 * $1")
 	s = triplePrefixPattern.ReplaceAllString(s, "3 * $1")
 	s = halfOfPattern.ReplaceAllString(s, "0.5 * $1")
 	s = quarterOfPattern.ReplaceAllString(s, "0.25 * $1")
-	// 7. Power words
+	// 12. Power words
 	s = squaredPattern.ReplaceAllString(s, "$1 ^ 2")
 	s = cubedPattern.ReplaceAllString(s, "$1 ^ 3")
-	// 8. Complex phrase patterns (before word operators)
+	// 13. Complex phrase patterns (before word operators)
 	s = increasedByPattern.ReplaceAllString(s, "$1 + $2")
 	s = decreasedByPattern.ReplaceAllString(s, "$1 - $2")
 	s = moreThanPattern.ReplaceAllString(s, "$2 + $1")
@@ -227,14 +267,15 @@ func (e *Engine) naturalize(s string) string {
 	s = differencePattern.ReplaceAllString(s, "abs($1 - $2)")
 	s = overDivPattern.ReplaceAllString(s, "$1 / $2")
 	s = outOfPattern.ReplaceAllString(s, "$1 / $2")
+	s = outOfEveryPattern.ReplaceAllString(s, "$1 / $2")
 	s = ratioOfPattern.ReplaceAllString(s, "$1 / $2")
 	s = productOfPattern.ReplaceAllString(s, "$1 * $2")
 	s = sumOfPattern.ReplaceAllString(s, "$1 + $2")
-	// 9. Natural function call patterns
+	// 14. Natural function call patterns
 	s = squareRootOfPattern.ReplaceAllString(s, "sqrt($1)")
 	s = cubeRootOfPattern.ReplaceAllString(s, "cbrt($1)")
 	s = absoluteValueOfPattern.ReplaceAllString(s, "abs($1)")
-	// 10. Replace word operators
+	// 15. Replace word operators
 	s = additionOps.ReplaceAllString(s, " + ")
 	s = additionOps2.ReplaceAllString(s, " + ")
 	s = subtractionOps.ReplaceAllString(s, " - ")
@@ -247,14 +288,23 @@ func (e *Engine) naturalize(s string) string {
 	s = divideOps3.ReplaceAllString(s, " / ")
 	s = powerOps.ReplaceAllString(s, " ^ ")
 	s = modOps.ReplaceAllString(s, " % ")
-	// 11. "percent" word
+	// 16. "X from Y" → "Y - X" (after word operators to avoid conflicting with subtract phrases)
+	s = fromSubtractPattern.ReplaceAllString(s, "$2 - $1")
+	// 17. Percentage relationship phrases (after word operators, before % word)
+	s = isWhatPercentOfPattern.ReplaceAllString(s, "(($1 / $2) * 100)")
+	s = asAPercentageOfPattern.ReplaceAllString(s, "(($1 / $2) * 100)")
+	s = percentOfWhatIsPattern.ReplaceAllString(s, "(($2 / $1) * 100)")
+	// 18. Advanced math phrases
+	s = logBasePattern.ReplaceAllString(s, "(ln($2) / ln($1))")
+	s = choosePattern.ReplaceAllString(s, "nCr($1, $2)")
+	// 19. "percent" word
 	s = percentWordPattern.ReplaceAllString(s, "$1% ")
-	// 12. Commas in numbers
+	// 20. Commas in numbers
 	s = commaPattern.ReplaceAllString(s, "$1$2")
-	// 13. Clean trailing punctuation
+	// 21. Clean trailing punctuation
 	s = trailingQMPattern.ReplaceAllString(s, "")
 	s = trailingPeriodPattern.ReplaceAllString(s, "")
-	// 14. Collapse multiple spaces
+	// 22. Collapse multiple spaces
 	s = spacesPattern.ReplaceAllString(s, " ")
 	return strings.TrimSpace(s)
 }
@@ -319,6 +369,58 @@ var wordNumMap = map[string]float64{
 	"thousand":  1000,
 	"million":   1000000,
 	"billion":   1000000000,
+	"couple":    2,
+	"dozen":     12,
+	"score":     20,
+}
+
+func expandPossessivePlural(s string) string {
+	pluralVals := map[string]float64{
+		"tens":      10,
+		"hundreds":  100,
+		"thousands": 1000,
+		"millions":  1000000,
+		"billions":  1000000000,
+		"dozens":    12,
+		"scores":    20,
+	}
+	return possessivePluralPattern.ReplaceAllStringFunc(s, func(m string) string {
+		parts := possessivePluralPattern.FindStringSubmatch(m)
+		if len(parts) < 3 {
+			return m
+		}
+		val, ok := pluralVals[strings.ToLower(parts[2])]
+		if !ok {
+			return m
+		}
+		return fmt.Sprintf("(%s * %g)", parts[1], val)
+	})
+}
+
+func expandSINotation(s string) string {
+	return siPattern.ReplaceAllStringFunc(s, func(m string) string {
+		parts := siPattern.FindStringSubmatch(m)
+		if len(parts) < 3 {
+			return m
+		}
+		num := parts[1]
+		suffix := strings.ToUpper(parts[2])
+		var mult float64
+		switch suffix {
+		case "K":
+			mult = 1000
+		case "M":
+			mult = 1000000
+		case "B":
+			mult = 1000000000
+		case "T":
+			mult = 1000000000000
+		default:
+			return m
+		}
+		val, _ := strconv.ParseFloat(num, 64)
+		return strconv.FormatFloat(val*mult, 'f', -1, 64)
+	})
 }
 
 func wordsToNumbers(s string) string {
@@ -392,6 +494,7 @@ func findNumberPhrase(fields []string, start int) int {
 func evalNumberPhrase(words []string) float64 {
 	total := 0.0
 	current := 0.0
+	aFlag := false
 	for _, w := range words {
 		w = strings.ToLower(strings.TrimRight(w, ","))
 		if w == "and" || w == "" {
@@ -399,25 +502,27 @@ func evalNumberPhrase(words []string) float64 {
 		}
 		if w == "a" {
 			current = 1
+			aFlag = true
 			continue
 		}
 		val, ok := wordNumMap[w]
 		if !ok {
 			continue
 		}
-		if val >= 100 {
+		if aFlag {
+			current *= val
+			aFlag = false
+		} else if val >= 100 {
 			if current == 0 {
 				current = 1
 			}
-			if val >= 1000 {
-				current *= val
-				total += current
-				current = 0
-			} else {
-				current *= val
-			}
+			current *= val
 		} else {
 			current += val
+		}
+		if val >= 1000 {
+			total += current
+			current = 0
 		}
 	}
 	total += current
@@ -461,6 +566,302 @@ var powerOps = regexp.MustCompile(`(?i)\s+(?:to\s+the\s+power\s+of|raised\s+to)\
 // Word operators — MODULO
 var modOps = regexp.MustCompile(`(?i)\s+mod(?:ulo)?\s+`)
 
+// Currency symbol → ISO code mapping (used by convertCurrencies)
+var currencySymbolToCode = map[string]string{
+	"$":  "USD",
+	"€":  "EUR",
+	"£":  "GBP",
+	"¥":  "JPY",
+	"₹":  "INR",
+	"₽":  "RUB",
+	"₩":  "KRW",
+	"₪":  "ILS",
+	"₫":  "VND",
+	"₱":  "PHP",
+	"₴":  "UAH",
+	"₸":  "KZT",
+	"₲":  "PYG",
+	"₵":  "GHS",
+	"₺":  "TRY",
+	"₼":  "AZN",
+	"₾":  "GEL",
+	"₿":  "BTC",
+	"฿":  "THB",
+	"₡":  "CRC",
+	"₦":  "NGN",
+	"₨":  "INR",
+	"R$": "BRL",
+	"৳":  "BDT",
+	"₮":  "MNT",
+	"៛":  "KHR",
+}
+
+// currencyAnyPattern matches any currency symbol followed by a number anywhere in the string
+var currencyAnyPattern = regexp.MustCompile(`(?:R\$|[$€£¥₹₽₩₪₫₱₴₸₲₵₺₼₾₿฿₡₦₨৳₮៛₠])\s*([\d.]+(?:[kKMBT])?)`)
+
+func getCrossRate(fromCode, toCode string) float64 {
+	fInfo, fOk := unitDB[strings.ToLower(fromCode)]
+	tInfo, tOk := unitDB[strings.ToLower(toCode)]
+	if !fOk || !tOk {
+		return 1
+	}
+	return fInfo.toSI / tInfo.toSI
+}
+
+func extractCurrencySymbol(full string) string {
+	if strings.HasPrefix(full, "R$") {
+		return "R$"
+	}
+	runes := []rune(full)
+	return string(runes[0])
+}
+
+func convertCurrencies(s string) string {
+	type matchInfo struct {
+		full   string
+		numStr string
+		code   string
+	}
+	submatch := currencyAnyPattern.FindAllStringSubmatch(s, -1)
+	if len(submatch) == 0 {
+		// Fallback: match currency code prefixes like "BTC5k", "USD5k", "EUR5k"
+		// Pattern: <2-5 alpha code><number with optional SI suffix>
+		if strings.Contains(s, " in ") || strings.Contains(s, " to ") || strings.Contains(s, " as ") {
+			return convertCurrencyCodePrefix(s)
+		}
+		return s
+	}
+	matches := make([]matchInfo, len(submatch))
+	for i, m := range submatch {
+		matches[i].full = m[0]
+		matches[i].numStr = strings.TrimSpace(m[1])
+		sym := extractCurrencySymbol(m[0])
+		matches[i].code = currencySymbolToCode[sym]
+		// Only use code if it exists in unitDB
+		if _, ok := unitDB[strings.ToLower(matches[i].code)]; !ok {
+			matches[i].code = ""
+		}
+	}
+
+	// Single currency — check if followed by unit conversion
+	if len(matches) == 1 {
+		if strings.Contains(s, " in ") || strings.Contains(s, " to ") || strings.Contains(s, " as ") {
+			// Replace SYM NUM with "NUM CODE" so unit conversion knows the from-unit
+			if matches[0].code != "" {
+				return strings.Replace(s, matches[0].full, matches[0].numStr+" "+strings.ToLower(matches[0].code), 1)
+			}
+		}
+		// No conversion — just strip symbol
+		return strings.Replace(s, matches[0].full, matches[0].numStr, 1)
+	}
+
+	// Multiple currencies — convert all to the first one's code
+	targetCode := matches[0].code
+	idx := 0
+	return currencyAnyPattern.ReplaceAllStringFunc(s, func(full string) string {
+		mi := matches[idx]
+		idx++
+		if mi.code == "" || mi.code == targetCode {
+			return mi.numStr
+		}
+		return fmt.Sprintf("(%s * %s)", mi.numStr, formatNumber(getCrossRate(mi.code, targetCode)))
+	})
+}
+
+// currencyCodePrefixPattern matches a known currency code directly followed by a number
+var currencyCodePrefixPattern = regexp.MustCompile(`\b([A-Za-z]{2,5})(\d+(?:\.\d+)?(?:[kKMBT])?)\b`)
+
+// knownCurrencyCodes is the set of currency ISO codes (uppercase 2-5 char names in unitDB)
+var knownCurrencyCodes map[string]bool
+
+func init() {
+	knownCurrencyCodes = make(map[string]bool)
+	for _, entry := range unitDB {
+		name := entry.name
+		if name != strings.ToUpper(name) {
+			continue
+		}
+		code := strings.ToLower(name)
+		if len(code) >= 2 && len(code) <= 5 {
+			knownCurrencyCodes[code] = true
+		}
+	}
+}
+
+// Fallback: convert "BTC5k in USD" → "5k btc in USD"
+func convertCurrencyCodePrefix(s string) string {
+	return currencyCodePrefixPattern.ReplaceAllStringFunc(s, func(full string) string {
+		parts := currencyCodePrefixPattern.FindStringSubmatch(full)
+		if len(parts) < 3 {
+			return full
+		}
+		code := strings.ToLower(parts[1])
+		num := parts[2]
+		if !knownCurrencyCodes[code] {
+			return full
+		}
+		return num + " " + code
+	})
+}
+
+// Ordinal suffix — strip "st", "nd", "rd", "th" after numbers
+var ordinalPattern = regexp.MustCompile(`(?i)(\d+)(?:st|nd|rd|th)\b`)
+
+// SI notation — k/K (thousand), M (million), B (billion), T (trillion)
+// Case-sensitive: lowercase k is kilo, uppercase M/B/T only (m is not mega)
+var siPattern = regexp.MustCompile(`(\d+(?:\.\d+)?)\s*([kK]|[MBT])\b`)
+
+// Collective nouns: "a couple", "a dozen", "a score" → numbers
+var aCouplePattern = regexp.MustCompile(`(?i)\bcouple\b`)
+var aDozenPattern = regexp.MustCompile(`(?i)\bdozen\b`)
+var aScorePattern = regexp.MustCompile(`(?i)\bscore\b`)
+
+// Possessive plural: "3 tens", "2 hundreds", "5 thousands" → "3 * 10", "2 * 100", "5 * 1000"
+var possessivePluralPattern = regexp.MustCompile(`(?i)(\d+)\s+(tens|hundreds|thousands|millions|billions|dozens|scores)\b`)
+
+// Mixed number: "2 1/2" → "2 + 1/2"
+var mixedNumberPattern = regexp.MustCompile(`\b(\d+)\s+(\d+)/(\d+)\b`)
+
+// "X from Y" → "Y - X"
+var fromSubtractPattern = regexp.MustCompile(`(?i)((?:[\d.]+|\([^)]+\)))\s+from\s+((?:[\d.]+|\([^)]+\)))`)
+
+// "X out of every Y" → "X / Y"
+var outOfEveryPattern = regexp.MustCompile(`(?i)([\d.]+)\s+out\s+of\s+every\s+([\d.]+)`)
+
+// Phase 2 — Percentage relationship phrases
+var isWhatPercentOfPattern = regexp.MustCompile(`(?i)([\d.]+)\s+is\s+what\s+(?:%|percent(?:age)?)\s+of\s+([\d.]+)`)
+var asAPercentageOfPattern = regexp.MustCompile(`(?i)([\d.]+)\s+as\s+a\s+percent(?:age)?\s+of\s+([\d.]+)`)
+var percentOfWhatIsPattern = regexp.MustCompile(`(?i)([\d.]+)\s*(?:%|percent(?:age)?)\s+of\s+what\s+is\s+([\d.]+)`)
+
+// Phase 3 — Advanced math phrases
+var logBasePattern = regexp.MustCompile(`(?i)log\s+base\s+([\d.]+)\s+of\s+([\d.]+)`)
+var choosePattern = regexp.MustCompile(`(?i)([\d.]+)\s+choose\s+([\d.]+)`)
+var howManyTimesPattern = regexp.MustCompile(`(?i)how\s+many\s+times\s+(?:does\s+)?([\d.]+(?:[kKMBT])?)\s+go\s+(?:into|in)\s+([\d.]+(?:[kKMBT])?)`)
+
+// Compact time notation: "2h30m" → hours with optional minutes
+var timeCompactPattern = regexp.MustCompile(`\b(\d+)h(\d*)m?\b`)
+
+// Date math patterns
+var monthNames = map[string]time.Month{
+	"jan": time.January, "january": time.January,
+	"feb": time.February, "february": time.February,
+	"mar": time.March, "march": time.March,
+	"apr": time.April, "april": time.April,
+	"may": time.May,
+	"jun": time.June, "june": time.June,
+	"jul": time.July, "july": time.July,
+	"aug": time.August, "august": time.August,
+	"sep": time.September, "september": time.September,
+	"oct": time.October, "october": time.October,
+	"nov": time.November, "november": time.November,
+	"dec": time.December, "december": time.December,
+}
+
+var dateMathPattern = regexp.MustCompile(`(?i)^(today|now)\s*([+-])\s*(\d+)\s+(day|days|week|weeks|month|months|year|years)$`)
+var todayPattern = regexp.MustCompile(`(?i)^(today|now)$`)
+var dateAddPattern = regexp.MustCompile(`(?i)^((?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:[,\s]+\d{4})?))\s*([+-])\s*(\d+)\s+(day|days|week|weeks|month|months|year|years)$`)
+
+func parseDate(s string) (time.Time, bool) {
+	s = strings.TrimSpace(s)
+	low := strings.ToLower(s)
+	switch low {
+	case "today":
+		now := time.Now()
+		return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()), true
+	case "now":
+		return time.Now(), true
+	}
+	// Find the longest matching month name
+	matchedName := ""
+	var matchedMonth time.Month
+	for name, m := range monthNames {
+		if strings.HasPrefix(low, name) && len(name) > len(matchedName) {
+			matchedName = name
+			matchedMonth = m
+		}
+	}
+	if matchedName == "" {
+		return time.Time{}, false
+	}
+	rest := strings.TrimSpace(s[len(matchedName):])
+	rest = strings.ReplaceAll(rest, ",", "")
+	parts := strings.Fields(rest)
+	if len(parts) == 0 {
+		return time.Time{}, false
+	}
+	day, err := strconv.Atoi(parts[0])
+	if err != nil || day < 1 || day > 31 {
+		return time.Time{}, false
+	}
+	year := time.Now().Year()
+	if len(parts) > 1 {
+		y, err := strconv.Atoi(parts[1])
+		if err == nil && y > 0 {
+			year = y
+		}
+	}
+	return time.Date(year, matchedMonth, day, 0, 0, 0, 0, time.Local), true
+}
+
+func computeDateMath(s string) string {
+	if todayPattern.MatchString(s) {
+		low := strings.ToLower(strings.TrimSpace(s))
+		if low == "now" {
+			return time.Now().Format("2006-01-02 15:04:05")
+		}
+		return time.Now().Format("2006-01-02")
+	}
+	if m := dateMathPattern.FindStringSubmatch(s); m != nil {
+		base, ok := parseDate(m[1])
+		if !ok {
+			return s
+		}
+		n, _ := strconv.Atoi(m[3])
+		unit := strings.ToLower(m[4])
+		sign := m[2]
+		if sign == "-" {
+			n = -n
+		}
+		var result time.Time
+		switch unit {
+		case "day", "days":
+			result = base.AddDate(0, 0, n)
+		case "week", "weeks":
+			result = base.AddDate(0, 0, n*7)
+		case "month", "months":
+			result = base.AddDate(0, n, 0)
+		case "year", "years":
+			result = base.AddDate(n, 0, 0)
+		}
+		return result.Format("2006-01-02")
+	}
+	if m := dateAddPattern.FindStringSubmatch(s); m != nil {
+		base, ok := parseDate(m[1])
+		if !ok {
+			return s
+		}
+		n, _ := strconv.Atoi(m[3])
+		unit := strings.ToLower(m[4])
+		sign := m[2]
+		if sign == "-" {
+			n = -n
+		}
+		var result time.Time
+		switch unit {
+		case "day", "days":
+			result = base.AddDate(0, 0, n)
+		case "week", "weeks":
+			result = base.AddDate(0, 0, n*7)
+		case "month", "months":
+			result = base.AddDate(0, n, 0)
+		case "year", "years":
+			result = base.AddDate(n, 0, 0)
+		}
+		return result.Format("2006-01-02")
+	}
+	return s
+}
+
 // Percent — matches "10 percent" anywhere, with word boundary to avoid "percentage"
 var percentWordPattern = regexp.MustCompile(`(?i)(\d+)\s+percent\b`)
 
@@ -501,7 +902,7 @@ var trailingPeriodPattern = regexp.MustCompile(`\.\s*$`)
 var spacesPattern = regexp.MustCompile(`\s{2,}`)
 
 // Pattern matching for unit conversion and percentages
-var unitConvPattern = regexp.MustCompile(`(?i)^([\d.,]+)\s*(.+?)\s+(?:in|to|as)\s+(.+)$`)
+var unitConvPattern = regexp.MustCompile(`(?i)^([\d.,]+)\s*(.*?)\s+\b(?:in|to|as)\b\s+(.+)$`)
 var percentOfPattern = regexp.MustCompile(`(?i)^([\d.,]+)\s*%\s*(?:of|on)\s+([\d.,]+)$`)
 var percentAddPattern = regexp.MustCompile(`(?i)^([\d.,]+)\s*([+\-])\s*([\d.,]+)\s*%$`)
 
@@ -529,6 +930,7 @@ const (
 	tokDiv
 	tokPow
 	tokMod
+	tokBang
 	tokLParen
 	tokRParen
 	tokComma
@@ -564,6 +966,9 @@ func lex(s string) []token {
 			i++
 		case '%':
 			toks = append(toks, token{tokMod, "%"})
+			i++
+		case '!':
+			toks = append(toks, token{tokBang, "!"})
 			i++
 		case '(':
 			toks = append(toks, token{tokLParen, "("})
@@ -602,8 +1007,8 @@ func (e *Engine) parseExpr(s string) (float64, error) {
 	return p.parseAddSub()
 }
 
-func (p *parser) peek() token       { return p.tokens[p.pos] }
-func (p *parser) advance() token     { t := p.tokens[p.pos]; p.pos++; return t }
+func (p *parser) peek() token    { return p.tokens[p.pos] }
+func (p *parser) advance() token { t := p.tokens[p.pos]; p.pos++; return t }
 
 func (p *parser) expect(kind tokenKind) (token, error) {
 	t := p.advance()
@@ -709,7 +1114,15 @@ func (p *parser) parseAtom() (float64, error) {
 
 	if t.kind == tokNum {
 		p.advance()
-		return strconv.ParseFloat(t.val, 64)
+		val, err := strconv.ParseFloat(t.val, 64)
+		if err != nil {
+			return 0, err
+		}
+		if p.peek().kind == tokBang {
+			p.advance()
+			return factorial(val)
+		}
+		return val, nil
 	}
 
 	if t.kind == tokLParen {
@@ -721,6 +1134,10 @@ func (p *parser) parseAtom() (float64, error) {
 		_, err = p.expect(tokRParen)
 		if err != nil {
 			return 0, err
+		}
+		if p.peek().kind == tokBang {
+			p.advance()
+			return factorial(val)
 		}
 		return val, nil
 	}

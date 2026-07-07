@@ -49,6 +49,34 @@ LineSolv handles:
 - Division phrases: `10 over 2`, `ratio of 10 to 2`
 - Natural functions: `square root of 144`, `cube root of 27`, `absolute value of -5`
 - Convert prefix: `convert 10 inches to cm`, `change 100 c to f`
+- Currency prefix: `$10`, `€5`, `£20`
+- Ordinal suffixes: `1st`, `2nd`, `3rd`, `4th`
+- SI notation: `5k`, `3M`, `2B`
+- Date math: `today + 14 days`, `March 1 + 30 days`
+- Time/duration: `2h30m`, `90 minutes in hours`
+- Mixed numbers: `2 1/2` → `2.5`
+- Possessive plurals: `3 tens`, `2 hundreds`, `2 dozens`
+- Collective nouns: `a couple`, `a dozen`, `a score`
+- Subtraction from: `10 from 100`
+- Percentage relations: `10 is what percent of 50`, `10 is what % of 50`, `50% of what is 25`
+- Factorial operator: `5!`
+- Log base: `log base 2 of 8`
+- Combinations: `5 choose 3`
+- How many times: `how many times does 5 go into 20`, `how many times does 25 go into 5k`
+
+### Can I combine patterns across phases in one line?
+Yes. All natural language patterns work together on the same line:
+```
+$100 + €20                           →  120
+2B / 5k                              →  400000
+a dozen + 3 scores                    →  72
+how many times does 25 go into 5k     →  200
+5 choose 2 + 3!                       →  16
+log base 10 of 100 + 3 squared        →  11
+10 is what % of 50 + $20              →  40
+double a dozen                        →  24
+3 tens from 5 hundreds                →  470
+```
 
 ### Why is nothing showing up for my input?
 LineSolv behaves like a notepad — invalid expressions silently show no result. Check for:
@@ -75,7 +103,7 @@ Yes. LineSolv understands context references:
 - **Mass**: gram, kilogram, pound, ounce
 - **Volume**: liter, milliliter, gallon, quart, cup
 - **Temperature**: Celsius, Fahrenheit
-- **Currency**: USD, EUR, GBP, JPY, CNY, INR, CAD, AUD, CHF
+- **Currency**: USD, EUR, GBP, JPY, CNY, INR, CAD, AUD, CHF, KRW, RUB, BRL, MXN, ZAR, NZD, SEK, NOK, PLN, HKD, SGD, THB, ILS, VND, PHP, UAH, KZT, PYG, GHS, TRY, AZN, GEL, BDT, PKR, LKR, NPR, MYR, IDR, TWD, SAR, AED, KWD, EGP, NGN, COP, CLP, ARS, PEN, MAD, BTC, XAU, XAG
 
 ### Are currency rates live?
 No. Currency rates are hardcoded and will drift over time. They serve as approximate conversions only. Live API integration is planned for a future release.

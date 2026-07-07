@@ -189,8 +189,8 @@ func TestEvaluateLine_Constants(t *testing.T) {
 func TestEvaluateLine_Errors(t *testing.T) {
 	e := NewEngine()
 	tests := []struct {
-		input    string
-		wantErr  bool
+		input   string
+		wantErr bool
 	}{
 		{"1/0", true},
 		{"5 % 0", true},
@@ -489,6 +489,242 @@ func TestEvaluateLine_ConvertPrefix(t *testing.T) {
 	}{
 		{"convert 10 inches to cm", "25.4 cm"},
 		{"change 100 c to f", "212.0 \u00b0F"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_CurrencyPrefix(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"$10", "10"},
+		{"€5", "5"},
+		{"£20", "20"},
+		{"$1.5", "1.5"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_OrdinalSuffix(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"1st", "1"},
+		{"2nd", "2"},
+		{"3rd", "3"},
+		{"4th", "4"},
+		{"1st + 2", "3"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_SINotation(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"5k", "5000"},
+		{"3M", "3000000"},
+		{"2B", "2000000000"},
+		{"1.5K", "1500"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_PossessivePlurals(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"3 tens", "30"},
+		{"2 hundreds", "200"},
+		{"5 thousands", "5000"},
+		{"2 dozens", "24"},
+		{"3 scores", "60"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_CollectiveNouns(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"a couple", "2"},
+		{"a dozen", "12"},
+		{"a score", "20"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_FromSubtract(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"10 from 100", "90"},
+		{"5 from 20", "15"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_PercentageRelations(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"10 is what percent of 50", "20"},
+		{"10 is what % of 50", "20"},
+		{"10 as a percentage of 50", "20"},
+		{"50 percent of what is 25", "50"},
+		{"50% of what is 25", "50"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_LogBase(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"log base 2 of 8", "3"},
+		{"log base 10 of 100", "2"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_Choose(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"5 choose 3", "10"},
+		{"10 choose 2", "45"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_HowManyTimes(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"how many times does 5 go into 20", "4"},
+		{"how many times does 3 go in 15", "5"},
+		{"how many times does 25 go into 5k", "200"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_FactorialOp(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"5!", "120"},
+		{"0!", "1"},
+		{"3! + 2", "8"},
 	}
 	for _, tt := range tests {
 		got, err := e.EvaluateLine(tt.input)

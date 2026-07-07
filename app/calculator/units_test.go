@@ -72,9 +72,9 @@ func TestConvertUnit_Currency(t *testing.T) {
 		to       string
 		expected string
 	}{
-		{100, "USD", "EUR", "92.59 EUR"},
-		{100, "EUR", "USD", "108.00 USD"},
-		{100, "GBP", "USD", "126.00 USD"},
+	{100, "USD", "EUR", "87.72 EUR"},
+	{100, "EUR", "USD", "114.00 USD"},
+	{100, "GBP", "USD", "133.00 USD"},
 	}
 	for _, tt := range tests {
 		got := convertUnit(tt.val, tt.from, tt.to)
@@ -121,10 +121,10 @@ func TestRegisterUnit(t *testing.T) {
 
 func TestConvertUnit_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name     string
-		val      float64
-		from     string
-		to       string
+		name string
+		val  float64
+		from string
+		to   string
 	}{
 		{"negative length", -10, "m", "cm"},
 		{"same unit", 5, "m", "m"},
