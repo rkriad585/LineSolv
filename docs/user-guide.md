@@ -202,7 +202,8 @@ today + 3 months       →  2026-10-07
 today - 7 days         →  2026-06-30
 March 1 + 30 days      →  March 31
 Dec 25 2026 + 7 days   →  Jan 01 2027
-```
+
+Date patterns are also extracted from within longer text, so extra words around the expression do not prevent the result: `asjeh fjfugh today + 3 months etc` → `2026-10-07`, `I completing a book at today + 14 days` → `2026-07-21`.
 
 ### Time / Duration
 Compact time notation and unit conversion for durations:
@@ -254,7 +255,8 @@ Ask percentage questions in plain English (`%` and `percent` both work):
 10 as a percentage of 50         →  20
 50 percent of what is 25         →  50
 50% of what is 25                →  50
-```
+
+The two-word form `per cent` is also accepted: `10 per cent of 200` → `20`.
 
 ### Factorial Operator
 The postfix `!` computes the factorial:
@@ -286,6 +288,20 @@ how many times does 3 go in 15        →  5
 how many times does 25 go into 5k     →  200
 how many times does 2 go into 1M      →  500000
 ```
+
+### Age Calculation
+
+Calculate your age from a birth year or full date (supports multiple date orderings):
+
+born in 2007                                 →  19
+born 1990                                    →  36
+i was born in 2007                           →  19
+i am born in 02 jun 2007 show me my age      →  19
+i am born in jun 02 2007 show me my age      →  19
+i am born in 2007 02 jun show me my age      →  19
+what is my age                               →  19  (after a birth-year query)
+
+The age computation triggers whenever `born` is present in the input and finds any valid 4-digit year (1900–current year). After computing age, you can ask `what is my age` or `what is my current age` to recall the result without retyping the birth date.
 
 ### Putting It All Together
 Mix patterns across all three phases in a single line:
@@ -357,6 +373,7 @@ result / 2              →  47
 - `of that`, `of it`, `of the result` — use the previous line's result
 - `then X` — previous result followed by X
 - Just `that` or `it` on a line — returns the previous result
+- `my age` / `my current age` — returns the previous line's result (useful after an age computation)
 
 ### Math Functions
 

@@ -111,6 +111,20 @@ func (e *Engine) evaluateExpr(input string) (string, error) {
 
 	s := e.naturalize(raw)
 
+	// Date math again after naturalize (handles "what is next week" → "next week")
+	if result := computeDateMath(s); result != s {
+		return result, nil
+	}
+	// Fallback: extract date patterns embedded anywhere in the string
+	if result := extractDateMath(s); result != s {
+		return result, nil
+	}
+
+	// Age computation ("born in YYYY", "born YYYY")
+	if result := computeAge(s); result != s {
+		return result, nil
+	}
+
 	// "convert X to Y" / "change X to Y" unit conversion
 	{
 		convertMatch := regexp.MustCompile(`(?i)^(?:convert|change)\s+(.+)\s+to\s+(.+)$`).FindStringSubmatch(s)
@@ -215,12 +229,27 @@ func (e *Engine) naturalize(s string) string {
 		s = prefixPattern.ReplaceAllString(s, "")
 		s = leadingArticlePattern.ReplaceAllString(s, "")
 		s = leadingAddSumPattern.ReplaceAllString(s, "")
+		s = iAmPattern.ReplaceAllString(s, "")
+		s = showMePattern.ReplaceAllString(s, "")
+		s = tellMePattern.ReplaceAllString(s, "")
+		s = myAgeIsPattern.ReplaceAllString(s, "")
+		s = goingPattern.ReplaceAllString(s, "")
+		s = therePattern.ReplaceAllString(s, "")
+		s = onAtInPattern.ReplaceAllString(s, "")
+		s = areaVolumeOfPattern.ReplaceAllString(s, "")
+		s = genericNounPattern.ReplaceAllString(s, "")
 		if s == prev {
 			break
 		}
 	}
 	// 2. Strip trailing fluff
 	s = trailingFluffPattern.ReplaceAllString(s, "")
+	s = trailingMyAgePattern.ReplaceAllString(s, "")
+	s = trailingYearsOldPattern.ReplaceAllString(s, "")
+	s = trailingYearsOfAgePattern.ReplaceAllString(s, "")
+	// 2b. Strip trailing punctuation early (before wordsToNumbers so "one?" → "one")
+	s = trailingQMPattern.ReplaceAllString(s, "")
+	s = trailingPeriodPattern.ReplaceAllString(s, "")
 	// 3. Convert mixed currencies (or strip if single currency)
 	s = convertCurrencies(s)
 	// 3b. Compact time notation ("2h30m", "90m", "2h")
@@ -249,6 +278,8 @@ func (e *Engine) naturalize(s string) string {
 	s = mixedNumberPattern.ReplaceAllString(s, "$1 + ($2/$3)")
 	// 9. Expand possessive plurals ("3 tens" → "(3 * 10)", "2 dozens" → "(2 * 12)")
 	s = expandPossessivePlural(s)
+	// 9b. "half NUMBER" → "0.5 * NUMBER" (from "half a million" → wordsToNumbers → "half 1000000")
+	s = halfNumericPattern.ReplaceAllString(s, "0.5 * $1")
 	// 10. Replace "that" / "then" / "result" context references
 	s = e.substituteContext(s)
 	// 11. Multiplicative prefixes
@@ -259,6 +290,15 @@ func (e *Engine) naturalize(s string) string {
 	// 12. Power words
 	s = squaredPattern.ReplaceAllString(s, "$1 ^ 2")
 	s = cubedPattern.ReplaceAllString(s, "$1 ^ 3")
+	// 12b. "X times more than Y" → "Y + Y * X"
+	s = timesMoreThanPattern.ReplaceAllString(s, "$2 + $2 * $1")
+	// 12c. "X times as much as Y" → "Y * X"
+	s = timesAsMuchAsPattern.ReplaceAllString(s, "$2 * $1")
+	// 12d. "X% more than Y" → "Y + Y * X / 100"
+	s = percentMoreThanPattern.ReplaceAllString(s, "$2 + $2 * $1 / 100")
+	s = percentLessThanPattern.ReplaceAllString(s, "$2 - $2 * $1 / 100")
+	// 12e. "X added to Y" → "Y + X"
+	s = addedToPattern.ReplaceAllString(s, "$2 + $1")
 	// 13. Complex phrase patterns (before word operators)
 	s = increasedByPattern.ReplaceAllString(s, "$1 + $2")
 	s = decreasedByPattern.ReplaceAllString(s, "$1 - $2")
@@ -271,10 +311,21 @@ func (e *Engine) naturalize(s string) string {
 	s = ratioOfPattern.ReplaceAllString(s, "$1 / $2")
 	s = productOfPattern.ReplaceAllString(s, "$1 * $2")
 	s = sumOfPattern.ReplaceAllString(s, "$1 + $2")
+	// 13b. Shape area/volume/dimension patterns
+	s = rectAreaPattern.ReplaceAllString(s, "$1 * $2")
+	s = circleAreaPattern.ReplaceAllString(s, "pi * $1^2")
+	s = circleCircumPattern.ReplaceAllString(s, "2 * pi * $1")
+	s = cubeVolumePattern.ReplaceAllString(s, "$1^3")
+	s = cylinderVolumePattern.ReplaceAllString(s, "pi * $1^2 * $2")
+	s = sphereVolumePattern.ReplaceAllString(s, "(4/3) * pi * $1^3")
+	s = byDimensionPattern.ReplaceAllString(s, "($1 * $2)")
+	s = xMultiplyPattern.ReplaceAllString(s, "($1 * $2)")
 	// 14. Natural function call patterns
 	s = squareRootOfPattern.ReplaceAllString(s, "sqrt($1)")
 	s = cubeRootOfPattern.ReplaceAllString(s, "cbrt($1)")
 	s = absoluteValueOfPattern.ReplaceAllString(s, "abs($1)")
+	// 14c. "per cent" → "percent" (must be before word operators where "per" → "/")
+	s = perCentPattern.ReplaceAllString(s, "$1 percent ")
 	// 15. Replace word operators
 	s = additionOps.ReplaceAllString(s, " + ")
 	s = additionOps2.ReplaceAllString(s, " + ")
@@ -297,14 +348,13 @@ func (e *Engine) naturalize(s string) string {
 	// 18. Advanced math phrases
 	s = logBasePattern.ReplaceAllString(s, "(ln($2) / ln($1))")
 	s = choosePattern.ReplaceAllString(s, "nCr($1, $2)")
+	// 18b. Function with unparenthesized arg: "sin theta" → "sin(theta)"
+	s = trigArgPattern.ReplaceAllString(s, "$1($2)")
 	// 19. "percent" word
 	s = percentWordPattern.ReplaceAllString(s, "$1% ")
 	// 20. Commas in numbers
 	s = commaPattern.ReplaceAllString(s, "$1$2")
-	// 21. Clean trailing punctuation
-	s = trailingQMPattern.ReplaceAllString(s, "")
-	s = trailingPeriodPattern.ReplaceAllString(s, "")
-	// 22. Collapse multiple spaces
+	// 21. Collapse multiple spaces
 	s = spacesPattern.ReplaceAllString(s, " ")
 	return strings.TrimSpace(s)
 }
@@ -315,9 +365,9 @@ func (e *Engine) substituteContext(s string) string {
 	}
 	lastStr := formatNumber(e.lastResult)
 
-	// Entire line is just "that", "it", "of that" → returns lastResult
+	// Entire line is "that", "it", "of that", "my age", "my current age" → lastResult
 	trimmed := strings.TrimSpace(s)
-	if matched, _ := regexp.MatchString(`(?i)^(?:of\s+)?(?:that|it)$`, trimmed); matched {
+	if matched, _ := regexp.MatchString(`(?i)^(?:of\s+)?(?:that|it|my\s+(?:current\s+)?age)$`, trimmed); matched {
 		return lastStr
 	}
 
@@ -531,11 +581,26 @@ func evalNumberPhrase(words []string) float64 {
 
 // --- Regex patterns ---
 
-var prefixPattern = regexp.MustCompile(`(?i)^(?:what\s+(?:is|'s|are)|calculate|compute|find|solve|value\s+of|eval(?:uate)?|result\s+of|how\s+much\s+is|how\s+many\s+is)\s+`)
+var prefixPattern = regexp.MustCompile(`(?i)^(?:what\s+(?:is|'s|are)|calculate|compute|find|solve|value\s+of|eval(?:uate)?|result\s+of|how\s+much\s+is|how\s+many\s+is|work\s+out|figure\s+out|give\s+me)\s+`)
 var greetingPattern = regexp.MustCompile(`(?i)^(?:hi|hello|hey)(?:\s+there)?\s+`)
 var leadingAddSumPattern = regexp.MustCompile(`(?i)^(?:add\b|sum\b(?:\s+of\b)?)\s+`)
 var leadingArticlePattern = regexp.MustCompile(`(?i)^(?:the|a|an)\s+`)
+
+// Conversational prefixes for age/self-referencing expressions
+var iAmPattern = regexp.MustCompile(`(?i)^(?:i\s+am|i'm|im)\s+`)
+
+// Conversational filler that can wrap date/time expressions
+var goingPattern = regexp.MustCompile(`(?i)^going\s+(?:to|on|there)?\s*`)
+var therePattern = regexp.MustCompile(`(?i)^(?:there|their|here)\s+`)
+var onAtInPattern = regexp.MustCompile(`(?i)^(?:on|at|in|by|from|for|during|this|the)\s+`)
+var showMePattern = regexp.MustCompile(`(?i)^show\s+me\s+`)
+var tellMePattern = regexp.MustCompile(`(?i)^tell\s+me\s+`)
+var myAgeIsPattern = regexp.MustCompile(`(?i)^my\s+age\s+is\s+`)
+
 var trailingFluffPattern = regexp.MustCompile(`(?i)\s+(?:please|thanks|thank you|pls)$`)
+var trailingMyAgePattern = regexp.MustCompile(`(?i)\s+(?:my\s+(?:current\s+)?age|show\s+me\s+my\s+(?:current\s+)?age)$`)
+var trailingYearsOldPattern = regexp.MustCompile(`(?i)\s+years?\s+old$`)
+var trailingYearsOfAgePattern = regexp.MustCompile(`(?i)\s+years?\s+of\s+age$`)
 
 // Context references
 var thatOfPattern = regexp.MustCompile(`(?i)\bof\s+(?:that|it|the\s+(?:result|answer|value))\b`)
@@ -803,6 +868,25 @@ func parseDate(s string) (time.Time, bool) {
 	return time.Date(year, matchedMonth, day, 0, 0, 0, 0, time.Local), true
 }
 
+func computeRelativeDate(nStr, unit string) string {
+	n, _ := strconv.Atoi(nStr)
+	now := time.Now()
+	base := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	var result time.Time
+	unit = strings.ToLower(unit)
+	switch {
+	case unit == "week" || strings.HasPrefix(unit, "week"):
+		result = base.AddDate(0, 0, n*7)
+	case unit == "month" || strings.HasPrefix(unit, "month"):
+		result = base.AddDate(0, n, 0)
+	case unit == "year" || strings.HasPrefix(unit, "year"):
+		result = base.AddDate(n, 0, 0)
+	default:
+		return ""
+	}
+	return result.Format("2006-01-02")
+}
+
 func computeDateMath(s string) string {
 	if todayPattern.MatchString(s) {
 		low := strings.ToLower(strings.TrimSpace(s))
@@ -811,53 +895,116 @@ func computeDateMath(s string) string {
 		}
 		return time.Now().Format("2006-01-02")
 	}
+	// "next week/month/year"
+	if m := nextDatePattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate("1", m[1])
+	}
+	// "last week/month/year"
+	if m := lastDatePattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate("-1", m[1])
+	}
+	// "N weeks/months/years from now/today"
+	if m := fromNowPattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate(m[1], m[2])
+	}
+	// "N weeks/months/years ago"
+	if m := agoPattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate("-"+m[1], m[2])
+	}
 	if m := dateMathPattern.FindStringSubmatch(s); m != nil {
 		base, ok := parseDate(m[1])
 		if !ok {
 			return s
 		}
-		n, _ := strconv.Atoi(m[3])
-		unit := strings.ToLower(m[4])
-		sign := m[2]
-		if sign == "-" {
-			n = -n
-		}
-		var result time.Time
-		switch unit {
-		case "day", "days":
-			result = base.AddDate(0, 0, n)
-		case "week", "weeks":
-			result = base.AddDate(0, 0, n*7)
-		case "month", "months":
-			result = base.AddDate(0, n, 0)
-		case "year", "years":
-			result = base.AddDate(n, 0, 0)
-		}
-		return result.Format("2006-01-02")
+		return computeDateOffset(base, m[2], m[3], m[4])
 	}
 	if m := dateAddPattern.FindStringSubmatch(s); m != nil {
 		base, ok := parseDate(m[1])
 		if !ok {
 			return s
 		}
-		n, _ := strconv.Atoi(m[3])
-		unit := strings.ToLower(m[4])
-		sign := m[2]
-		if sign == "-" {
-			n = -n
+		return computeDateOffset(base, m[2], m[3], m[4])
+	}
+	return s
+}
+
+// Unanchored date patterns for embedded extraction (anywhere in string)
+var embeddedTodayPattern = regexp.MustCompile(`(?i)\b(today|now)\b`)
+var embeddedNextPattern = regexp.MustCompile(`(?i)\bnext\s+(week|month|year)\b`)
+var embeddedLastPattern = regexp.MustCompile(`(?i)\blast\s+(week|month|year)\b`)
+var embeddedFromNowPattern = regexp.MustCompile(`(?i)(\d+)\s+(weeks?|months?|years?)\s+from\s+(now|today)\b`)
+var embeddedAgoPattern = regexp.MustCompile(`(?i)(\d+)\s+(weeks?|months?|years?)\s+ago\b`)
+var embeddedDateMathPattern = regexp.MustCompile(`(?i)\b(today|now)\s*([+-])\s*(\d+)\s+(day|days|week|weeks|month|months|year|years)\b`)
+var embeddedDateAddPattern = regexp.MustCompile(`(?i)((?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:[,\s]+\d{4})?))\s*([+-])\s*(\d+)\s+(day|days|week|weeks|month|months|year|years)\b`)
+
+func extractDateMath(s string) string {
+	// Check more specific offset patterns first (today + 14 days, etc.)
+	if m := embeddedDateMathPattern.FindStringSubmatch(s); m != nil {
+		base, ok := parseDate(m[1])
+		if !ok {
+			return s
 		}
-		var result time.Time
-		switch unit {
-		case "day", "days":
-			result = base.AddDate(0, 0, n)
-		case "week", "weeks":
-			result = base.AddDate(0, 0, n*7)
-		case "month", "months":
-			result = base.AddDate(0, n, 0)
-		case "year", "years":
-			result = base.AddDate(n, 0, 0)
+		return computeDateOffset(base, m[2], m[3], m[4])
+	}
+	if m := embeddedDateAddPattern.FindStringSubmatch(s); m != nil {
+		base, ok := parseDate(m[1])
+		if !ok {
+			return s
 		}
-		return result.Format("2006-01-02")
+		return computeDateOffset(base, m[2], m[3], m[4])
+	}
+	if m := embeddedFromNowPattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate(m[1], m[2])
+	}
+	if m := embeddedAgoPattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate("-"+m[1], m[2])
+	}
+	if m := embeddedNextPattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate("1", m[1])
+	}
+	if m := embeddedLastPattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate("-1", m[1])
+	}
+	// Standalone today/now last (least specific)
+	if m := embeddedTodayPattern.FindStringSubmatch(s); m != nil {
+		low := strings.ToLower(m[1])
+		if low == "now" {
+			return time.Now().Format("2006-01-02 15:04:05")
+		}
+		return time.Now().Format("2006-01-02")
+	}
+	return s
+}
+
+func computeDateOffset(base time.Time, sign, nStr, unit string) string {
+	n, _ := strconv.Atoi(nStr)
+	if sign == "-" {
+		n = -n
+	}
+	var result time.Time
+	switch strings.ToLower(unit) {
+	case "day", "days":
+		result = base.AddDate(0, 0, n)
+	case "week", "weeks":
+		result = base.AddDate(0, 0, n*7)
+	case "month", "months":
+		result = base.AddDate(0, n, 0)
+	case "year", "years":
+		result = base.AddDate(n, 0, 0)
+	}
+	return result.Format("2006-01-02")
+}
+
+func computeAge(s string) string {
+	if !strings.Contains(strings.ToLower(s), "born") {
+		return s
+	}
+	yearPat := regexp.MustCompile(`\b(\d{4})\b`)
+	for _, m := range yearPat.FindAllStringSubmatch(s, -1) {
+		year, err := strconv.Atoi(m[1])
+		if err == nil && year >= 1900 && year <= time.Now().Year() {
+			return strconv.Itoa(time.Now().Year() - year)
+		}
 	}
 	return s
 }
@@ -894,6 +1041,54 @@ var sumOfPattern = regexp.MustCompile(`(?i)sum\s+of\s+([\d.]+)\s+and\s+([\d.]+)`
 var squareRootOfPattern = regexp.MustCompile(`(?i)square\s+root\s+of\s+(-?[\d.]+)`)
 var cubeRootOfPattern = regexp.MustCompile(`(?i)cube\s+root\s+of\s+(-?[\d.]+)`)
 var absoluteValueOfPattern = regexp.MustCompile(`(?i)absolute\s+value\s+of\s+(-?[\d.]+)`)
+
+// "X times more than Y" → "Y + Y * X" (before word operator replacement of "times")
+var timesMoreThanPattern = regexp.MustCompile(`(?i)([\d.]+)\s+times\s+more\s+than\s+([\d.]+)`)
+
+// "X times as much/many/big/etc. as Y" → "Y * X"
+var timesAsMuchAsPattern = regexp.MustCompile(`(?i)([\d.]+)\s+times\s+as\s+(?:much|many|big|large|little|small)\s+as\s+([\d.]+)`)
+
+// "X% more than Y" → "Y + Y * X / 100"
+var percentMoreThanPattern = regexp.MustCompile(`(?i)([\d.]+)\s*%\s+more\s+than\s+([\d.]+)`)
+
+// "X% less than Y" → "Y - Y * X / 100"
+var percentLessThanPattern = regexp.MustCompile(`(?i)([\d.]+)\s*%\s+less\s+than\s+([\d.]+)`)
+
+// "X added to Y" → "Y + X"
+var addedToPattern = regexp.MustCompile(`(?i)([\d.]+)\s+added\s+to\s+([\d.]+)`)
+
+// "half NUMBER" → "0.5 * NUMBER" (after wordsToNumbers converts "half a million" → "half 1000000")
+var halfNumericPattern = regexp.MustCompile(`(?i)\bhalf\s+(\d+(?:\.\d+)?)\b`)
+
+// "per cent" → "%"
+var perCentPattern = regexp.MustCompile(`(?i)(\d+)\s+per\s+cent\b`)
+
+// Relative date shorthand
+var nextDatePattern = regexp.MustCompile(`(?i)^next\s+(week|month|year)$`)
+var lastDatePattern = regexp.MustCompile(`(?i)^last\s+(week|month|year)$`)
+var fromNowPattern = regexp.MustCompile(`(?i)^(\d+)\s+(weeks?|months?|years?)\s+from\s+(now|today)$`)
+var agoPattern = regexp.MustCompile(`(?i)^(\d+)\s+(weeks?|months?|years?)\s+ago$`)
+
+// "X by Y" dimension → X * Y (e.g., "10 by 20")
+var byDimensionPattern = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)\s+by\s+(\d+(?:\.\d+)?)\b`)
+
+// "XxY" or "X×Y" multiplication (e.g., "5x10", "2×3")
+var xMultiplyPattern = regexp.MustCompile(`(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)`)
+
+// Shape area/volume patterns
+var rectAreaPattern = regexp.MustCompile(`(?i)(?:rectangle|rect)\s+(\d+(?:\.\d+)?)\s+by\s+(\d+(?:\.\d+)?)`)
+var circleAreaPattern = regexp.MustCompile(`(?i)circle\s+(?:with\s+)?(?:radius\s+)?(\d+(?:\.\d+)?)`)
+var circleCircumPattern = regexp.MustCompile(`(?i)circumference\s+(?:of\s+)?(?:a|the)?\s*circle\s+(?:with\s+)?(?:radius\s+)?(\d+(?:\.\d+)?)`)
+var cubeVolumePattern = regexp.MustCompile(`(?i)cube\s+(?:with\s+)?(?:side\s+)?(\d+(?:\.\d+)?)`)
+var cylinderVolumePattern = regexp.MustCompile(`(?i)cylinder\s+(?:with\s+)?(?:radius\s+)?(\d+(?:\.\d+)?)\s+(?:and\s+)?(?:height\s+)?(\d+(?:\.\d+)?)`)
+var sphereVolumePattern = regexp.MustCompile(`(?i)sphere\s+(?:with\s+)?(?:radius\s+)?(\d+(?:\.\d+)?)`)
+
+// Function with unparenthesized argument: "sin theta" → "sin(theta)"
+var trigArgPattern = regexp.MustCompile(`(?i)\b(sin|cos|tan|asin|acos|atan|sinh|cosh|tanh|log|ln|log2|log10|sqrt|cbrt|abs|round|floor|ceil|sign|trunc|exp|deg|rad)\s+(\d+(?:\.\d+)?|[a-zA-Z_]\w*)\b`)
+
+// Strip area/volume/geometric prefixes and generic nouns
+var areaVolumeOfPattern = regexp.MustCompile(`(?i)^(?:area|volume|perimeter)\s+of\s+(?:a|the|my|your|this|that)?\s*`)
+var genericNounPattern = regexp.MustCompile(`(?i)^(?:land|house|room|floor|space|field|garden|yard|property|building|lot|garage|deck|patio|porch|driveway|shape)\s+`)
 
 // Commas and trailing noise
 var commaPattern = regexp.MustCompile(`(\d),(\d)`)

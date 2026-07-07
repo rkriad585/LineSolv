@@ -1,6 +1,7 @@
 package calculator
 
 import (
+	"strconv"
 	"testing"
 )
 
@@ -65,6 +66,8 @@ func TestEvaluateLine_NaturalLanguage(t *testing.T) {
 		{"hi what is one plus one", "2"},
 		{"hello how much is 5 + 3", "8"},
 		{"hey there calculate 6 times 7", "42"},
+		{"what is one plus one", "2"},
+		{"what is one plus one?", "2"},
 	}
 	for _, tt := range tests {
 		got, err := e.EvaluateLine(tt.input)
@@ -725,6 +728,235 @@ func TestEvaluateLine_FactorialOp(t *testing.T) {
 		{"5!", "120"},
 		{"0!", "1"},
 		{"3! + 2", "8"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_HalfNumeric(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"half a dozen", "6"},
+		{"half a million", "500000"},
+		{"half a couple", "1"},
+		{"half a dozen plus 3", "9"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_TimesMoreThan(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"3 times more than 5", "20"},
+		{"2 times more than 10", "30"},
+		{"10 times more than 3", "33"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_TimesAsMuchAs(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"3 times as much as 5", "15"},
+		{"2 times as many as 10", "20"},
+		{"10 times as big as 3", "30"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_PercentMoreLess(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"20% more than 100", "120"},
+		{"10% less than 200", "180"},
+		{"50% more than 10", "15"},
+		{"25% less than 80", "60"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_AddedTo(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"5 added to 10", "15"},
+		{"3 added to 20", "23"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_PerCent(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"10 per cent of 200", "20"},
+		{"50 per cent of 80", "40"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_AdditionalPrefixes(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"work out 2 + 3", "5"},
+		{"figure out 10 * 5", "50"},
+		{"give me 3 + 7", "10"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_RelativeDates(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		desc     string
+		checkFn  func(string) bool
+	}{
+		{"next week", "next week returns a date 7 days from now", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"last month", "last month returns a date string", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"what is next week", "prefixed next week returns a date", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"2 weeks from now", "weeks from now returns a date", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"3 months ago", "months ago returns a date", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"today + 14 days", "today + 14 days", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"today - 7 days", "today - 7 days", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"March 1 + 30 days", "March 1 + 30 days", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"asjeh fjfugh today + 3 months etc", "embedded today + 3 months", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"ssome text march 1 + 30 days rnbnoroihnotho", "embedded march 1 + 30 days", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"I completing a book at today + 14 days some others story", "embedded today + 14 days in text", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+		{"I'm start a job on today - 7 days something more", "embedded today - 7 days in text", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if !tt.checkFn(got) {
+			t.Errorf("EvaluateLine(%q) = %q, want YYYY-MM-DD (%s)", tt.input, got, tt.desc)
+		}
+	}
+}
+
+func TestEvaluateLine_AgeBirthYear(t *testing.T) {
+	e := NewEngine()
+	curYear := 2026 // Current year
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"born in 2007", strconv.Itoa(curYear - 2007)},
+		{"born 2007", strconv.Itoa(curYear - 2007)},
+		{"born in 1990", strconv.Itoa(curYear - 1990)},
+		{"i am born in 2007 show me my current age", strconv.Itoa(curYear - 2007)},
+		{"i was born in 2007", strconv.Itoa(curYear - 2007)},
+		{"what is my age", strconv.Itoa(curYear - 2007)},
+		{"what is my current age", strconv.Itoa(curYear - 2007)},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_ConversationalAge(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"i am 25", "25"},
+		{"i am 25 years old", "25"},
+		{"i am twenty five years old", "25"},
+		{"my age is 30", "30"},
+		{"my age is thirty", "30"},
+		{"show me 5 + 3", "8"},
+		{"tell me 10 + 20", "30"},
 	}
 	for _, tt := range tests {
 		got, err := e.EvaluateLine(tt.input)

@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.1] — 2026-07-07
+
+### Fixed
+- Trailing `?` breaking word-to-number conversion (`"what is one plus one?"` → `2`)
+- "What is my age?" not resolving from context (now returns last computed age)
+- Date math patterns not matching when embedded in surrounding text
+
+### Added
+- Embedded date math extraction: `today + 14 days` computed even with extra words around it
+- "my age" / "my current age" as context references (return last result)
+- `extractDateMath` fallback using unanchored patterns for post-naturalize matching
+- Refactored `computeDateOffset` to eliminate duplicate date offset logic
+- Test coverage for embedded date expressions and "what is my age" sequence
+
 ## [0.4.0] — 2026-07-07
 
 ### Added
@@ -97,6 +111,7 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
+[0.4.1]: https://github.com/rkriad585/LineSolv/releases/tag/v0.4.1
 [0.4.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.4.0
 [0.3.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.3.0
 [0.2.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.2.0

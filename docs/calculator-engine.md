@@ -22,30 +22,34 @@ Before arithmetic parsing, the input is preprocessed through a multi-step pipeli
 | Step | What it does | Example |
 |---|---|---|---|---|
 | 1. Prefix stripping | Removes query prefixes (loop) | `what is 2+2` → `2+2` |
-| 2. Trailing fluff | Removes `please`, `thanks` | `2+2 please` → `2+2` |
-| 3. Currency conversion | Strips symbols, handles cross-rates, code prefixes | `$5k in EUR` → `5000 usd in EUR`, `BTC5k in USD` → `5k btc in USD` |
+| 2. Trailing fluff | Removes `please`, `thanks`, `my age`, `years old` | `2+2 please` → `2+2` |
+| 2b. Trailing punctuation | Strips `?` and `.` early (before word-to-number) | `one plus one?` → `one plus one` |
+| 3. Currency conversion | Strips symbols, handles cross-rates, code prefixes | `$5k in EUR` → `5000 usd in EUR` |
 | 3b. Compact time | Expands `h`/`m` notation | `2h30m` → `(2 + 30/60.0)` |
 | 4. Fraction words | Converts fraction words to decimals | `one half` → `0.5` |
 | 5. Word-to-number | Converts word numbers to digits | `twenty five` → `25` |
 | 6. Ordinal suffixes | Strips `st`, `nd`, `rd`, `th` | `1st` → `1` |
 | 7. "how many times" | Division via how-many-times (before SI) | `how many times does 5 go into 20` → `20 / 5` |
-| 8. SI notation | Expands `k`/`M`/`B`/`T` suffixes | `5k` → `5000` (computed value) |
+| 8. SI notation | Expands `k`/`M`/`B`/`T` suffixes | `5k` → `5000` |
 | 8b. Mixed numbers | Whole + fraction → addition | `2 1/2` → `2 + (1/2)` |
 | 9. Possessive plurals | Expands plural number words | `3 tens` → `(3 * 10)` |
-| 10. Context references | Replaces `that`, `then`, `result` | `then * 2` → `42 * 2` |
+| 9b. "half N" pattern | `half N` → `0.5 * N` | `half 1000000` → `0.5 * 1000000` |
+| 10. Context references | Replaces `that`, `then`, `result`, `my age` | `then * 2` → `42 * 2` |
 | 11. Multiplicative prefixes | Handles `double`, `twice`, `half of` | `double 5` → `2 * 5` |
 | 12. Power words | Converts `squared`, `cubed` | `5 squared` → `5 ^ 2` |
+| 12b–12e. Comparison/ratio | `times more/less`, `% more/less`, `added to` | `3 times more than 5` → `5 + 5 * 3` |
 | 13. Complex phrases | Comparison, division, multiplication phrases | `10 increased by 5` → `10 + 5` |
+| 13b. Shape patterns | Rectangle/circle area, cube/cylinder/sphere volume, `by`/`x` multiply | `area of rectangle 10 by 20` → `200` |
 | 14. Natural functions | Converts `square root of X` to `sqrt(X)` | `square root of 144` → `sqrt(144)` |
+| 14c. "per cent" | Converts `per cent` → `percent` (before word operator `per`) | `10 per cent of 200` → `10 percent of 200` |
 | 15. Word operators | Replaces English operators with symbols | `plus` → `+`, `divided by` → `/` |
 | 16. "X from Y" | Converts subtraction-by-from (after word operators) | `10 from 100` → `100 - 10` |
-| 17. Percentage relations | `is what percent of`, `as a percentage of`, `% of what is` | `10 is what % of 50` → `((10 / 50) * 100)` |
-| 18. Advanced math phrases | `log base`, `choose` | `log base 2 of 8` → `(ln(8)/ln(2))` |
+| 17. Percentage relations | `is what % of`, `as a percentage of`, `% of what is` | `10 is what % of 50` → `((10 / 50) * 100)` |
+| 18. Advanced math | `log base`, `choose` | `log base 2 of 8` → `(ln(8) / ln(2))` |
+| 18b. Trig shorthand | `sin 45` → `sin(45)`, `sin theta` → `sin(theta)` | `sin 45` → `0.8509` |
 | 19. Percent word | Converts `percent` → `%` | `10 percent of 200` → `10% of 200` |
-| 20. Date math | `today + N days`, `March 1 + 30 days` | `today + 14 days` → `2026-07-21` (before final cleanup) |
-| 21. Comma cleanup | Removes commas from numbers | `1,000` → `1000` |
-| 22. Trailing punctuation | Strips `?` and `.` | `42?` → `42` |
-| 23. Collapse spaces | Normalises multiple spaces to one | `5  +   3` → `5 + 3` |
+| 20. Comma cleanup | Removes commas from numbers | `1,000` → `1000` |
+| 21. Collapse spaces | Normalises multiple spaces to one | `5  +   3` → `5 + 3` |
 
 ### Query Prefixes
 
@@ -108,12 +112,30 @@ These patterns provide natural‑language access to advanced mathematical operat
 
 The factorial `!` operator is parsed at the lexer level as a `tokBang` token and applied in the parser's `parseAtom` — it binds tighter than all binary operators. The `nCr` function is registered in the built‑in function table. `log base` and `choose` are substituted before word operators so they don't conflict with other patterns. The "how many times" pattern runs before SI expansion (step 7) to handle SI suffixed numbers like `5k`.
 
+### Date Math (before and after naturalize)
+
+Date math runs **before** naturalize (to preserve date keywords like `today`, `now`, `next`) 
+and again **after** naturalize (handling cleaned expressions like `what is next week` → `next week`).
+
+An additional embedded extraction pass searches for date patterns anywhere in the
+post-naturalize string, so expressions like `asjeh fjfugh today + 3 months etc` still
+resolve to the correct date.
+
+Supported patterns:
+- `today` / `now` — returns current date/time
+- `next week` / `last month` / `next year` — relative dates
+- `today + 14 days` / `today - 3 months` / `now + 1 year`
+- `March 1 + 30 days` / `Dec 25 2026 + 7 days`
+- `N days from now` / `N months ago`
+- Embedded in text: `I completing a book at today + 14 days some others story` → date
+
 ### Context References
 
 - `of that`, `of it`, `of the result` — replaces with previous line's result
 - `then X` — prepends previous result: `then + 5` → `42 + 5`
 - `result X` / `answer X` — same as `then`
-- Entire line `that` or `it` — returns previous result
+- `my age` / `my current age` — returns previous line's result (useful after a birth-year query)
+- Entire line `that`, `it`, `my age`, or `my current age` — returns previous result
 
 ### Word Operators
 
