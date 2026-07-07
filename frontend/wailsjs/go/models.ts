@@ -20,6 +20,7 @@ export namespace calculator {
 export namespace service {
 	
 	export class SettingsData {
+	    theme: string;
 	    font_size: string;
 	    font_family: string;
 	    shortcut_overrides: string;
@@ -30,6 +31,7 @@ export namespace service {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.theme = source["theme"];
 	        this.font_size = source["font_size"];
 	        this.font_family = source["font_family"];
 	        this.shortcut_overrides = source["shortcut_overrides"];
