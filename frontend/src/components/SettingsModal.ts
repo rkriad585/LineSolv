@@ -82,7 +82,6 @@ export class SettingsModal {
 
   private fontSizeInput!: HTMLInputElement;
   private fontFamilySelect!: CustomSelect;
-  private fontColorInput!: HTMLInputElement;
   private themeBtn!: HTMLButtonElement;
   private previewEl!: HTMLDivElement;
   private updateStatusEl!: HTMLDivElement;
@@ -422,25 +421,6 @@ export class SettingsModal {
       return wrap;
     });
 
-    // Font Color
-    const colorRow = this.fieldRow('Font Color', () => {
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;align-items:center;gap:8px;';
-
-      const input = this.styledInput('color', 'width:32px;height:28px;padding:1px;cursor:pointer;');
-      this.fontColorInput = input;
-
-      const hexLabel = document.createElement('span');
-      hexLabel.style.cssText = 'font-size:12px;color:var(--text-muted);font-family:monospace;';
-      input.addEventListener('input', () => {
-        hexLabel.textContent = input.value;
-        this.updatePreview();
-      });
-
-      wrap.append(input, hexLabel);
-      return wrap;
-    });
-
     // Preview section
     const previewSection = document.createElement('div');
     previewSection.style.cssText =
@@ -457,7 +437,7 @@ export class SettingsModal {
 
     previewSection.append(previewLabel, this.previewEl);
 
-    panel.append(themeRow, familyRow, sizeRow, colorRow, previewSection);
+    panel.append(themeRow, familyRow, sizeRow, previewSection);
   }
 
   private fieldRow(label: string, makeCtrl: () => HTMLElement): HTMLDivElement {
@@ -484,7 +464,6 @@ export class SettingsModal {
     const size = this.fontSizeInput.value || '16';
     this.previewEl.style.fontSize = size + 'px';
     this.previewEl.style.fontFamily = this.fontFamilySelect.value;
-    this.previewEl.style.color = this.fontColorInput.value;
   }
 
   private buildShortcuts(panel: HTMLDivElement): void {
@@ -653,7 +632,6 @@ export class SettingsModal {
     const settings: SettingsData = {
       font_size: this.fontSizeInput.value,
       font_family: this.fontFamilySelect.value,
-      font_color: this.fontColorInput.value,
       shortcut_overrides: JSON.stringify(this.overrides),
     };
 
@@ -686,7 +664,6 @@ export class SettingsModal {
       if (this.fontFamilySelect.options.some(o => o === fontFamily)) {
         this.fontFamilySelect.value = fontFamily;
       }
-      this.fontColorInput.value = settings.font_color || '#ffffff';
       this.updatePreview();
 
       const verEl = this.el.querySelector('#settings-version');

@@ -24,7 +24,6 @@ type Config struct {
 	Settings struct {
 		FontSize          string `toml:"font_size"`
 		FontFamily        string `toml:"font_family"`
-		FontColor         string `toml:"font_color"`
 		ShortcutOverrides string `toml:"shortcut_overrides"`
 	} `toml:"settings"`
 }
@@ -37,7 +36,6 @@ func DefaultConfig() *Config {
 	c.Behavior.DeleteWithoutConfirm = "false"
 	c.Settings.FontSize = "16"
 	c.Settings.FontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-	c.Settings.FontColor = "#ffffff"
 	c.Settings.ShortcutOverrides = "{}"
 	return c
 }
@@ -77,7 +75,6 @@ func SaveConfig(cfg *Config) error {
 	buf.WriteString("\n[settings]\n")
 	buf.WriteString(fmt.Sprintf("font_size = %q\n", cfg.Settings.FontSize))
 	buf.WriteString(fmt.Sprintf("font_family = %q\n", cfg.Settings.FontFamily))
-	buf.WriteString(fmt.Sprintf("font_color = %q\n", cfg.Settings.FontColor))
 	buf.WriteString(fmt.Sprintf("shortcut_overrides = %q\n", cfg.Settings.ShortcutOverrides))
 	return os.WriteFile(dir, []byte(buf.String()), 0644)
 }
@@ -127,8 +124,6 @@ func parseConfigTOML(data string, cfg *Config) {
 				cfg.Settings.FontSize = val
 			case "font_family":
 				cfg.Settings.FontFamily = val
-			case "font_color":
-				cfg.Settings.FontColor = val
 			case "shortcut_overrides":
 				cfg.Settings.ShortcutOverrides = val
 			}

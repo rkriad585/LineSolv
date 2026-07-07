@@ -234,7 +234,6 @@ const appVersion = "0.1.45"
 type SettingsData struct {
 	FontSize          string `json:"font_size"`
 	FontFamily        string `json:"font_family"`
-	FontColor         string `json:"font_color"`
 	ShortcutOverrides string `json:"shortcut_overrides"`
 }
 
@@ -253,7 +252,6 @@ func (s *AppService) GetSettings() (*SettingsData, error) {
 	return &SettingsData{
 		FontSize:          cfg.Settings.FontSize,
 		FontFamily:        cfg.Settings.FontFamily,
-		FontColor:         cfg.Settings.FontColor,
 		ShortcutOverrides: cfg.Settings.ShortcutOverrides,
 	}, nil
 }
@@ -265,7 +263,6 @@ func (s *AppService) SaveSettings(settings *SettingsData) error {
 	}
 	cfg.Settings.FontSize = settings.FontSize
 	cfg.Settings.FontFamily = settings.FontFamily
-	cfg.Settings.FontColor = settings.FontColor
 	cfg.Settings.ShortcutOverrides = settings.ShortcutOverrides
 	return storage.SaveConfig(cfg)
 }

@@ -16,20 +16,10 @@ import {installGlobalShortcuts} from './utils/shortcuts';
 import * as serviceBindings from '../wailsjs/go/service/AppService';
 
 let saveContentTimer: number | null = null;
-let lastSettings: SettingsData | null = null;
-
 function applyFontSettings(settings: SettingsData): void {
-  lastSettings = settings;
   const size = settings.font_size || '16';
   document.documentElement.style.setProperty('--calc-font-size', size + 'px');
   document.documentElement.style.setProperty('--calc-font-family', settings.font_family || 'monospace');
-
-  const fc = (settings.font_color || '').toLowerCase();
-  if (fc === '#ffffff' || fc === '#18181b' || fc === '') {
-    document.documentElement.style.removeProperty('--calc-font-color');
-  } else {
-    document.documentElement.style.setProperty('--calc-font-color', fc);
-  }
 }
 
 function scheduleSaveContent(noteId: string, content: string): void {
@@ -324,8 +314,6 @@ export function renderApp(root: HTMLElement): void {
     darkMode = !darkMode;
     document.documentElement.classList.toggle('light', !darkMode);
     titleBar.updateThemeIcon(darkMode);
-    document.documentElement.style.removeProperty('--calc-font-color');
-    if (lastSettings) applyFontSettings(lastSettings);
   };
 
   const cb = {

@@ -29,7 +29,6 @@ export interface AppCallbacks {
 export interface SettingsData {
   font_size: string;
   font_family: string;
-  font_color: string;
   shortcut_overrides: string;
 }
 

@@ -22,7 +22,6 @@ export namespace service {
 	export class SettingsData {
 	    font_size: string;
 	    font_family: string;
-	    font_color: string;
 	    shortcut_overrides: string;
 	
 	    static createFrom(source: any = {}) {
@@ -33,7 +32,6 @@ export namespace service {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.font_size = source["font_size"];
 	        this.font_family = source["font_family"];
-	        this.font_color = source["font_color"];
 	        this.shortcut_overrides = source["shortcut_overrides"];
 	    }
 	}
