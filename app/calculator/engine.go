@@ -221,7 +221,25 @@ func evalFraction(match string) string {
 	return fmt.Sprintf("%g", val)
 }
 
+// normalize preprocesses input before the naturalize pipeline.
+// It normalises Unicode characters, punctuation, and whitespace
+// that should never affect pattern recognition.
+func normalize(s string) string {
+	s = unicodeQuotePattern.Replace(s)
+	s = unicodeDashPattern.Replace(s)
+	s = unicodeMathPattern.ReplaceAllString(s, "$1 * $2")
+	s = unicodeDivPattern.ReplaceAllString(s, "$1 / $2")
+	s = unicodeBracketPattern.Replace(s)
+	s = unicodeSpaceReplacer.Replace(s)
+	s = multiPunctPattern.ReplaceAllString(s, "")
+	s = noiseWordPattern.ReplaceAllString(s, "")
+	// Normalise all whitespace runs (including Unicode whitespace) to single spaces
+	fields := strings.Fields(s)
+	return strings.Join(fields, " ")
+}
+
 func (e *Engine) naturalize(s string) string {
+	s = normalize(s)
 	// 1. Strip leading query prefixes (run multiple times for compound prefixes)
 	for {
 		prev := s
@@ -238,6 +256,27 @@ func (e *Engine) naturalize(s string) string {
 		s = onAtInPattern.ReplaceAllString(s, "")
 		s = areaVolumeOfPattern.ReplaceAllString(s, "")
 		s = genericNounPattern.ReplaceAllString(s, "")
+		// Expanded conversational prefixes
+		s = canYouPattern.ReplaceAllString(s, "")
+		s = whatWouldPattern.ReplaceAllString(s, "")
+		s = iWantPattern.ReplaceAllString(s, "")
+		s = letsPattern.ReplaceAllString(s, "")
+		s = determinePattern.ReplaceAllString(s, "")
+		s = thinkGuessPattern.ReplaceAllString(s, "")
+		s = soWellPattern.ReplaceAllString(s, "")
+		// Handle "what does X equal" → capture the expression after "equal"
+		if m := whatEqualsPattern.FindStringSubmatch(s); m != nil {
+			preIdx := strings.Index(s, m[1])
+			if preIdx >= 0 {
+				s = s[preIdx:]
+			}
+		}
+		// Protect "my age" / "my current age" / "my name is" from stray pronoun stripping
+		s = strayPronounPattern.ReplaceAllString(s, "")
+		trim := strings.TrimSpace(s)
+		if !isAgeRefPattern.MatchString(trim) {
+			s = strayMyPattern.ReplaceAllString(s, "")
+		}
 		if s == prev {
 			break
 		}
@@ -306,11 +345,17 @@ func (e *Engine) naturalize(s string) string {
 	s = lessThanPattern.ReplaceAllString(s, "$2 - $1")
 	s = differencePattern.ReplaceAllString(s, "abs($1 - $2)")
 	s = overDivPattern.ReplaceAllString(s, "$1 / $2")
+	// Specific "out of" patterns before generic outOfPattern
+	s = outOfAsPercentPattern.ReplaceAllString(s, "(($1 / $2) * 100)")
 	s = outOfPattern.ReplaceAllString(s, "$1 / $2")
 	s = outOfEveryPattern.ReplaceAllString(s, "$1 / $2")
 	s = ratioOfPattern.ReplaceAllString(s, "$1 / $2")
 	s = productOfPattern.ReplaceAllString(s, "$1 * $2")
 	s = sumOfPattern.ReplaceAllString(s, "$1 + $2")
+	// Expanded comparison phrases
+	s = halfAsMuchPattern.ReplaceAllString(s, "$1 * 0.5")
+	s = quarterAsMuchPattern.ReplaceAllString(s, "$1 * 0.25")
+	s = howManyInPattern.ReplaceAllString(s, "$2 / $1")
 	// 13b. Shape area/volume/dimension patterns
 	s = rectAreaPattern.ReplaceAllString(s, "$1 * $2")
 	s = circleAreaPattern.ReplaceAllString(s, "pi * $1^2")
@@ -324,20 +369,51 @@ func (e *Engine) naturalize(s string) string {
 	s = squareRootOfPattern.ReplaceAllString(s, "sqrt($1)")
 	s = cubeRootOfPattern.ReplaceAllString(s, "cbrt($1)")
 	s = absoluteValueOfPattern.ReplaceAllString(s, "abs($1)")
-	// 14c. "per cent" → "percent" (must be before word operators where "per" → "/")
+	// 14b. Natural trig/log functions: "sine of X" → "sin(X)", "log of X" → "ln(X)"
+	s = naturalTrigPattern.ReplaceAllStringFunc(s, func(m string) string {
+		parts := naturalTrigPattern.FindStringSubmatch(m)
+		abbr := trigAbbrev[strings.ToLower(parts[1])]
+		return abbr + "(" + parts[2] + ")"
+	})
+	s = naturalInvTrigPattern.ReplaceAllStringFunc(s, func(m string) string {
+		parts := naturalInvTrigPattern.FindStringSubmatch(m)
+		abbr := invTrigAbbrev[strings.ToLower(parts[1])]
+		return abbr + "(" + parts[2] + ")"
+	})
+	s = naturalLogPattern.ReplaceAllString(s, "ln($1)")
+	s = naturalLnPattern.ReplaceAllString(s, "ln($1)")
+	s = naturalLog10Pattern.ReplaceAllString(s, "log10($1)")
+	s = naturalLog2Pattern.ReplaceAllString(s, "log2($1)")
+	// 14c. "per cent" / "pct" → "percent" (must be before word operators where "per" → "/")
 	s = perCentPattern.ReplaceAllString(s, "$1 percent ")
+	s = pctAbbrevPattern.ReplaceAllString(s, "$1 percent ")
+	// 14d. Tip/discount phrases (before word operators)
+	s = tipPattern.ReplaceAllString(s, "($1 + $1 * $2 / 100)")
+	s = discountPattern.ReplaceAllString(s, "($1 - $1 * $2 / 100)")
 	// 15. Replace word operators
 	s = additionOps.ReplaceAllString(s, " + ")
 	s = additionOps2.ReplaceAllString(s, " + ")
+	s = additionOps3.ReplaceAllString(s, " + ")
+	s = additionOps4.ReplaceAllString(s, " + ")
+	s = additionOps5.ReplaceAllString(s, " + ")
+	s = additionOps6.ReplaceAllString(s, " + ")
 	s = subtractionOps.ReplaceAllString(s, " - ")
 	s = subtractionOps2.ReplaceAllString(s, " - ")
 	s = subtractionOps3.ReplaceAllString(s, " - ")
+	s = subtractionOps4.ReplaceAllString(s, " - ")
+	s = subtractionOps5.ReplaceAllString(s, " - ")
+	s = subtractionOps6.ReplaceAllString(s, " - ")
 	s = multiplyOps.ReplaceAllString(s, " * ")
 	s = multiplyOps2.ReplaceAllString(s, " * ")
+	s = multiplyOps3.ReplaceAllString(s, " * ")
 	s = divideOps.ReplaceAllString(s, " / ")
 	s = divideOps2.ReplaceAllString(s, " / ")
 	s = divideOps3.ReplaceAllString(s, " / ")
+	s = divideOps4.ReplaceAllString(s, " / ")
+	s = divideOps5.ReplaceAllString(s, " / ")
 	s = powerOps.ReplaceAllString(s, " ^ ")
+	s = powerOps2.ReplaceAllString(s, "^ $1 ")
+	s = powerOps3.ReplaceAllString(s, " ^ ")
 	s = modOps.ReplaceAllString(s, " % ")
 	// 16. "X from Y" → "Y - X" (after word operators to avoid conflicting with subtract phrases)
 	s = fromSubtractPattern.ReplaceAllString(s, "$2 - $1")
@@ -345,11 +421,17 @@ func (e *Engine) naturalize(s string) string {
 	s = isWhatPercentOfPattern.ReplaceAllString(s, "(($1 / $2) * 100)")
 	s = asAPercentageOfPattern.ReplaceAllString(s, "(($1 / $2) * 100)")
 	s = percentOfWhatIsPattern.ReplaceAllString(s, "(($2 / $1) * 100)")
+	s = whatPercentOfYIsXPattern.ReplaceAllString(s, "(($2 / $1) * 100)")
 	// 18. Advanced math phrases
 	s = logBasePattern.ReplaceAllString(s, "(ln($2) / ln($1))")
 	s = choosePattern.ReplaceAllString(s, "nCr($1, $2)")
 	// 18b. Function with unparenthesized arg: "sin theta" → "sin(theta)"
 	s = trigArgPattern.ReplaceAllString(s, "$1($2)")
+	// 18c. "sin of X" → "sin(X)"
+	s = trigOfPattern.ReplaceAllString(s, "$1($2)")
+	// 18d. "square X" → "X ^ 2", "cube X" → "X ^ 3"
+	s = squareVerbPattern.ReplaceAllString(s, "$1 ^ 2")
+	s = cubeVerbPattern.ReplaceAllString(s, "$1 ^ 3")
 	// 19. "percent" word
 	s = percentWordPattern.ReplaceAllString(s, "$1% ")
 	// 20. Commas in numbers
@@ -365,13 +447,13 @@ func (e *Engine) substituteContext(s string) string {
 	}
 	lastStr := formatNumber(e.lastResult)
 
-	// Entire line is "that", "it", "of that", "my age", "my current age" → lastResult
+	// Entire line is a context reference → lastResult
 	trimmed := strings.TrimSpace(s)
-	if matched, _ := regexp.MatchString(`(?i)^(?:of\s+)?(?:that|it|my\s+(?:current\s+)?age)$`, trimmed); matched {
+	if matched, _ := regexp.MatchString(`(?i)^(?:of\s+)?(?:that|it|my\s+(?:current\s+)?age|previous|last|prior|prev)$`, trimmed); matched {
 		return lastStr
 	}
 
-	// "of that", "of it", "of the result" → replace with lastResult value
+	// "of that", "of it", "of the result", "of the answer" → replace with lastResult value
 	s = thatOfPattern.ReplaceAllString(s, lastStr)
 	// "then X" → "{lastResult} X"
 	if thenPattern.MatchString(s) {
@@ -380,6 +462,10 @@ func (e *Engine) substituteContext(s string) string {
 	// "result X" or "answer X" → "{lastResult} X"
 	if resultPattern.MatchString(s) {
 		s = resultPattern.ReplaceAllString(s, lastStr+" ")
+	}
+	// "previous X", "last X", "prior X", "prev X" → "{lastResult} X"
+	if previousPattern.MatchString(s) {
+		s = previousPattern.ReplaceAllString(s, lastStr+" ")
 	}
 	return s
 }
@@ -586,6 +672,18 @@ var greetingPattern = regexp.MustCompile(`(?i)^(?:hi|hello|hey)(?:\s+there)?\s+`
 var leadingAddSumPattern = regexp.MustCompile(`(?i)^(?:add\b|sum\b(?:\s+of\b)?)\s+`)
 var leadingArticlePattern = regexp.MustCompile(`(?i)^(?:the|a|an)\s+`)
 
+// Conversational inquiry prefixes
+var canYouPattern = regexp.MustCompile(`(?i)^(?:can|could|would|will|do|does)\s+(?:you\s+)?(?:please\s+)?(?:know\s+)?`)
+var whatWouldPattern = regexp.MustCompile(`(?i)^(?:what\s+would\s+be|what\s+will\s+be|what\s+was)\s+`)
+var iWantPattern = regexp.MustCompile(`(?i)^(?:i\s+(?:need|want|would\s+like)\s+(?:to\s+)?|i'd\s+like\s+(?:to\s+)?|we\s+(?:need|want)\s+(?:to\s+)?)`)
+var letsPattern = regexp.MustCompile(`(?i)^(?:let's|lets|let\s+us)\s+`)
+var determinePattern = regexp.MustCompile(`(?i)^determine\s+`)
+var whatEqualsPattern = regexp.MustCompile(`(?i)^(?:what\s+(?:does|is)\s+)(.+?)\s+(?:equal(?:s)?|is\s+equal\s+to)(?:\s+|$)`)
+var strayPronounPattern = regexp.MustCompile(`(?i)^(?:i|we|you|your)\s+`)
+var strayMyPattern = regexp.MustCompile(`(?i)^my\s+`)
+var thinkGuessPattern = regexp.MustCompile(`(?i)^(?:i\s+think|i\s+guess|maybe|perhaps|probably|like)\s+`)
+var soWellPattern = regexp.MustCompile(`(?i)^(?:so|well|ok(?:ay)?|alright|all\s+right|right|now|so\s+then)\s+`)
+
 // Conversational prefixes for age/self-referencing expressions
 var iAmPattern = regexp.MustCompile(`(?i)^(?:i\s+am|i'm|im)\s+`)
 
@@ -597,36 +695,52 @@ var showMePattern = regexp.MustCompile(`(?i)^show\s+me\s+`)
 var tellMePattern = regexp.MustCompile(`(?i)^tell\s+me\s+`)
 var myAgeIsPattern = regexp.MustCompile(`(?i)^my\s+age\s+is\s+`)
 
-var trailingFluffPattern = regexp.MustCompile(`(?i)\s+(?:please|thanks|thank you|pls)$`)
+var trailingFluffPattern = regexp.MustCompile(`(?i)\s+(?:please|thanks|thank you|pls|for\s+me|for\s+us|if\s+you\s+don't\s+mind|if\s+possible|if\s+you\s+can|quickly|real\s+quick|right\s+now|exactly|approximately)$`)
 var trailingMyAgePattern = regexp.MustCompile(`(?i)\s+(?:my\s+(?:current\s+)?age|show\s+me\s+my\s+(?:current\s+)?age)$`)
-var trailingYearsOldPattern = regexp.MustCompile(`(?i)\s+years?\s+old$`)
-var trailingYearsOfAgePattern = regexp.MustCompile(`(?i)\s+years?\s+of\s+age$`)
+var trailingYearsOldPattern = regexp.MustCompile(`(?i)\s+yrs?\s+old$`)
+var trailingYearsOfAgePattern = regexp.MustCompile(`(?i)\s+yrs?\s+of\s+age$`)
+
+// Age-reference guard (used in prefix loop)
+var isAgeRefPattern = regexp.MustCompile(`(?i)^my\s+(?:current\s+)?(?:age|name)\b`)
 
 // Context references
 var thatOfPattern = regexp.MustCompile(`(?i)\bof\s+(?:that|it|the\s+(?:result|answer|value))\b`)
 var thenPattern = regexp.MustCompile(`(?i)^then\s+`)
 var resultPattern = regexp.MustCompile(`(?i)^(?:result|answer)\s+`)
+var previousPattern = regexp.MustCompile(`(?i)^(?:previous|last|prior|prev)(?:\s+(?:result|answer|value))?\s+`)
 
 // Word operators — ADDITION
 var additionOps = regexp.MustCompile(`(?i)\s+plus\s+`)
 var additionOps2 = regexp.MustCompile(`(?i)\s+and\s+`)
+var additionOps3 = regexp.MustCompile(`(?i)\s+added\s+to\s+`)
+var additionOps4 = regexp.MustCompile(`(?i)\s+combined\s+with\s+`)
+var additionOps5 = regexp.MustCompile(`(?i)\s+together\s+with\s+`)
+var additionOps6 = regexp.MustCompile(`(?i)\s+along\s+with\s+`)
 
 // Word operators — SUBTRACTION
 var subtractionOps = regexp.MustCompile(`(?i)\s+minus\s+`)
 var subtractionOps2 = regexp.MustCompile(`(?i)\s+(?:subtract(?:ed)?\s+from|less|reduced\s+by)\s+`)
 var subtractionOps3 = regexp.MustCompile(`(?i)\s+take\s+away\s+`)
+var subtractionOps4 = regexp.MustCompile(`(?i)\s+subtract\s+`)
+var subtractionOps5 = regexp.MustCompile(`(?i)\s+without\s+`)
+var subtractionOps6 = regexp.MustCompile(`(?i)\s+fewer\s+`)
 
 // Word operators — MULTIPLICATION
 var multiplyOps = regexp.MustCompile(`(?i)\s+times\s+`)
 var multiplyOps2 = regexp.MustCompile(`(?i)\s+(?:multiplied\s+by|multiply|groups?\s+of)\s+`)
+var multiplyOps3 = regexp.MustCompile(`(?i)\s+(?:lots?|sets?)\s+of\s+`)
 
 // Word operators — DIVISION
 var divideOps = regexp.MustCompile(`(?i)\s+divided\s+by\s+`)
-var divideOps2 = regexp.MustCompile(`(?i)\s+split\s+into\s+`)
+var divideOps2 = regexp.MustCompile(`(?i)\s+split\s+(?:into|between|among)\s+`)
 var divideOps3 = regexp.MustCompile(`(?i)\s+per\s+`)
+var divideOps4 = regexp.MustCompile(`(?i)\s+divide\s+`)
+var divideOps5 = regexp.MustCompile(`(?i)\s+shared\s+(?:between|among)\s+`)
 
 // Word operators — POWER
-var powerOps = regexp.MustCompile(`(?i)\s+(?:to\s+the\s+power\s+of|raised\s+to)\s+`)
+var powerOps = regexp.MustCompile(`(?i)\s+(?:to\s+the\s+power\s+of|raised\s+to(?:\s+the\s+power\s+of)?)\s+`)
+var powerOps2 = regexp.MustCompile(`(?i)\s+to\s+the\s+(\d+)(?:\s+|$)`)
+var powerOps3 = regexp.MustCompile(`(?i)\s+exponent\s+`)
 
 // Word operators — MODULO
 var modOps = regexp.MustCompile(`(?i)\s+mod(?:ulo)?\s+`)
@@ -793,10 +907,23 @@ var fromSubtractPattern = regexp.MustCompile(`(?i)((?:[\d.]+|\([^)]+\)))\s+from\
 // "X out of every Y" → "X / Y"
 var outOfEveryPattern = regexp.MustCompile(`(?i)([\d.]+)\s+out\s+of\s+every\s+([\d.]+)`)
 
+// "half as much/many as Y" → "Y * 0.5"
+var halfAsMuchPattern = regexp.MustCompile(`(?i)half\s+as\s+(?:much|many|big|large)\s+as\s+([\d.]+)`)
+var quarterAsMuchPattern = regexp.MustCompile(`(?i)quarter\s+as\s+(?:much|many|big|large)\s+as\s+([\d.]+)`)
+
+// "how many X in/are in Y" → "Y / X"
+var howManyInPattern = regexp.MustCompile(`(?i)how\s+many\s+([\d.]+)\s+(?:are\s+)?in\s+([\d.]+)`)
+
 // Phase 2 — Percentage relationship phrases
 var isWhatPercentOfPattern = regexp.MustCompile(`(?i)([\d.]+)\s+is\s+what\s+(?:%|percent(?:age)?)\s+of\s+([\d.]+)`)
 var asAPercentageOfPattern = regexp.MustCompile(`(?i)([\d.]+)\s+as\s+a\s+percent(?:age)?\s+of\s+([\d.]+)`)
 var percentOfWhatIsPattern = regexp.MustCompile(`(?i)([\d.]+)\s*(?:%|percent(?:age)?)\s+of\s+what\s+is\s+([\d.]+)`)
+var whatPercentOfYIsXPattern = regexp.MustCompile(`(?i)what\s+(?:%|percent(?:age)?)\s+of\s+([\d.]+)\s+is\s+([\d.]+)`)
+var outOfAsPercentPattern = regexp.MustCompile(`(?i)([\d.]+)\s+out\s+of\s+([\d.]+)\s+as\s+a\s+percent(?:age)?`)
+
+// Tip/discount natural phrasing (runs before word operators, step 15)
+var tipPattern = regexp.MustCompile(`(?i)([\d.]+)\s+(?:plus|with|including)\s+([\d.]+)\s*%?\s*(?:tip|tax)\b`)
+var discountPattern = regexp.MustCompile(`(?i)([\d.]+)\s+(?:minus|less|after)\s+([\d.]+)\s*%?\s*discount\b`)
 
 // Phase 3 — Advanced math phrases
 var logBasePattern = regexp.MustCompile(`(?i)log\s+base\s+([\d.]+)\s+of\s+([\d.]+)`)
@@ -875,6 +1002,8 @@ func computeRelativeDate(nStr, unit string) string {
 	var result time.Time
 	unit = strings.ToLower(unit)
 	switch {
+	case unit == "day" || strings.HasPrefix(unit, "day"):
+		result = base.AddDate(0, 0, n)
 	case unit == "week" || strings.HasPrefix(unit, "week"):
 		result = base.AddDate(0, 0, n*7)
 	case unit == "month" || strings.HasPrefix(unit, "month"):
@@ -925,6 +1054,22 @@ func computeDateMath(s string) string {
 		}
 		return computeDateOffset(base, m[2], m[3], m[4])
 	}
+	// "in N days/weeks"
+	if m := inNDaysPattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate(m[1], m[2])
+	}
+	// "N days before/after today"
+	if m := beforeAfterTodayPattern.FindStringSubmatch(s); m != nil {
+		n := m[1]
+		if strings.ToLower(m[3]) == "before" {
+			return computeRelativeDate("-"+n, m[2])
+		}
+		return computeRelativeDate(n, m[2])
+	}
+	// "next/last/this Monday"
+	if m := weekdayPattern.FindStringSubmatch(s); m != nil {
+		return computeWeekdayDate(m[1], m[2])
+	}
 	return s
 }
 
@@ -937,7 +1082,87 @@ var embeddedAgoPattern = regexp.MustCompile(`(?i)(\d+)\s+(weeks?|months?|years?)
 var embeddedDateMathPattern = regexp.MustCompile(`(?i)\b(today|now)\s*([+-])\s*(\d+)\s+(day|days|week|weeks|month|months|year|years)\b`)
 var embeddedDateAddPattern = regexp.MustCompile(`(?i)((?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:[,\s]+\d{4})?))\s*([+-])\s*(\d+)\s+(day|days|week|weeks|month|months|year|years)\b`)
 
+// Expanded date patterns
+var inNDaysPattern = regexp.MustCompile(`(?i)\bin\s+(\d+)\s+(days?|weeks?|months?|years?)\b`)
+var beforeAfterTodayPattern = regexp.MustCompile(`(?i)(\d+)\s+(days?|weeks?|months?|years?)\s+(before|after)\s+(today|now)\b`)
+var weekdayPattern = regexp.MustCompile(`(?i)\b(next|last|this|coming|previous|following)\s+(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b`)
+var whatIsDatePattern = regexp.MustCompile(`(?i)what(?:\s+is|\'s)\s+(?:the\s+)?date\s+(?:in|on)\s+(\d+)\s+(days?|weeks?|months?|years?)\b`)
+var whatDateIsPattern = regexp.MustCompile(`(?i)what\s+date\s+is\s+(\d+)\s+(days?|weeks?|months?|years?)\s+from\s+(?:now|today)\b`)
+
+var bareWeekdayPattern = regexp.MustCompile(`(?i)^\s*(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\s*$`)
+var bareDaysPattern = regexp.MustCompile(`(?i)^\s*(\d+)\s+(days?|weeks?|months?|years?)\s*$`)
+
+var weekdayNames = map[string]int{
+	"mon": 1, "monday": 1,
+	"tue": 2, "tuesday": 2,
+	"wed": 3, "wednesday": 3,
+	"thu": 4, "thur": 4, "thurs": 4, "thursday": 4,
+	"fri": 5, "friday": 5,
+	"sat": 6, "saturday": 6,
+	"sun": 7, "sunday": 7,
+}
+
+func computeWeekdayDate(modifier, weekday string) string {
+	now := time.Now()
+	today := now.Weekday()
+	targetDay, ok := weekdayNames[strings.ToLower(weekday)]
+	if !ok {
+		return ""
+	}
+	// Go weekday: Sunday=0, Monday=1, ..., Saturday=6
+	targetGo := time.Weekday(targetDay % 7)
+	var diff int
+	switch strings.ToLower(modifier) {
+	case "next", "coming", "following":
+		diff = int((targetGo - today + 7) % 7)
+		if diff == 0 {
+			diff = 7 // next week, not today
+		}
+	case "last", "previous":
+		diff = int((today - targetGo + 7) % 7)
+		if diff == 0 {
+			diff = 7 // last week, not today
+		}
+	case "this":
+		diff = int(targetGo - today)
+	}
+	result := time.Now().AddDate(0, 0, diff)
+	return result.Format("2006-01-02")
+}
+
 func extractDateMath(s string) string {
+	// "what is the date in N days"
+	if m := whatIsDatePattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate(m[1], m[2])
+	}
+	// "what date is N days from now"
+	if m := whatDateIsPattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate(m[1], m[2])
+	}
+	// "in N days/weeks"
+	if m := inNDaysPattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate(m[1], m[2])
+	}
+	// "N days before/after today"
+	if m := beforeAfterTodayPattern.FindStringSubmatch(s); m != nil {
+		n := m[1]
+		if strings.ToLower(m[3]) == "before" {
+			return computeRelativeDate("-"+n, m[2])
+		}
+		return computeRelativeDate(n, m[2])
+	}
+	// "next/last/this Monday"
+	if m := weekdayPattern.FindStringSubmatch(s); m != nil {
+		return computeWeekdayDate(m[1], m[2])
+	}
+	// bare weekday name (modifier was already stripped by naturalize)
+	if m := bareWeekdayPattern.FindStringSubmatch(s); m != nil {
+		return computeWeekdayDate("this", m[1])
+	}
+	// bare "N days" (modifier was already stripped by naturalize)
+	if m := bareDaysPattern.FindStringSubmatch(s); m != nil {
+		return computeRelativeDate(m[1], m[2])
+	}
 	// Check more specific offset patterns first (today + 14 days, etc.)
 	if m := embeddedDateMathPattern.FindStringSubmatch(s); m != nil {
 		base, ok := parseDate(m[1])
@@ -1038,9 +1263,24 @@ var productOfPattern = regexp.MustCompile(`(?i)product\s+of\s+([\d.]+)\s+and\s+(
 var sumOfPattern = regexp.MustCompile(`(?i)sum\s+of\s+([\d.]+)\s+and\s+([\d.]+)`)
 
 // Natural function call patterns: "square root of X", "cube root of X", "absolute value of X"
-var squareRootOfPattern = regexp.MustCompile(`(?i)square\s+root\s+of\s+(-?[\d.]+)`)
-var cubeRootOfPattern = regexp.MustCompile(`(?i)cube\s+root\s+of\s+(-?[\d.]+)`)
-var absoluteValueOfPattern = regexp.MustCompile(`(?i)absolute\s+value\s+of\s+(-?[\d.]+)`)
+var squareRootOfPattern = regexp.MustCompile(`(?i)(?:the\s+)?square\s+root\s+of\s+(-?[\d.]+)`)
+var cubeRootOfPattern = regexp.MustCompile(`(?i)(?:the\s+)?cube\s+root\s+of\s+(-?[\d.]+)`)
+var absoluteValueOfPattern = regexp.MustCompile(`(?i)(?:the\s+)?absolute\s+value\s+of\s+(-?[\d.]+)`)
+
+// Natural trig/log function call patterns: "sine of X", "cosine of X", "log of X"
+var naturalTrigPattern = regexp.MustCompile(`(?i)\b(sine|cosine|tangent|cosecant|secant|cotangent)\s+of\s+(-?[\d.]+)`)
+var naturalInvTrigPattern = regexp.MustCompile(`(?i)\b(arcsin|arccos|arctan|arccosecant|arcsecant|arccotangent)\s+of\s+(-?[\d.]+)`)
+var naturalLogPattern = regexp.MustCompile(`(?i)\b(?:natural\s+)?log(?:arithm)?\s+of\s+(-?[\d.]+)`)
+var naturalLnPattern = regexp.MustCompile(`(?i)\bln\s+of\s+(-?[\d.]+)`)
+var naturalLog10Pattern = regexp.MustCompile(`(?i)\blog\s*10\s+of\s+(-?[\d.]+)`)
+var naturalLog2Pattern = regexp.MustCompile(`(?i)\blog\s*2\s+of\s+(-?[\d.]+)`)
+
+// Square/cube as verb: "square X" → "X ^ 2", "cube X" → "X ^ 3"
+var squareVerbPattern = regexp.MustCompile(`(?i)\bsquare\s+(-?[\d.]+)`)
+var cubeVerbPattern = regexp.MustCompile(`(?i)\bcube\s+(-?[\d.]+)`)
+
+// Sin/cos/tan with "of": "sin of X", "cos of X", "tan of X"
+var trigOfPattern = regexp.MustCompile(`(?i)\b(sin|cos|tan|asin|acos|atan|sinh|cosh|tanh)\s+of\s+(-?[\d.]+)`)
 
 // "X times more than Y" → "Y + Y * X" (before word operator replacement of "times")
 var timesMoreThanPattern = regexp.MustCompile(`(?i)([\d.]+)\s+times\s+more\s+than\s+([\d.]+)`)
@@ -1062,6 +1302,18 @@ var halfNumericPattern = regexp.MustCompile(`(?i)\bhalf\s+(\d+(?:\.\d+)?)\b`)
 
 // "per cent" → "%"
 var perCentPattern = regexp.MustCompile(`(?i)(\d+)\s+per\s+cent\b`)
+// "pct" abbreviation
+var pctAbbrevPattern = regexp.MustCompile(`(?i)(\d+)\s+p\s*\.?\s*c\s*\.?\s*t?\b`)
+
+// Trig abbreviation maps for natural function names
+var trigAbbrev = map[string]string{
+	"sine": "sin", "cosine": "cos", "tangent": "tan",
+	"cosecant": "csc", "secant": "sec", "cotangent": "cot",
+}
+var invTrigAbbrev = map[string]string{
+	"arcsin": "asin", "arccos": "acos", "arctan": "atan",
+	"arccosecant": "acsc", "arcsecant": "asec", "arccotangent": "acot",
+}
 
 // Relative date shorthand
 var nextDatePattern = regexp.MustCompile(`(?i)^next\s+(week|month|year)$`)
@@ -1095,6 +1347,32 @@ var commaPattern = regexp.MustCompile(`(\d),(\d)`)
 var trailingQMPattern = regexp.MustCompile(`\?\s*$`)
 var trailingPeriodPattern = regexp.MustCompile(`\.\s*$`)
 var spacesPattern = regexp.MustCompile(`\s{2,}`)
+
+// Unicode normalisation patterns (Phase 0 — normalise before any matching)
+var unicodeQuotePattern = strings.NewReplacer(
+	"\u2018", "'", "\u2019", "'", "\u201a", "'", "\u201b", "'",
+	"\u201c", "\"", "\u201d", "\"", "\u201e", "\"", "\u201f", "\"",
+)
+var unicodeDashPattern = strings.NewReplacer(
+	"\u2012", "-", "\u2013", "-", "\u2014", "-", "\u2015", "-", "\u2212", "-",
+)
+var unicodeMathPattern = regexp.MustCompile(`(\d)\s*[×·]\s*(\d)`)
+var unicodeDivPattern = regexp.MustCompile(`(\d)\s*[÷]\s*(\d)`)
+var unicodeBracketPattern = strings.NewReplacer(
+	"\u300c", "(", "\u300d", ")", "\u300e", "(", "\u300f", ")",
+	"\u3010", "(", "\u3011", ")", "\uff08", "(", "\uff09", ")",
+)
+// unicodeSpaceReplacer strips non-standard whitespace runes.
+// strings.Fields in normalize() handles the rest.
+var unicodeSpaceReplacer = strings.NewReplacer(
+	"\u00a0", " ", "\u2000", " ", "\u2001", " ", "\u2002", " ", "\u2003", " ",
+	"\u2004", " ", "\u2005", " ", "\u2006", " ", "\u2007", " ", "\u2008", " ",
+	"\u2009", " ", "\u200a", " ", "\u202f", " ", "\u205f", " ",
+)
+var multiPunctPattern = regexp.MustCompile(`[?]{2,}|[!]{2,}|[.]{3,}|[?]+[!]+|[!]+[?]+`)
+
+// Noise words that should be stripped from anywhere in input
+var noiseWordPattern = regexp.MustCompile(`(?i)\b(?:exactly|roughly|about|around|approximately|say|eg|e\.g|ie|i\.e)\b\s*`)
 
 // Pattern matching for unit conversion and percentages
 var unitConvPattern = regexp.MustCompile(`(?i)^([\d.,]+)\s*(.*?)\s+\b(?:in|to|as)\b\s+(.+)$`)

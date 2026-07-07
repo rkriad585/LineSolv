@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0] — 2026-07-07
+
+### Added
+- Phase 0 `normalize()` preprocessing: Unicode quotes/dashes/brackets → ASCII, `×` → `*`, `÷` → `/`, noise word stripping (`exactly`, `roughly`, `about`, `say`), whitespace normalisation
+- Expanded conversational prefixes: `can you`, `could you`, `would you`, `i need`, `i'd like`, `let's`, `determine`, `i think`, `maybe`, `so`, `okay`, `like`, `what does X equal`
+- Expanded trailing patterns: `for me`, `if you don't mind`, `quickly`, `yrs old`, `yr old`
+- Expanded word operators: `combined with`, `together with`, `subtract` (infix), `without`, `fewer`, `lots of`, `sets of`, `split between/among`, `shared between/among`, `divide` (infix), `exponent`, `to the N` (power)
+- Expanded natural functions: `the square/cube/absolute root of`, `sine/cosine/tangent of X`, `log of X`, `ln of X`, `square X` (verb), `cube X` (verb)
+- Expanded context references: `previous`, `last`, `prior`, `prev` (standalone and with `result`/`answer`)
+- Expanded comparison phrases: `half as much as`, `quarter as much as`, `how many X in Y`
+- Expanded percentage patterns: `pct` / `p.c.` abbreviations, `what percent of Y is X`, `X out of Y as a percentage`, `X plus Y% tip/tax`, `X minus/after Y% discount`
+- Expanded date patterns: `in N days/weeks`, `what is the date in N days`, `N days before/after today`, `next/last/this Mon/Tue/Wed...`
+- 33 new test cases across all new pattern categories (82 total, up from 49)
+
 ## [0.4.1] — 2026-07-07
 
 ### Fixed
@@ -111,6 +125,7 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
+[0.5.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.5.0
 [0.4.1]: https://github.com/rkriad585/LineSolv/releases/tag/v0.4.1
 [0.4.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.4.0
 [0.3.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.3.0

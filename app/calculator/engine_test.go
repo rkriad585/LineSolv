@@ -969,6 +969,349 @@ func TestEvaluateLine_ConversationalAge(t *testing.T) {
 	}
 }
 
+func TestNormalize_Unicode(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		// Unicode multiplication/division symbols
+		{"5 × 3", "15"},
+		{"5 ÷ 2", "2.5"},
+		// Normalisation: × → *, ÷ → /
+		{"10×5", "50"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_ConversationalPrefixes(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"can you calculate 2+2", "4"},
+		{"could you find 5*3", "15"},
+		{"would you solve 10+5", "15"},
+		{"will you compute 2^3", "8"},
+		{"do you know 5+3", "8"},
+		{"does 2+2 equal 4", "4"},
+		{"i need to add 2+2", "4"},
+		{"i want 5+3", "8"},
+		{"i would like 10+5", "15"},
+		{"i'd like 2*3", "6"},
+		{"we need 5*10", "50"},
+		{"we want 3+7", "10"},
+		{"let's calculate 5+3", "8"},
+		{"lets 2+2", "4"},
+		{"determine 2^10", "1024"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_ThinkGuessSoPrefixes(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"i think 5+3", "8"},
+		{"i guess 10+5", "15"},
+		{"maybe 2+2", "4"},
+		{"perhaps 5*3", "15"},
+		{"probably 10/2", "5"},
+		{"so 5+3", "8"},
+		{"well 2+2", "4"},
+		{"ok 5+3", "8"},
+		{"okay 10+5", "15"},
+		{"alright 2+2", "4"},
+		{"right 5*3", "15"},
+		{"now 2+2", "4"},
+		{"like 5 plus 3", "8"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_ExpandedFluff(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"2+2 for me", "4"},
+		{"5+3 for us", "8"},
+		{"2+2 if you don't mind", "4"},
+		{"5+3 if possible", "8"},
+		{"2+2 if you can", "4"},
+		{"5+3 quickly", "8"},
+		{"2+2 real quick", "4"},
+		{"5+3 right now", "8"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_ExpandedAgeTrailing(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"25 yrs old", "25"},
+		{"30 yr old", "30"},
+		{"40 years old", "40"},
+		{"25 yrs of age", "25"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_ExpandedWordOperators(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		// Addition
+		{"5 combined with 3", "8"},
+		{"5 together with 3", "8"},
+		{"5 along with 3", "8"},
+		// Subtraction
+		{"5 subtract 3", "2"},
+		{"5 without 3", "2"},
+		{"8 fewer 3", "5"},
+		// Division
+		{"10 split between 2", "5"},
+		{"10 split among 2", "5"},
+		{"12 shared between 3", "4"},
+		{"12 shared among 3", "4"},
+		{"10 divide 5", "2"},
+		// Multiplication
+		{"3 lots of 5", "15"},
+		{"3 sets of 5", "15"},
+		// Power
+		{"5 exponent 3", "125"},
+		{"5 to the 3", "125"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_NaturalFunctions(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"the square root of 144", "12"},
+		{"the cube root of 27", "3"},
+		{"the absolute value of -5", "5"},
+		{"sine of 0", "0"},
+		{"cosine of 0", "1"},
+		{"tangent of 0", "0"},
+		{"log of 100", "4.605170185988092"},
+		{"ln of 100", "4.605170185988092"},
+		{"natural log of 100", "4.605170185988092"},
+		{"square 5", "25"},
+		{"cube 3", "27"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_ContextReferences(t *testing.T) {
+	e := NewEngine()
+	e.EvaluateLine("42")
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"previous", "42"},
+		{"prev", "42"},
+		{"last", "42"},
+		{"prior", "42"},
+		{"previous result", "42"},
+		{"last result", "42"},
+		{"last answer", "42"},
+		{"prior result", "42"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_ComparisonPhrases(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"half as much as 10", "5"},
+		{"half as many as 20", "10"},
+		{"quarter as much as 20", "5"},
+		{"quarter as many as 40", "10"},
+		{"how many 5 in 20", "4"},
+		{"how many 3 are in 15", "5"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_PercentageExpansion(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"10 pct of 200", "20"},
+		{"50 p.c. of 80", "40"},
+		{"what percent of 50 is 10", "20"},
+		{"what percentage of 80 is 20", "25"},
+		{"10 out of 50 as a percentage", "20"},
+		{"10 out of 50 as a percent", "20"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_TipDiscount(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"40 plus 15% tip", "46"},
+		{"100 with 8% tax", "108"},
+		{"200 minus 10% discount", "180"},
+		{"200 after 10% discount", "180"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_NoiseWords(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"exactly 5 plus 3", "8"},
+		{"roughly 2+2", "4"},
+		{"about 10+5", "15"},
+		{"approximately 5*3", "15"},
+		{"say 2+2", "4"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalize_WhatEquals(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"what does 2+2 equal", "4"},
+		{"what is 5+3 equal to", "8"},
+		{"what does 10*5 equal", "50"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
 func TestEvaluateLine_PEMDAS(t *testing.T) {
 	e := NewEngine()
 	tests := []struct {
