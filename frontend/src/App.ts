@@ -1,5 +1,5 @@
 import type {ShortcutMap} from './utils/shortcuts';
-import type {SettingsData} from './types';
+import type {AppCallbacks, SettingsData} from './types';
 import {CalculatorStore} from './stores/calculator';
 import {NotesManager} from './stores/notes';
 import {TitleBar} from './components/TitleBar';
@@ -307,7 +307,86 @@ export function renderApp(root: HTMLElement): void {
       }
     },
     onToggleFullscreen: toggleFullscreen,
+    onPrint: () => {
+      const text = input.text;
+      const lines = text.split('\n');
+      const state = store.getState();
+      const noteName = notesMgr.activeNote()?.name || '';
+      const today = new Date().toLocaleDateString(undefined, {year:'numeric',month:'short',day:'numeric'});
+
+      let rows = '';
+      for (let i = 0; i < lines.length; i++) {
+        const result = state.results[i] || '';
+        rows += `<tr><td class="print-line">${escapeHtml(lines[i]) || '\u00A0'}</td><td class="print-result">${escapeHtml(result) || '\u00A0'}</td></tr>`;
+      }
+
+      const watermarkSvg =
+        '<svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/>' +
+        '<line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>' +
+        '<line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/>' +
+        '<line x1="10" y1="15" x2="14" y2="15"/></svg>';
+
+      const printDoc = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+  @page { size: A4 portrait; margin: 20mm 15mm 25mm 15mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 10pt; line-height: 1.6; color: #000; background: #fff; padding: 0;
+  }
+  .print-header {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14pt; font-weight: 700; color: #1a1a1a;
+    padding-bottom: 8px; margin-bottom: 12px; border-bottom: 2px solid #7c3aed;
+  }
+  .print-table { width: 100%; border-collapse: collapse; }
+  .print-table tr { page-break-inside: avoid; }
+  .print-line {
+    width: 65%; padding: 2px 8px 2px 0; color: #333; text-align: left;
+    vertical-align: top; border-bottom: 1px solid #e5e5e5; word-break: break-all;
+  }
+  .print-result {
+    width: 35%; padding: 2px 0 2px 8px; color: #7c3aed; text-align: right;
+    vertical-align: top; border-bottom: 1px solid #e5e5e5; word-break: break-all;
+  }
+  .print-watermark {
+    position: fixed; bottom: 10mm; left: 15mm;
+    display: flex; align-items: center; gap: 6px;
+    opacity: 0.15; pointer-events: none; z-index: 9999;
+  }
+  .print-watermark svg { width: 18px; height: 18px; stroke: #7c3aed; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .print-watermark span {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12pt; font-weight: 700; color: #7c3aed; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .print-footer {
+    position: fixed; bottom: 10mm; right: 15mm;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 8pt; color: #999; z-index: 9999;
+  }
+</style></head><body>
+<div class="print-header">${escapeHtml(noteName)}</div>
+<table class="print-table">${rows}</table>
+<div class="print-watermark">${watermarkSvg}<span>LineSolv</span></div>
+<div class="print-footer">${today}</div>
+</body></html>`;
+
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:1px;height:1px;border:none';
+      document.body.appendChild(iframe);
+      const idoc = iframe.contentDocument || iframe.contentWindow!.document;
+      idoc.open();
+      idoc.write(printDoc);
+      idoc.close();
+      iframe.contentWindow!.focus();
+      iframe.contentWindow!.print();
+      document.body.removeChild(iframe);
+    },
   };
+
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 
   // --- Callbacks for components ---
 
@@ -326,7 +405,7 @@ export function renderApp(root: HTMLElement): void {
     importNote: handleImportNote,
   };
 
-  const cb = {
+  const cb: AppCallbacks = {
     onEvaluateAll: evaluateAll,
     onNewNote: handleNewNote,
     onToggleNotes: shortcuts.onToggleNotes,
@@ -337,6 +416,7 @@ export function renderApp(root: HTMLElement): void {
     onToggleFullscreen: toggleFullscreen,
     onToggleSettings: shortcuts.onToggleSettings,
     onToggleDocs: shortcuts.onToggleDocs,
+    onPrint: shortcuts.onPrint,
   };
 
   // --- Build DOM ---

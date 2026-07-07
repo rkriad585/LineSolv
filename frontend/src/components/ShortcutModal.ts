@@ -36,6 +36,7 @@ const shortcuts: ShortcutEntry[] = [
   {keys: 'Ctrl / Cmd + \u2193', desc: 'History: next input'},
   {keys: '? / Cmd + /', desc: 'Show this reference'},
   {keys: 'Ctrl / Cmd + ,', desc: 'Open settings'},
+  {keys: 'Ctrl / Cmd + P', desc: 'Print current note'},
 ];
 
 export class ShortcutModal {

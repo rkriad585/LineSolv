@@ -14,6 +14,7 @@ export interface ShortcutMap {
   onToggleSettings: () => void;
   onToggleFullscreen: () => void;
   onToggleDocs: () => void;
+  onPrint: () => void;
 }
 
 let fullscreen = false;
@@ -137,6 +138,11 @@ export function installGlobalShortcuts(
     if (e.key === ',' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       cmds.onToggleSettings();
+    }
+
+    if (e.key === 'p' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      cmds.onPrint();
     }
 
     if (!mod && e.key === 'Escape') {

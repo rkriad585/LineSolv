@@ -185,6 +185,21 @@ body {
   -webkit-app-region: no-drag;
 }
 
+/* Fallback: if user prints via browser native Ctrl+P (not our handler), hide screen chrome */
+@media print {
+  html, body {
+    background: #fff !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+  header, #notepad, #results-column, #gutter,
+  #notes-panel, #history-panel, #vars-panel,
+  #settings-modal, #shortcut-modal, #docs-viewer,
+  #confirm-dialog, .drag {
+    display: none !important;
+  }
+}
+
 /* Context menu */
 .context-menu-item:hover {
   background: var(--surface-hover) !important;
