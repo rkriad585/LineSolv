@@ -42,6 +42,13 @@ LineSolv handles:
 - Variables: `x = 42`, `x * 2`
 - Math functions: `sqrt(144)`, `sin(pi/2)`, `log(100)`, `round(3.7)`
 - Constants: `pi`, `e`
+- Fraction words: `one half`, `two thirds`, `three quarters`
+- Scale words: `double 5`, `half of 20`, `triple 3`
+- Power words: `5 squared`, `3 cubed`
+- Comparison: `10 increased by 5`, `5 more than 10`, `difference between 10 and 3`
+- Division phrases: `10 over 2`, `ratio of 10 to 2`
+- Natural functions: `square root of 144`, `cube root of 27`, `absolute value of -5`
+- Convert prefix: `convert 10 inches to cm`, `change 100 c to f`
 
 ### Why is nothing showing up for my input?
 LineSolv behaves like a notepad — invalid expressions silently show no result. Check for:

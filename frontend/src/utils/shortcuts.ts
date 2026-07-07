@@ -13,6 +13,7 @@ export interface ShortcutMap {
   onToggleShortcuts: () => void;
   onToggleSettings: () => void;
   onToggleFullscreen: () => void;
+  onToggleDocs: () => void;
 }
 
 let fullscreen = false;

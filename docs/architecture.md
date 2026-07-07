@@ -31,7 +31,8 @@ LineSolv is a cross-platform desktop application built with the **Wails v2** fra
 │  │  │              ResultDisplay, HistoryPanel,         ││
 │  │  │              NotesPanel, VariableExplorer,        ││
 │  │  │              ContextMenu, ConfirmDialog,          ││
-│  │  │              ShortcutModal, SettingsModal)        ││
+│  │  │              ShortcutModal, SettingsModal,         ││
+│  │  │              DocsViewer)                           ││
 │  │  ├─ style.css (Tailwind v4 + CSS vars)              ││
 │  │  └─ wailsjs/go/service/ (auto-generated bindings)   ││
 │  └─────────────────────────────────────────────────────┘│
@@ -71,7 +72,7 @@ Orchestrator that wires all UI components, uses `CalculatorStore` for reactive s
 Reactive store with subscriber pattern. Holds input, results, variables, eval state (idle/loading/error), error message, and computation history. Components subscribe to state changes.
 
 ### Components
-- **TitleBar** — Frameless drag region with app title and action buttons (notes, variables, history, settings). Double-click toggles fullscreen.
+- **TitleBar** — Frameless drag region with app title and action buttons (notes, variables, history, docs, settings). Double-click toggles fullscreen.
 - **CalculatorInput** — Textarea with synchronized line-number gutter
 - **ResultDisplay** — Right-aligned results column synced with input scroll, shows loading indicator and empty state
 - **NotesPanel** — Collapsible sidebar for managing multiple calculation notes, with right-click context menu (rename, delete, export, import, share)

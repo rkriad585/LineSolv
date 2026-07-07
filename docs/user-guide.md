@@ -19,7 +19,7 @@ Results appear to the right of each line. Empty lines and comment lines (startin
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ ● ● ●  LineSolv                  [☰] [≡] [⏱] ☾ │  ← Title bar (drag to move)
+│ ● ● ●  LineSolv            [☰] [≡] [⏱] [📄] ☾ │  ← Title bar (drag to move)
 ├────────┬────────────────────────┬───────────────┤
 │        │                        │               │
 │ Notes  │  # Textarea            │  Results      │
@@ -36,7 +36,17 @@ Results appear to the right of each line. Empty lines and comment lines (startin
 ### Title Bar
 - **Window controls**: Close (red), Minimize, Maximize
 - **Drag region**: Click and drag the title text to move the window; double-click to toggle fullscreen
-- **Buttons**: Notes (⌘B), Variables (⌘I), History (⌘H), Settings (⌘,)
+- **Buttons**: Notes (⌘B), Variables (⌘I), History (⌘H), Documentation, Settings (⌘,)
+
+### Documentation Viewer
+Click the book icon in the title bar to open the built-in documentation viewer. It shows all guide files in a sidebar tab layout:
+
+- **Tabs** on the left — click any doc name to switch
+- **Content** on the right — rendered markdown with styling
+- **Escape** or **Close** button dismisses
+- **Offline** — all docs are embedded in the app binary, no internet needed
+- **Cache** — loaded documents are cached in memory for instant re-opening
+- **Default** — the User Guide opens automatically when you first open the viewer
 
 ### Notes Panel (left)
 Manage multiple calculation notebooks. Each note is independent with its own content and variables.
@@ -73,9 +83,71 @@ LineSolv understands:
 - Word numbers: `twenty five`, `one hundred`, `two million`
 - Query prefixes: `what is`, `calculate`, `how much is`, `solve`
 - Word operators: `plus`, `minus`, `times`, `divided by`, `power of`
+- Fraction words: `one half`, `two thirds`, `three quarters`
+- Scale words: `double`, `triple`, `half of`, `quarter of`
+- Power words: `squared`, `cubed`
+- Comparison phrases: `X increased by Y`, `X more than Y`, `difference between X and Y`
+- Division phrases: `X over Y`, `X out of Y`, `ratio of X to Y`
+- Natural functions: `square root of X`, `cube root of X`, `absolute value of X`
+- Convert prefix: `convert X to Y`, `change X to Y`
+
+### Fraction Words
+```
+one half                 →  0.5
+one third                →  0.333333
+two thirds               →  0.666667
+one quarter              →  0.25
+three quarters           →  0.75
+```
+
+### Scale / Multiplicative Words
+```
+double 5                 →  10
+twice 10                 →  20
+triple 3                 →  9
+half of 20               →  10
+quarter of 100           →  25
+```
+
+### Power Words
+```
+5 squared                →  25
+3 cubed                  →  27
+```
+
+### Comparison Phrases
+```
+10 increased by 5        →  15
+20 decreased by 7        →  13
+5 more than 10           →  15
+3 less than 8            →  5
+difference between 10 and 3  →  7
+```
+
+### Division Phrases
+```
+10 over 2                →  5
+9 out of 3               →  3
+ratio of 10 to 2         →  5
+```
+
+### Multiplication Phrases
+```
+product of 4 and 3       →  12
+sum of 10 and 5          →  15
+```
+
+### Natural Function Calls
+```
+square root of 144       →  12
+cube root of 27          →  3
+absolute value of -5     →  5
+convert 10 inches to cm  →  25.4 cm
+change 100 c to f        →  212.0 °F
+```
 
 ### Unit Conversion
-Use the pattern `X fromUnit toUnit` or `X fromUnit in toUnit`:
+Use the pattern `X fromUnit toUnit` or `X fromUnit in toUnit` or `convert/change X to Y`:
 
 ```
 10 inches in cm         →  25.4 cm
@@ -83,6 +155,7 @@ Use the pattern `X fromUnit toUnit` or `X fromUnit in toUnit`:
 212 f to c              →  100 °C
 1 kg to lb              →  2.20462 lb
 3 liters in gallons     →  0.792516 gal
+convert 10 inches to cm →  25.4 cm
 ```
 
 **Supported units:**
@@ -143,6 +216,7 @@ result / 2              →  47
 | `cosh(x)` | Hyperbolic cosine | `cosh(0)` → 1 |
 | `tanh(x)` | Hyperbolic tangent | `tanh(0)` → 0 |
 | `sqrt(x)` | Square root | `sqrt(144)` → 12 |
+| `cbrt(x)` | Cube root | `cbrt(27)` → 3 |
 | `abs(x)` | Absolute value | `abs(-5)` → 5 |
 | `round(x)` | Round to integer | `round(3.7)` → 4 |
 | `floor(x)` | Round down | `floor(3.7)` → 3 |

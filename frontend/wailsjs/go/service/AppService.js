@@ -54,6 +54,14 @@ export function GetDeleteWithoutConfirm() {
   return window['go']['service']['AppService']['GetDeleteWithoutConfirm']();
 }
 
+export function GetDocContent(arg1) {
+  return window['go']['service']['AppService']['GetDocContent'](arg1);
+}
+
+export function GetDocList() {
+  return window['go']['service']['AppService']['GetDocList']();
+}
+
 export function GetHistory() {
   return window['go']['service']['AppService']['GetHistory']();
 }
@@ -88,4 +96,8 @@ export function SaveSettings(arg1) {
 
 export function SetDeleteWithoutConfirm(arg1) {
   return window['go']['service']['AppService']['SetDeleteWithoutConfirm'](arg1);
+}
+
+export function SetDocs(arg1) {
+  return window['go']['service']['AppService']['SetDocs'](arg1);
 }

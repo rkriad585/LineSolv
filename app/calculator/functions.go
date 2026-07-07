@@ -63,6 +63,11 @@ func (p *parser) callBuiltinOrPlugin(name string, args []float64) (float64, erro
 			return 0, fmt.Errorf("sqrt expects 1 argument, got %d", len(args))
 		}
 		return math.Sqrt(args[0]), nil
+	case "cbrt":
+		if len(args) != 1 {
+			return 0, fmt.Errorf("cbrt expects 1 argument, got %d", len(args))
+		}
+		return math.Cbrt(args[0]), nil
 	case "abs":
 		if len(args) != 1 {
 			return 0, fmt.Errorf("abs expects 1 argument, got %d", len(args))

@@ -330,6 +330,177 @@ func TestEvaluateLine_NaturalizePipeline(t *testing.T) {
 	}
 }
 
+func TestEvaluateLine_Fractions(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"one half", "0.5"},
+		{"one third", "0.3333333333333333"},
+		{"two thirds", "0.6666666666666666"},
+		{"one quarter", "0.25"},
+		{"three quarters", "0.75"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_MultiplicativePrefixes(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"double 5", "10"},
+		{"twice 10", "20"},
+		{"triple 3", "9"},
+		{"half of 20", "10"},
+		{"quarter of 100", "25"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_PowerWords(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"5 squared", "25"},
+		{"3 cubed", "27"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_ComparisonPhrases(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"10 increased by 5", "15"},
+		{"20 decreased by 7", "13"},
+		{"5 more than 10", "15"},
+		{"3 less than 8", "5"},
+		{"difference between 10 and 3", "7"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_DivisionPhrases(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"10 over 2", "5"},
+		{"9 out of 3", "3"},
+		{"ratio of 10 to 2", "5"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_MultiplicationPhrases(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"product of 4 and 3", "12"},
+		{"sum of 10 and 5", "15"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_NaturalFunctions(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"square root of 144", "12"},
+		{"cube root of 27", "3"},
+		{"absolute value of -5", "5"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestEvaluateLine_ConvertPrefix(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"convert 10 inches to cm", "25.4 cm"},
+		{"change 100 c to f", "212.0 \u00b0F"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("EvaluateLine(%q) unexpected error: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("EvaluateLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
 func TestEvaluateLine_PEMDAS(t *testing.T) {
 	e := NewEngine()
 	tests := []struct {

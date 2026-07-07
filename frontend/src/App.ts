@@ -10,6 +10,7 @@ import {VariableExplorer} from './components/VariableExplorer';
 import {ConfirmDialog} from './components/ConfirmDialog';
 import {ShortcutModal} from './components/ShortcutModal';
 import {SettingsModal} from './components/SettingsModal';
+import {DocsViewer} from './components/DocsViewer';
 import {HistoryPanel} from './components/HistoryPanel';
 import {buildLineResults} from './utils/format';
 import {installGlobalShortcuts, toggleFullscreen} from './utils/shortcuts';
@@ -255,7 +256,9 @@ export function renderApp(root: HTMLElement): void {
       return store.navigateHistory('down');
     },
     onEscape: () => {
-      if (settingsModal.isOpen()) {
+      if (docsViewer.isOpen()) {
+        docsViewer.close();
+      } else if (settingsModal.isOpen()) {
         settingsModal.close();
       } else if (shortcutModal.isOpen()) {
         shortcutModal.close();
@@ -296,6 +299,13 @@ export function renderApp(root: HTMLElement): void {
         settingsModal.open();
       }
     },
+    onToggleDocs: () => {
+      if (docsViewer.isOpen()) {
+        docsViewer.close();
+      } else {
+        docsViewer.open();
+      }
+    },
     onToggleFullscreen: toggleFullscreen,
   };
 
@@ -326,6 +336,7 @@ export function renderApp(root: HTMLElement): void {
     onClearAll: shortcuts.onClearAll,
     onToggleFullscreen: toggleFullscreen,
     onToggleSettings: shortcuts.onToggleSettings,
+    onToggleDocs: shortcuts.onToggleDocs,
   };
 
   // --- Build DOM ---
@@ -357,6 +368,8 @@ export function renderApp(root: HTMLElement): void {
     forceEval();
   });
 
+  const docsViewer = new DocsViewer();
+
   const main = document.createElement('div');
   main.className = 'flex-1 flex flex-col min-w-0';
   main.appendChild(notepad);
@@ -373,6 +386,7 @@ export function renderApp(root: HTMLElement): void {
   ui.style.borderRadius = '10px';
   ui.appendChild(titleBar.el);
   ui.appendChild(content);
+  ui.appendChild(docsViewer.el);
 
   root.appendChild(ui);
 

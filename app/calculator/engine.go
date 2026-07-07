@@ -103,6 +103,20 @@ func (e *Engine) EvaluateAll(input string) []string {
 func (e *Engine) evaluateExpr(input string) (string, error) {
 	s := e.naturalize(strings.TrimSpace(input))
 
+	// "convert X to Y" / "change X to Y" unit conversion
+	{
+		convertMatch := regexp.MustCompile(`(?i)^(?:convert|change)\s+(.+)\s+to\s+(.+)$`).FindStringSubmatch(s)
+		if convertMatch != nil {
+			// Re-parse as "X in Y"
+			if m := unitConvPattern.FindStringSubmatch(convertMatch[1] + " in " + convertMatch[2]); m != nil {
+				val, err := strconv.ParseFloat(m[1], 64)
+				if err == nil {
+					return convertUnit(val, m[2], m[3]), nil
+				}
+			}
+		}
+	}
+
 	// "X in Y" unit conversion
 	if match := unitConvPattern.FindStringSubmatch(s); match != nil {
 		val, err := strconv.ParseFloat(match[1], 64)
@@ -150,6 +164,33 @@ func (e *Engine) evaluateExpr(input string) (string, error) {
 
 // --- Natural language pipeline ---
 
+func evalFraction(match string) string {
+	parts := strings.Fields(match)
+	if len(parts) < 2 {
+		return match
+	}
+	nums := strings.ToLower(parts[0])
+	denom := strings.ToLower(parts[len(parts)-1])
+	val := 0.0
+	switch nums {
+	case "one", "a":
+		val = 1
+	case "two":
+		val = 2
+	case "three":
+		val = 3
+	}
+	switch denom {
+	case "half":
+		val /= 2
+	case "third", "thirds":
+		val /= 3
+	case "quarter", "quarters", "fourth", "fourths":
+		val /= 4
+	}
+	return fmt.Sprintf("%g", val)
+}
+
 func (e *Engine) naturalize(s string) string {
 	// 1. Strip leading query prefixes (run multiple times for compound prefixes)
 	for {
@@ -164,11 +205,36 @@ func (e *Engine) naturalize(s string) string {
 	}
 	// 2. Strip trailing fluff
 	s = trailingFluffPattern.ReplaceAllString(s, "")
-	// 3. Replace word numbers with digits
+	// 3. Replace fraction words with decimals
+	s = fractionPattern.ReplaceAllStringFunc(s, evalFraction)
+	// 4. Replace word numbers with digits
 	s = wordsToNumbers(s)
-	// 4. Replace "that" / "then" / "result" context references
+	// 5. Replace "that" / "then" / "result" context references
 	s = e.substituteContext(s)
-	// 5. Replace word operators
+	// 6. Multiplicative prefixes
+	s = doublePrefixPattern.ReplaceAllString(s, "2 * $1")
+	s = triplePrefixPattern.ReplaceAllString(s, "3 * $1")
+	s = halfOfPattern.ReplaceAllString(s, "0.5 * $1")
+	s = quarterOfPattern.ReplaceAllString(s, "0.25 * $1")
+	// 7. Power words
+	s = squaredPattern.ReplaceAllString(s, "$1 ^ 2")
+	s = cubedPattern.ReplaceAllString(s, "$1 ^ 3")
+	// 8. Complex phrase patterns (before word operators)
+	s = increasedByPattern.ReplaceAllString(s, "$1 + $2")
+	s = decreasedByPattern.ReplaceAllString(s, "$1 - $2")
+	s = moreThanPattern.ReplaceAllString(s, "$2 + $1")
+	s = lessThanPattern.ReplaceAllString(s, "$2 - $1")
+	s = differencePattern.ReplaceAllString(s, "abs($1 - $2)")
+	s = overDivPattern.ReplaceAllString(s, "$1 / $2")
+	s = outOfPattern.ReplaceAllString(s, "$1 / $2")
+	s = ratioOfPattern.ReplaceAllString(s, "$1 / $2")
+	s = productOfPattern.ReplaceAllString(s, "$1 * $2")
+	s = sumOfPattern.ReplaceAllString(s, "$1 + $2")
+	// 9. Natural function call patterns
+	s = squareRootOfPattern.ReplaceAllString(s, "sqrt($1)")
+	s = cubeRootOfPattern.ReplaceAllString(s, "cbrt($1)")
+	s = absoluteValueOfPattern.ReplaceAllString(s, "abs($1)")
+	// 10. Replace word operators
 	s = additionOps.ReplaceAllString(s, " + ")
 	s = additionOps2.ReplaceAllString(s, " + ")
 	s = subtractionOps.ReplaceAllString(s, " - ")
@@ -181,14 +247,14 @@ func (e *Engine) naturalize(s string) string {
 	s = divideOps3.ReplaceAllString(s, " / ")
 	s = powerOps.ReplaceAllString(s, " ^ ")
 	s = modOps.ReplaceAllString(s, " % ")
-	// 6. "percent" word
+	// 11. "percent" word
 	s = percentWordPattern.ReplaceAllString(s, "$1% ")
-	// 7. Commas in numbers
+	// 12. Commas in numbers
 	s = commaPattern.ReplaceAllString(s, "$1$2")
-	// 8. Clean trailing punctuation
+	// 13. Clean trailing punctuation
 	s = trailingQMPattern.ReplaceAllString(s, "")
 	s = trailingPeriodPattern.ReplaceAllString(s, "")
-	// 9. Collapse multiple spaces
+	// 14. Collapse multiple spaces
 	s = spacesPattern.ReplaceAllString(s, " ")
 	return strings.TrimSpace(s)
 }
@@ -397,6 +463,36 @@ var modOps = regexp.MustCompile(`(?i)\s+mod(?:ulo)?\s+`)
 
 // Percent — matches "10 percent" anywhere, with word boundary to avoid "percentage"
 var percentWordPattern = regexp.MustCompile(`(?i)(\d+)\s+percent\b`)
+
+// Fraction words (multi-word): "one half", "two thirds", "three quarters", etc.
+var fractionPattern = regexp.MustCompile(`(?i)\b(one|a)\s+(half|third|quarter|fourth)\b|\b(two)\s+(thirds|quarters|fourths)\b|\b(three)\s+(quarters|fourths)\b`)
+
+// Multiplicative prefixes: "double X", "twice X", "triple X", "half of X", "quarter of X"
+var doublePrefixPattern = regexp.MustCompile(`(?i)^(?:double|twice)\s+(.+)`)
+var triplePrefixPattern = regexp.MustCompile(`(?i)^triple\s+(.+)`)
+var halfOfPattern = regexp.MustCompile(`(?i)^half\s+of\s+(.+)`)
+var quarterOfPattern = regexp.MustCompile(`(?i)^quarter\s+of\s+(.+)`)
+
+// Power words: "X squared", "X cubed"
+var squaredPattern = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)\s+squared`)
+var cubedPattern = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)\s+cubed`)
+
+// Complex phrase patterns (applied after word→number, before word→operator)
+var increasedByPattern = regexp.MustCompile(`(?i)([\d.]+)\s+increased\s+by\s+([\d.]+)`)
+var decreasedByPattern = regexp.MustCompile(`(?i)([\d.]+)\s+decreased\s+by\s+([\d.]+)`)
+var moreThanPattern = regexp.MustCompile(`(?i)([\d.]+)\s+more\s+than\s+([\d.]+)`)
+var lessThanPattern = regexp.MustCompile(`(?i)([\d.]+)\s+less\s+than\s+([\d.]+)`)
+var differencePattern = regexp.MustCompile(`(?i)difference\s+between\s+([\d.]+)\s+and\s+([\d.]+)`)
+var overDivPattern = regexp.MustCompile(`(?i)([\d.]+)\s+over\s+([\d.]+)`)
+var outOfPattern = regexp.MustCompile(`(?i)([\d.]+)\s+out\s+of\s+([\d.]+)`)
+var ratioOfPattern = regexp.MustCompile(`(?i)ratio\s+of\s+([\d.]+)\s+to\s+([\d.]+)`)
+var productOfPattern = regexp.MustCompile(`(?i)product\s+of\s+([\d.]+)\s+and\s+([\d.]+)`)
+var sumOfPattern = regexp.MustCompile(`(?i)sum\s+of\s+([\d.]+)\s+and\s+([\d.]+)`)
+
+// Natural function call patterns: "square root of X", "cube root of X", "absolute value of X"
+var squareRootOfPattern = regexp.MustCompile(`(?i)square\s+root\s+of\s+(-?[\d.]+)`)
+var cubeRootOfPattern = regexp.MustCompile(`(?i)cube\s+root\s+of\s+(-?[\d.]+)`)
+var absoluteValueOfPattern = regexp.MustCompile(`(?i)absolute\s+value\s+of\s+(-?[\d.]+)`)
 
 // Commas and trailing noise
 var commaPattern = regexp.MustCompile(`(\d),(\d)`)

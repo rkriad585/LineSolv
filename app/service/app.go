@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -36,8 +37,9 @@ func getCtx() context.Context {
 }
 
 type AppService struct {
-	engine  *calculator.Engine
-	storage *storage.DB
+	engine      *calculator.Engine
+	storage     *storage.DB
+	docsContent map[string]string
 }
 
 func NewAppService(db *storage.DB) *AppService {
@@ -45,6 +47,23 @@ func NewAppService(db *storage.DB) *AppService {
 		engine:  calculator.NewEngine(),
 		storage: db,
 	}
+}
+
+func (s *AppService) SetDocs(docs map[string]string) {
+	s.docsContent = docs
+}
+
+func (s *AppService) GetDocList() []string {
+	names := make([]string, 0, len(s.docsContent))
+	for name := range s.docsContent {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func (s *AppService) GetDocContent(name string) string {
+	return s.docsContent[name]
 }
 
 func (s *AppService) EvaluateLine(input string) (string, error) {

@@ -71,6 +71,7 @@ Frameless drag region at the top of the window. Contains:
 - **Notes** button (clipboard SVG, toggles sidebar)
 - **Variables** button (code SVG, toggles sidebar)
 - **History** button (clock SVG, toggles sidebar)
+- **Documentation** button (book SVG, opens documentation viewer)
 - **Settings** button (gear SVG, opens settings)
 - **Double-click** on the drag region toggles fullscreen
 
@@ -139,6 +140,18 @@ Keyboard shortcut reference overlay:
 - Shows a table of all keyboard shortcuts with key bindings and descriptions
 - Triggered by `Ctrl/Cmd+/`
 - Closes on Escape or clicking the backdrop
+
+### DocsViewer
+
+Full-screen documentation viewer with sidebar tab navigation:
+- **Left sidebar** — list of all documentation files as clickable tabs
+- **Content area** — rendered markdown (headers, tables, code blocks, links, etc.)
+- Built-in inline markdown-to-HTML renderer (no external dependencies)
+- **Async loading** — document list and content fetched from embedded Go backend
+- **Caching** — loaded documents are cached in memory for instant re-opening
+- **Offline** — all docs embedded in the Go binary, no internet connection required
+- **Default** — User Guide opens automatically on first launch
+- Opens via the book icon in the title bar; closes on Escape or close button
 
 ### SettingsModal
 
@@ -215,3 +228,5 @@ Available methods:
 - `serviceBindings.SaveSettings(settings)` → `void`
 - `serviceBindings.GetAppVersion()` → `string`
 - `serviceBindings.CheckForUpdate()` → `UpdateInfo`
+- `serviceBindings.GetDocList()` → `string[]`
+- `serviceBindings.GetDocContent(name)` → `string`

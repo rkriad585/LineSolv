@@ -20,17 +20,22 @@ Input → Naturalize → Pattern Matching → Recursive Descent Parser → Resul
 Before arithmetic parsing, the input is preprocessed through a multi-step pipeline:
 
 | Step | What it does | Example |
-|---|---|---|
+|---|---|---|---|
 | 1. Prefix stripping | Removes query prefixes | `what is 2+2` → `2+2` |
 | 2. Leading commands | Strips `add`, `sum of` | `add 2 plus 2` → `2 plus 2` |
 | 3. Leading articles | Strips `the`, `a`, `an` | `the just plus five` → `just plus five` |
 | 4. Trailing fluff | Removes `please`, `thanks` | `2+2 please` → `2+2` |
-| 5. Word-to-number | Converts word numbers to digits | `twenty five` → `25` |
-| 6. Context references | Replaces `that`, `then`, `result` | `then * 2` → `42 * 2` |
-| 7. Word operators | Replaces English operators with symbols | `plus` → `+`, `divided by` → `/` |
-| 8. Percent word | Converts `percent` → `%` | `10 percent of 200` → `10% of 200` |
-| 9. Comma cleanup | Removes commas from numbers | `1,000` → `1000` |
-| 10. Trailing punctuation | Strips `?` and `.` | `42?` → `42` |
+| 5. Fraction words | Converts fraction words to decimals | `one half` → `0.5` |
+| 6. Word-to-number | Converts word numbers to digits | `twenty five` → `25` |
+| 7. Context references | Replaces `that`, `then`, `result` | `then * 2` → `42 * 2` |
+| 8. Multiplicative prefixes | Handles `double`, `twice`, `half of` | `double 5` → `2 * 5` |
+| 9. Power words | Converts `squared`, `cubed` | `5 squared` → `5 ^ 2` |
+| 10. Complex phrases | Comparison, division, multiplication phrases | `10 increased by 5` → `10 + 5` |
+| 11. Natural functions | Converts `square root of X` to `sqrt(X)` | `square root of 144` → `sqrt(144)` |
+| 12. Word operators | Replaces English operators with symbols | `plus` → `+`, `divided by` → `/` |
+| 13. Percent word | Converts `percent` → `%` | `10 percent of 200` → `10% of 200` |
+| 14. Comma cleanup | Removes commas from numbers | `1,000` → `1000` |
+| 15. Trailing punctuation | Strips `?` and `.` | `42?` → `42` |
 
 ### Query Prefixes
 
@@ -114,14 +119,37 @@ Tokens: `+`, `-`, `*`, `/`, `^`, `%`, `(`, `)`, `,`, numbers (`tokNum`), identif
 | `sin(x)` | Sine (radians) |
 | `cos(x)` | Cosine (radians) |
 | `tan(x)` | Tangent (radians) |
+| `asin(x)` | Arc sine |
+| `acos(x)` | Arc cosine |
+| `atan(x)` | Arc tangent |
+| `atan2(y, x)` | Arc tangent of y/x |
+| `sinh(x)` | Hyperbolic sine |
+| `cosh(x)` | Hyperbolic cosine |
+| `tanh(x)` | Hyperbolic tangent |
 | `sqrt(x)` | Square root |
+| `cbrt(x)` | Cube root |
 | `abs(x)` | Absolute value |
 | `round(x)` | Nearest integer |
 | `floor(x)` | Round down |
 | `ceil(x)` | Round up |
+| `trunc(x)` | Truncate decimals |
+| `fract(x)` | Fractional part |
 | `log(x)` / `ln(x)` | Natural logarithm |
 | `log10(x)` | Base-10 logarithm |
+| `log2(x)` | Base-2 logarithm |
 | `exp(x)` | e^x |
+| `pow(x, y)` | x^y |
+| `fact(x)` / `factorial(x)` | Factorial |
+| `gcd(a, b)` | Greatest common divisor |
+| `lcm(a, b)` | Least common multiple |
+| `rand()` | Random [0, 1) |
+| `min(a, b, ...)` | Minimum |
+| `max(a, b, ...)` | Maximum |
+| `sum(a, b, ...)` | Sum |
+| `avg(a, b, ...)` | Average |
+| `sign(x)` / `sgn(x)` | Sign (-1, 0, 1) |
+| `deg(x)` | Radians to degrees |
+| `rad(x)` | Degrees to radians |
 
 ### Constants
 

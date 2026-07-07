@@ -30,6 +30,10 @@ export function GetDataDir():Promise<string>;
 
 export function GetDeleteWithoutConfirm():Promise<boolean>;
 
+export function GetDocContent(arg1:string):Promise<string>;
+
+export function GetDocList():Promise<Array<string>>;
+
 export function GetHistory():Promise<Array<calculator.HistoryEntry>>;
 
 export function GetNote(arg1:string):Promise<storage.Note>;
@@ -47,3 +51,5 @@ export function SaveNoteContent(arg1:string,arg2:string):Promise<void>;
 export function SaveSettings(arg1:service.SettingsData):Promise<void>;
 
 export function SetDeleteWithoutConfirm(arg1:boolean):Promise<void>;
+
+export function SetDocs(arg1:Record<string, string>):Promise<void>;

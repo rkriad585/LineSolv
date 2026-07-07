@@ -20,6 +20,9 @@ var version = "dev"
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed all:docs
+var docsFS embed.FS
+
 //go:embed build/appicon.png
 var appIcon []byte
 
@@ -31,7 +34,21 @@ func main() {
 	}
 	defer db.Close()
 
+	docs := make(map[string]string)
+	entries, err := docsFS.ReadDir("docs")
+	if err == nil {
+		for _, e := range entries {
+			if !e.IsDir() {
+				data, rErr := docsFS.ReadFile("docs/" + e.Name())
+				if rErr == nil {
+					docs[e.Name()] = string(data)
+				}
+			}
+		}
+	}
+
 	svc := service.NewAppService(db)
+	svc.SetDocs(docs)
 
 	err = wails.Run(&options.App{
 		Title:     "LineSolv",

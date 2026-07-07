@@ -24,6 +24,7 @@ export interface AppCallbacks {
   onClearAll: () => void;
   onToggleFullscreen: () => void;
   onToggleSettings: () => void;
+  onToggleDocs: () => void;
 }
 
 export interface SettingsData {
