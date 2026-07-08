@@ -8,31 +8,7 @@ interface CustomSelect {
   addEventListener(type: 'change', fn: () => void): void;
 }
 
-interface ShortcutEntry {
-  id: string;
-  keys: string;
-  desc: string;
-}
-
-const ALL_SHORTCUTS: ShortcutEntry[] = [
-  {id: 'toggle_notes', keys: 'Ctrl/Cmd + B', desc: 'Toggle notes sidebar'},
-  {id: 'toggle_vars', keys: 'Ctrl/Cmd + I', desc: 'Toggle variables panel'},
-  {id: 'toggle_history', keys: 'Ctrl/Cmd + H', desc: 'Toggle history panel'},
-  {id: 'toggle_settings', keys: 'Ctrl/Cmd + ,', desc: 'Open settings'},
-  {id: 'clear_all', keys: 'Ctrl/Cmd + K', desc: 'Clear all'},
-  {id: 'new_note', keys: 'Ctrl/Cmd + N', desc: 'Create new note'},
-  {id: 'shortcut_ref', keys: '? / Cmd + /', desc: 'Show shortcuts reference'},
-  {id: 'history_up', keys: 'Ctrl/Cmd + \u2191', desc: 'History: previous input'},
-  {id: 'history_down', keys: 'Ctrl/Cmd + \u2193', desc: 'History: next input'},
-  {id: 'force_eval', keys: 'Shift + Enter', desc: 'Force evaluate now'},
-  {id: 'escape', keys: 'Escape', desc: 'Close modal / clear input / close panel'},
-  {id: 'duplicate', keys: 'Ctrl/Cmd + D', desc: 'Duplicate line or selection'},
-  {id: 'select_line', keys: 'Ctrl/Cmd + L', desc: 'Select current line'},
-  {id: 'delete_line', keys: 'Ctrl/Cmd + Shift + K', desc: 'Delete current line'},
-  {id: 'toggle_case', keys: 'Alt + Shift', desc: 'Toggle case (lower / UPPER / Title)'},
-  {id: 'move_up', keys: 'Alt + \u2191', desc: 'Move line up'},
-  {id: 'move_down', keys: 'Alt + \u2193', desc: 'Move line down'},
-];
+import {ALL_SHORTCUTS} from '../utils/shortcutDefs';
 
 const APP_REPO = 'https://github.com/rkriad585/LineSolv';
 

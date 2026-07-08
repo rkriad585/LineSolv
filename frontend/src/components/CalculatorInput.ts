@@ -2,6 +2,7 @@ export class CalculatorInput {
   readonly el: HTMLDivElement;
   readonly textarea: HTMLTextAreaElement;
   readonly gutter: HTMLDivElement;
+  private gutterCount = 0;
 
   constructor() {
     this.el = document.createElement('div');
@@ -28,11 +29,21 @@ export class CalculatorInput {
 
   updateGutter(lineCount: number): void {
     const count = Math.max(lineCount, 1);
-    let html = '';
-    for (let i = 1; i <= count; i++) {
-      html += `<div>${i}</div>`;
+    const oldCount = this.gutterCount;
+    if (count === oldCount) return;
+
+    if (count > oldCount) {
+      for (let i = oldCount + 1; i <= count; i++) {
+        const d = document.createElement('div');
+        d.textContent = String(i);
+        this.gutter.appendChild(d);
+      }
+    } else {
+      while (this.gutter.childElementCount > count) {
+        this.gutter.lastChild?.remove();
+      }
     }
-    this.gutter.innerHTML = html;
+    this.gutterCount = count;
   }
 
   get text(): string {

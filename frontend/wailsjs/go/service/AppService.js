@@ -26,6 +26,10 @@ export function EvaluateAll(arg1) {
   return window['go']['service']['AppService']['EvaluateAll'](arg1);
 }
 
+export function EvaluateGraph(arg1) {
+  return window['go']['service']['AppService']['EvaluateGraph'](arg1);
+}
+
 export function EvaluateLine(arg1) {
   return window['go']['service']['AppService']['EvaluateLine'](arg1);
 }
@@ -44,6 +48,10 @@ export function GetAllNotes() {
 
 export function GetAppVersion() {
   return window['go']['service']['AppService']['GetAppVersion']();
+}
+
+export function GetCurrencyCacheInfo() {
+  return window['go']['service']['AppService']['GetCurrencyCacheInfo']();
 }
 
 export function GetDataDir() {
@@ -74,6 +82,10 @@ export function GetSettings() {
   return window['go']['service']['AppService']['GetSettings']();
 }
 
+export function GetSteps(arg1) {
+  return window['go']['service']['AppService']['GetSteps'](arg1);
+}
+
 export function GetVariables() {
   return window['go']['service']['AppService']['GetVariables']();
 }
@@ -84,6 +96,10 @@ export function ImportNoteFromFile() {
 
 export function RenameNote(arg1, arg2) {
   return window['go']['service']['AppService']['RenameNote'](arg1, arg2);
+}
+
+export function ReorderNotes(arg1) {
+  return window['go']['service']['AppService']['ReorderNotes'](arg1);
 }
 
 export function SaveNoteContent(arg1, arg2) {
@@ -100,4 +116,8 @@ export function SetDeleteWithoutConfirm(arg1) {
 
 export function SetDocs(arg1) {
   return window['go']['service']['AppService']['SetDocs'](arg1);
+}
+
+export function UpdateCurrencyRates() {
+  return window['go']['service']['AppService']['UpdateCurrencyRates']();
 }

@@ -56,17 +56,19 @@ LineSolv/
 │   │   ├── engine.go       # Core engine, parser, NL pipeline, history
 │   │   ├── units.go         # Unit database + conversion
 │   │   ├── functions.go     # Built-in math functions
-│   │   └── variables.go     # Variable get/set/clear
+│   │   ├── variables.go     # Variable get/set/clear
+│   │   ├── steps.go         # Step / EvalDetail types + GetSteps
+│   │   └── graph.go         # Point / GraphResult + EvaluateGraph
 │   ├── service/
-│   │   └── app.go           # Wails-bound service methods (16 methods)
+│   │   └── app.go           # Wails-bound service methods (19 methods)
 │   └── storage/
-│       ├── db.go            # SQLite notes CRUD
+│       ├── db.go            # SQLite notes CRUD (includes position/reorder)
 │       ├── config.go        # config.toml parse/save
-│       ├── exporter.go      # Export/import: .lv, .txt, .md, .json, .toml
+│       ├── exporter.go      # Export/import: .lv, .txt, .md, .json, .toml, .pdf
 │       └── fancyname.go     # Random name generator
 ├── frontend/
 │   ├── src/
-│   │   ├── App.ts           # Orchestrator (~335 lines)
+│   │   ├── App.ts           # Orchestrator (~360 lines)
 │   │   ├── main.ts          # Entry point
 │   │   ├── types.ts         # Shared interfaces
 │   │   ├── style.css        # Tailwind + CSS custom properties
@@ -81,12 +83,16 @@ LineSolv/
 │   │       ├── TitleBar.ts
 │   │       ├── CalculatorInput.ts
 │   │       ├── ResultDisplay.ts
-│   │       ├── NotesPanel.ts
+│   │       ├── NotesPanel.ts     # Drag-and-drop reorder
 │   │       ├── VariableExplorer.ts
-│   │       ├── HistoryPanel.ts
+│   │       ├── HistoryPanel.ts   # Search/filter
+│   │       ├── StepsPanel.ts     # Step-by-step evaluation
+│   │       ├── GraphPanel.ts     # Chart.js function plotting
 │   │       ├── ContextMenu.ts
 │   │       ├── ConfirmDialog.ts
-│   │       └── ShortcutModal.ts
+│   │       ├── ShortcutModal.ts
+│   │       ├── SettingsModal.ts
+│   │       └── DocsViewer.ts
 │   ├── wailsjs/             # Auto-generated bindings (do not edit)
 │   └── index.html
 ├── docs/

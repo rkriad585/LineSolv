@@ -97,6 +97,11 @@ Uninstall via Settings > Apps, then delete `%APPDATA%/neostore/linesolv` to remo
 - **Keyboard Shortcuts** — full shortcut reference available via `Ctrl/Cmd+/`
 - **Configurable Font** — font family and size adjustable in Settings
 - **Customizable Shortcuts** — rebind any keyboard shortcut in Settings
+- **Step-by-Step Evaluation** — view intermediate computation steps via the steps panel or `Ctrl/Cmd+S`
+- **Function Graphing** — auto-detect `plot x^2`, `graph sin(x)`, `y = 2x + 1` expressions and render live charts
+- **History Search** — filter past calculations by input or output text
+- **Drag-and-Drop Note Reorder** — rearrange notes in the sidebar by dragging
+- **PDF Export** — export any note as a formatted A4 PDF with title, dates, and page numbers
 - **Print Notes** — print calculations with A4 formatting, note name header, watermark, and date via the print button or `Ctrl/Cmd+P`
 - **Notepad-Style UI** — free-form textarea with live results column, loading indicators
 - **Delete Confirmation** — optional "Don't ask again" preference stored in config.toml

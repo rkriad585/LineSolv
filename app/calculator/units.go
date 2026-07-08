@@ -214,6 +214,30 @@ func convertUnit(val float64, from, to string) string {
 	return fmt.Sprintf("%.4g %s", result, to)
 }
 
+// SetCurrencyRates updates the unitDB with live exchange rates from USD.
+// rates maps ISO codes (e.g. "EUR") to their value per 1 USD.
+func SetCurrencyRates(rates map[string]float64) {
+	for code, rate := range rates {
+		if rate <= 0 {
+			continue
+		}
+		lower := strings.ToLower(code)
+		toUSDRate := 1.0 / rate
+		if existing, ok := unitDB[lower]; ok && isCurrencyUnit(existing.name) {
+			unitDB[lower] = unitInfo{name: existing.name, toSI: toUSDRate}
+			for alias, info := range unitDB {
+				if alias != lower && info.name == existing.name {
+					unitDB[alias] = unitInfo{name: info.name, toSI: toUSDRate}
+				}
+			}
+		}
+	}
+}
+
+func isCurrencyUnit(name string) bool {
+	return len(name) >= 2 && len(name) <= 5 && name == strings.ToUpper(name)
+}
+
 // RegisterUnit adds a custom unit to the conversion database.
 // phrases is a comma-separated list of aliases; ratio is the conversion factor to SI.
 func (e *Engine) RegisterUnit(name string, phrases string, format string, ratio float64) {

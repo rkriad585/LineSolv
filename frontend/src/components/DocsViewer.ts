@@ -1,8 +1,5 @@
 import * as serviceBindings from '../../wailsjs/go/service/AppService';
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+import {escapeHtml} from '../utils/html';
 
 function renderMarkdown(md: string): string {
   const lines = md.split('\n');

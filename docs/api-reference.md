@@ -76,6 +76,68 @@ function ClearHistory(): Promise<void>
 
 Clears all stored history entries.
 
+## `GetSteps`
+
+```typescript
+interface Step {
+  operation: string;
+  expression: string;
+  result: string;
+}
+
+interface EvalDetail {
+  result: string;
+  steps: Step[];
+}
+
+function GetSteps(input: string): Promise<EvalDetail>
+```
+
+Evaluates a single expression and returns the intermediate computation steps. Does not modify engine state (no side effects on history or variables).
+
+**Parameters:**
+- `input` — single expression string
+
+**Returns:**
+- `EvalDetail` with the final result and an ordered array of `Step` objects showing each parser level reduction.
+
+## `EvaluateGraph`
+
+```typescript
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface GraphResult {
+  points: Point[];
+  expression: string;
+  from: number;
+  to: number;
+}
+
+function EvaluateGraph(input: string): Promise<GraphResult | null>
+```
+
+Evaluates a graphing expression (`plot`, `graph`, `y =` syntax) and returns 200 sampled points across the expression's range.
+
+**Parameters:**
+- `input` — graphing expression (e.g. `"plot x^2"`, `"graph sin(x) from -5 to 5"`)
+
+**Returns:**
+- `GraphResult` with sampled points, cleaned expression, and range, or `null` if the input is not a graph expression or evaluation fails.
+
+## `ReorderNotes`
+
+```typescript
+function ReorderNotes(noteIDs: string[]): Promise<void>
+```
+
+Updates the position of notes to match the given order. All note IDs must exist.
+
+**Parameters:**
+- `noteIDs` — array of note IDs in their desired order
+
 ## Usage from TypeScript
 
 ```typescript

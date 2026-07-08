@@ -18,25 +18,27 @@ Results appear to the right of each line. Empty lines and comment lines (startin
 ## The Interface
 
 ```
-┌─────────────────────────────────────────────────┐
-│ ● ● ●  LineSolv            [☰] [≡] [⏱] [📄] [🖨] ☾ │  ← Title bar (drag to move)
-├────────┬────────────────────────┬───────────────┤
-│        │                        │               │
-│ Notes  │  # Textarea            │  Results      │
-│ Panel  │  (type here)           │  Column       │
-│        │                        │               │
-│        │  1 │ 25 + 17        ──│  42           │
-│        │  2 │ 42 * 2         ──│  84           │
-│        │                        │               │
-├────────┴────────────────────────┴───────────────┤
-│  History Panel (toggle with ⌘H)                  │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ ● ● ●  LineSolv         [☰] [≡] [⏱] [🔍] [📄] [🖨] ⚙ │  ← Title bar (drag to move)
+├────────┬──────────────────────────┬──────────────────┤
+│        │                          │                  │
+│ Notes  │  # Textarea              │  Results         │
+│ Panel  │  (type here)             │  Column          │
+│        │                          │                  │
+│        │  1 │ 25 + 17          ──│  42              │
+│        │  2 │ 42 * 2           ──│  84              │
+│        │                          │                  │
+├────────┴──────────────────────────┴──────────────────┤
+│  Steps Panel (toggle with ⌘S) / Graph Panel (auto)   │
+├──────────────────────────────────────────────────────┤
+│  History Panel (toggle with ⌘H) — search filter      │
+└──────────────────────────────────────────────────────┘
 ```
 
 ### Title Bar
 - **Window controls**: Close (red), Minimize, Maximize
 - **Drag anywhere**: Click and drag any empty area of the title bar to move the window (buttons are exempted from drag); double-click to toggle fullscreen
-- **Buttons**: Notes (⌘B), Variables (⌘I), History (⌘H), Documentation, Print (⌘P), Settings (⌘,)
+- **Buttons**: Notes (⌘B), Variables (⌘I), History (⌘H), Steps (⌘S), Documentation, Print (⌘P), Settings (⌘,)
 
 ### Documentation Viewer
 Click the book icon in the title bar to open the built-in documentation viewer. It shows all guide files in a sidebar tab layout:
@@ -52,7 +54,10 @@ Click the book icon in the title bar to open the built-in documentation viewer. 
 Manage multiple calculation notebooks. Each note is independent with its own content and variables.
 
 ### History Panel (left, behind Notes)
-Shows your recent evaluation history. Click any entry to restore its input.
+Shows your recent evaluation history. Click any entry to restore its input. Use the search field at the top to filter entries by input or output text in real-time. The search input is auto-focused when the panel opens and cleared when it closes.
+
+### Steps Panel (bottom)
+Toggle the steps panel with the button in the title bar or press `Ctrl/Cmd+S`. Shows the step-by-step breakdown of the last evaluated expression — from the naturalized form through each parse-tree reduction (addition, multiplication, exponentiation, etc.) to the final result.
 
 ### Variables Panel (right)
 Shows all currently defined variables and their values.
@@ -440,6 +445,7 @@ Right-click a note → **Export** → choose a format:
 - **.md** — Markdown
 - **.json** — Structured JSON (name + content)
 - **.toml** — TOML format
+- **.pdf** — A4 PDF with title, dates, wrapped content, and page numbering
 
 A native Save As dialog will appear. Choose where to save.
 
@@ -467,6 +473,7 @@ Right-click a note → **Share** copies the note name and content to your clipbo
 | `Ctrl/Cmd + B` | Toggle notes sidebar |
 | `Ctrl/Cmd + I` | Toggle variables panel |
 | `Ctrl/Cmd + H` | Toggle history panel |
+| `Ctrl/Cmd + S` | Toggle steps panel |
 | `Ctrl/Cmd + K` | Clear all (input, history, variables) |
 | `Ctrl/Cmd + N` | Create new note |
 | `Ctrl/Cmd + P` | Print current note |
@@ -488,6 +495,19 @@ Print your current note with the printer icon in the title bar or press `Ctrl/Cm
 - Opens your operating system's native print dialog (choose printer, page range, etc.)
 
 The print output uses a monospaced font with the note name in a sans-serif header, input lines in dark gray, and results in the LineSolv purple accent color.
+
+## Graphing Functions
+
+LineSolv can plot mathematical functions. Type an expression prefixed with `plot`, `graph`, or `y =`:
+
+```
+plot x ^ 2                 →  (graph shown)
+graph sin(x)               →  (graph shown)
+y = 2x + 1                 →  (graph shown)
+graph x^2 from -5 to 5     →  (graph shown with custom range)
+```
+
+When a graph expression is detected, a chart panel appears at the bottom of the window showing the function plotted across the default range `-10` to `10` (or your custom `from N to N` range). The chart can be dismissed by clicking the close button in its header bar.
 
 ## Settings
 

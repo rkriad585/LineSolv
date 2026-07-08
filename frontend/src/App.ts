@@ -12,11 +12,14 @@ import {ShortcutModal} from './components/ShortcutModal';
 import {SettingsModal} from './components/SettingsModal';
 import {DocsViewer} from './components/DocsViewer';
 import {HistoryPanel} from './components/HistoryPanel';
+import {StepsPanel} from './components/StepsPanel';
+import {GraphPanel} from './components/GraphPanel';
 import {buildLineResults} from './utils/format';
 import {installGlobalShortcuts, toggleFullscreen} from './utils/shortcuts';
+import {escapeHtml} from './utils/html';
+import {toast} from './utils/toast';
 import * as serviceBindings from '../wailsjs/go/service/AppService';
 
-let saveContentTimer: number | null = null;
 function applyTheme(theme: string): void {
   const valid = ['dark', 'light', 'neon', 'red', 'obsidian', 'plasma', 'blood'];
   const cls = valid.includes(theme) ? theme : 'dark';
@@ -29,16 +32,6 @@ function applyFontSettings(settings: SettingsData): void {
   document.documentElement.style.setProperty('--calc-font-family', settings.font_family || 'monospace');
 }
 
-function scheduleSaveContent(noteId: string, content: string): void {
-  if (saveContentTimer) clearTimeout(saveContentTimer);
-  saveContentTimer = window.setTimeout(async () => {
-    saveContentTimer = null;
-    try {
-      await serviceBindings.SaveNoteContent(noteId, content);
-    } catch { /* ignore */ }
-  }, 500);
-}
-
 /** Mount the LineSolv application into a root element. */
 export function renderApp(root: HTMLElement): void {
   const store = new CalculatorStore();
@@ -46,6 +39,27 @@ export function renderApp(root: HTMLElement): void {
 
   let pendingEval: number | null = null;
   let evalVersion = 0;
+  let saveContentTimer: number | null = null;
+  let lastSavedContent = '';
+
+  function setNoteDirty(dirty: boolean): void {
+    const id = notesMgr.getActiveId();
+    if (id) notesPanel.setDirty(id, dirty);
+  }
+
+  function scheduleSaveContent(noteId: string, content: string): void {
+    if (saveContentTimer) clearTimeout(saveContentTimer);
+    saveContentTimer = window.setTimeout(async () => {
+      saveContentTimer = null;
+      try {
+        await serviceBindings.SaveNoteContent(noteId, content);
+        lastSavedContent = content;
+        if (noteId === notesMgr.getActiveId()) {
+          notesPanel.setDirty(noteId, false);
+        }
+      } catch { /* ignore */ }
+    }, 500);
+  }
 
   // --- Core evaluation ---
 
@@ -84,6 +98,32 @@ export function renderApp(root: HTMLElement): void {
 
       for (const r of res) {
         if (r) store.pushHistory({input: text, output: r});
+      }
+
+      // Fetch steps for the last evaluated expression
+      let lastExpr = '';
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const t = lines[i].trim();
+        if (t && !t.startsWith('#') && !t.startsWith('//') && !t.endsWith(':')) {
+          lastExpr = t;
+          break;
+        }
+      }
+      if (lastExpr && stepsPanel.isOpen()) {
+        try {
+          const detail = await serviceBindings.GetSteps(lastExpr);
+          stepsPanel.render(detail.steps, detail.result);
+        } catch { /* ignore */ }
+      }
+
+      // Auto-detect graph expressions ("plot x^2", "graph sin(x)", "y = x^2")
+      if (lastExpr) {
+        try {
+          const graphResult = await serviceBindings.EvaluateGraph(lastExpr);
+          if (graphResult && graphResult.points && graphResult.points.length > 0) {
+            graphPanel.render(graphResult.points, graphResult.expression);
+          }
+        } catch { /* ignore */ }
       }
     } catch {
       if (version !== evalVersion) return;
@@ -141,9 +181,11 @@ export function renderApp(root: HTMLElement): void {
       const note = await serviceBindings.CreateNote();
       notesMgr.addNote(note);
       input.text = '';
+      lastSavedContent = '';
       refreshNotesUI();
       clearAndEval();
       input.textarea.focus();
+      toast.show('Note created', 'success');
     } catch { /* ignore */ }
   }
 
@@ -152,6 +194,7 @@ export function renderApp(root: HTMLElement): void {
       await serviceBindings.RenameNote(id, name);
       notesMgr.renameNote(id, name);
       refreshNotesUI();
+      toast.show('Note renamed', 'success');
     } catch { /* ignore */ }
   }
 
@@ -186,6 +229,7 @@ export function renderApp(root: HTMLElement): void {
       await serviceBindings.DeleteNote(id);
       const wasActive = id === notesMgr.getActiveId();
       notesMgr.removeNote(id);
+      notesPanel.setDirty(id, false);
       if (wasActive && notesMgr.activeNote()) {
         input.text = notesMgr.activeNote().content;
       }
@@ -195,12 +239,14 @@ export function renderApp(root: HTMLElement): void {
       } else {
         clearAndEval();
       }
+      toast.show('Note deleted', 'info');
     } catch { /* ignore */ }
   }
 
   async function handleExportNote(id: string, format: string): Promise<void> {
     try {
       await serviceBindings.ExportNoteToFile(id, format);
+      toast.show('Note exported', 'success');
     } catch { /* ignore */ }
   }
 
@@ -213,6 +259,7 @@ export function renderApp(root: HTMLElement): void {
       input.text = note.content;
       refreshNotesUI();
       clearAndEval();
+      toast.show('Note imported', 'success');
     } catch { /* ignore */ }
   }
 
@@ -220,7 +267,10 @@ export function renderApp(root: HTMLElement): void {
     const note = notesMgr.getNotes().find(n => n.id === id);
     if (!note) return;
     const text = `${note.name}\n---\n${note.content}`;
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text).then(
+      () => toast.show('Copied to clipboard', 'info'),
+      () => {},
+    );
   }
 
   // --- Shortcut callbacks ---
@@ -270,6 +320,8 @@ export function renderApp(root: HTMLElement): void {
         notesPanel.close();
       } else if (historyPanel.isOpen()) {
         historyPanel.close();
+      } else if (stepsPanel.isOpen()) {
+        stepsPanel.close();
       } else if (varsPanel.isOpen()) {
         varsPanel.close();
       }
@@ -281,15 +333,30 @@ export function renderApp(root: HTMLElement): void {
       if (notesMgr.activeNote()) {
         notesMgr.activeNote().content = input.text;
         scheduleSaveContent(notesMgr.activeNote().id, input.text);
+        if (input.text !== lastSavedContent) {
+          setNoteDirty(true);
+        }
       }
     },
     onToggleShortcuts: () => shortcutModal.open(),
     onToggleHistory: () => {
       if (historyPanel.isOpen()) {
         historyPanel.close();
+        historyPanel.clearFilter();
       } else {
+        historyPanel.clearFilter();
         historyPanel.render(store.getState().history);
         historyPanel.open();
+        historyPanel.focusSearch();
+      }
+    },
+    onToggleSteps: () => {
+      if (stepsPanel.isOpen()) {
+        stepsPanel.close();
+      } else {
+        stepsPanel.render([], '');
+        stepsPanel.open();
+        forceEval();
       }
     },
     onToggleSettings: () => {
@@ -307,6 +374,7 @@ export function renderApp(root: HTMLElement): void {
       }
     },
     onToggleFullscreen: toggleFullscreen,
+    onSearchNotes: () => notesPanel.focusSearch(),
     onPrint: () => {
       const text = input.text;
       const lines = text.split('\n');
@@ -384,17 +452,27 @@ export function renderApp(root: HTMLElement): void {
     },
   };
 
-  function escapeHtml(s: string): string {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
   // --- Callbacks for components ---
 
   const switchNote = (id: string) => {
     if (!notesMgr.switchNote(id)) return;
-    input.text = notesMgr.activeNote().content;
+    const content = notesMgr.activeNote().content;
+    input.text = content;
+    lastSavedContent = content;
+    const activeId = notesMgr.getActiveId();
+    if (activeId) notesPanel.setDirty(activeId, false);
     refreshNotesUI();
     clearAndEval();
+  };
+
+  const handleReorderNotes = async (noteIDs: string[]) => {
+    try {
+      await serviceBindings.ReorderNotes(noteIDs);
+      const notes = await serviceBindings.GetAllNotes();
+      const activeId = notesMgr.getActiveId();
+      notesMgr.load(notes, activeId || notes[0]?.id || '');
+      refreshNotesUI();
+    } catch { /* ignore */ }
   };
 
   const noteActions = {
@@ -403,6 +481,7 @@ export function renderApp(root: HTMLElement): void {
     exportNote: handleExportNote,
     share: handleShareNote,
     importNote: handleImportNote,
+    reorder: handleReorderNotes,
   };
 
   const cb: AppCallbacks = {
@@ -411,6 +490,7 @@ export function renderApp(root: HTMLElement): void {
     onToggleNotes: shortcuts.onToggleNotes,
     onToggleVars: shortcuts.onToggleVars,
     onToggleHistory: shortcuts.onToggleHistory,
+    onToggleSteps: shortcuts.onToggleSteps,
     onSwitchNote: switchNote,
     onClearAll: shortcuts.onClearAll,
     onToggleFullscreen: toggleFullscreen,
@@ -430,8 +510,15 @@ export function renderApp(root: HTMLElement): void {
   const notepad = document.createElement('div');
   notepad.id = 'notepad-wrapper';
   notepad.className = 'flex-1 flex min-h-0';
+  notepad.style.position = 'relative';
   notepad.appendChild(input.el);
   notepad.appendChild(results.el);
+
+  const loadingSpinner = document.createElement('div');
+  loadingSpinner.id = 'loading-spinner';
+  loadingSpinner.style.cssText = 'display:none;position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:50;';
+  loadingSpinner.innerHTML = '<div style="width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;"></div>';
+  notepad.appendChild(loadingSpinner);
 
   const shortcutModal = new ShortcutModal();
 
@@ -448,17 +535,22 @@ export function renderApp(root: HTMLElement): void {
     forceEval();
   });
 
+  const stepsPanel = new StepsPanel();
+  const graphPanel = new GraphPanel();
+
   const docsViewer = new DocsViewer();
 
   const main = document.createElement('div');
   main.className = 'flex-1 flex flex-col min-w-0';
   main.appendChild(notepad);
+  main.appendChild(graphPanel.el);
 
   const content = document.createElement('div');
   content.className = 'flex flex-1 min-h-0';
   content.appendChild(historyPanel.el);
   content.appendChild(notesPanel.el);
   content.appendChild(main);
+  content.appendChild(stepsPanel.el);
   content.appendChild(varsPanel.el);
 
   const ui = document.createElement('div');
@@ -480,12 +572,14 @@ export function renderApp(root: HTMLElement): void {
   window.addEventListener('resize', () => {
     if (window.innerWidth < 700 && notesPanel.isOpen()) notesPanel.close();
     if (window.innerWidth < 700 && historyPanel.isOpen()) historyPanel.close();
+    if (window.innerWidth < 600 && stepsPanel.isOpen()) stepsPanel.close();
     if (window.innerWidth < 500 && varsPanel.isOpen()) varsPanel.close();
   });
 
   installGlobalShortcuts(input.textarea, shortcuts);
 
   store.subscribe((state) => {
+    loadingSpinner.style.display = state.evalState === 'loading' ? '' : 'none';
     if (historyPanel.isOpen()) {
       historyPanel.render(state.history);
     }

@@ -2,6 +2,7 @@ export interface ShortcutMap {
   onToggleNotes: () => void;
   onToggleVars: () => void;
   onToggleHistory: () => void;
+  onToggleSteps: () => void;
   onClearAll: () => void;
   onNewNote: () => void;
   onHistoryUp: () => string | null;
@@ -15,14 +16,57 @@ export interface ShortcutMap {
   onToggleFullscreen: () => void;
   onToggleDocs: () => void;
   onPrint: () => void;
+  onSearchNotes: () => void;
 }
 
 let fullscreen = false;
+
+// --- Undo/Redo stack ---
+const undoStack = new Map<HTMLTextAreaElement, string[]>();
+const redoStack = new Map<HTMLTextAreaElement, string[]>();
+const MAX_UNDO = 200;
+
+function pushSnapshot(ta: HTMLTextAreaElement): void {
+  let stack = undoStack.get(ta);
+  if (!stack) {
+    stack = [];
+    undoStack.set(ta, stack);
+  }
+  if (stack.length > 0 && stack[stack.length - 1] === ta.value) return;
+  stack.push(ta.value);
+  if (stack.length > MAX_UNDO) stack.shift();
+  redoStack.delete(ta);
+}
+
+function undo(ta: HTMLTextAreaElement): void {
+  const stack = undoStack.get(ta);
+  if (!stack || stack.length === 0) return;
+  let redo = redoStack.get(ta);
+  if (!redo) { redo = []; redoStack.set(ta, redo); }
+  redo.push(ta.value);
+  if (redo.length > MAX_UNDO) redo.shift();
+  ta.value = stack.pop()!;
+  const len = ta.value.length;
+  ta.setSelectionRange(len, len);
+}
+
+function redo(ta: HTMLTextAreaElement): void {
+  const stack = redoStack.get(ta);
+  if (!stack || stack.length === 0) return;
+  pushSnapshot(ta);
+  ta.value = stack.pop()!;
+  const len = ta.value.length;
+  ta.setSelectionRange(len, len);
+}
 
 export function installGlobalShortcuts(
   textarea: HTMLTextAreaElement,
   cmds: ShortcutMap,
 ): void {
+
+  // Push initial snapshot
+  pushSnapshot(textarea);
+
   textarea.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -44,18 +88,19 @@ export function installGlobalShortcuts(
 
     // Undo/Redo
     if (mod && e.key === 'z') {
+      e.preventDefault();
       if (e.shiftKey) {
-        e.preventDefault();
-        document.execCommand('redo');
+        redo(textarea);
       } else {
-        e.preventDefault();
-        document.execCommand('undo');
+        undo(textarea);
       }
+      cmds.onInput();
       return;
     }
     if (mod && e.key === 'y') {
       e.preventDefault();
-      document.execCommand('redo');
+      redo(textarea);
+      cmds.onInput();
       return;
     }
 
@@ -102,6 +147,7 @@ export function installGlobalShortcuts(
   });
 
   textarea.addEventListener('input', () => {
+    pushSnapshot(textarea);
     cmds.onInput();
   });
 
@@ -110,6 +156,7 @@ export function installGlobalShortcuts(
     if (mod && e.key === 'b') { e.preventDefault(); cmds.onToggleNotes(); }
     if (mod && e.key === 'i') { e.preventDefault(); cmds.onToggleVars(); }
     if (mod && e.key === 'h') { e.preventDefault(); cmds.onToggleHistory(); }
+    if (mod && e.key === 's') { e.preventDefault(); cmds.onToggleSteps(); }
     if (mod && e.key === 'k') { e.preventDefault(); cmds.onClearAll(); }
     if (mod && e.key === 'n') { e.preventDefault(); cmds.onNewNote(); }
 
@@ -143,6 +190,11 @@ export function installGlobalShortcuts(
     if (e.key === 'p' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       cmds.onPrint();
+    }
+
+    if (e.key === 'f' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      cmds.onSearchNotes();
     }
 
     if (!mod && e.key === 'Escape') {
@@ -199,6 +251,7 @@ function duplicateLineOrSelection(ta: HTMLTextAreaElement): void {
 }
 
 function deleteCurrentLine(ta: HTMLTextAreaElement): void {
+  pushSnapshot(ta);
   const {line, lineStart, lineEnd} = getLineInfo(ta);
   const val = ta.value;
   const beforeLine = val.substring(0, lineStart);
@@ -229,6 +282,7 @@ function toggleCase(ta: HTMLTextAreaElement): void {
 function moveLineUp(ta: HTMLTextAreaElement): void {
   const {line, lineStart, lineEnd} = getLineInfo(ta);
   if (line === 0) return;
+  pushSnapshot(ta);
   const val = ta.value;
   const lines = val.split('\n');
   const prevLineStart = lineStart - lines[line - 1].length - 1;
@@ -246,6 +300,7 @@ function moveLineDown(ta: HTMLTextAreaElement): void {
   const val = ta.value;
   const lines = val.split('\n');
   if (line >= lines.length - 1) return;
+  pushSnapshot(ta);
   const currentLine = lines[line];
   const nextLine = lines[line + 1];
   lines[line] = nextLine;

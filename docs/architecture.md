@@ -11,15 +11,17 @@ LineSolv is a cross-platform desktop application built with the **Wails v2** fra
 │  │  main.go                                            ││
 │  │  ├─ service.AppService (Wails-bound methods)        ││
 │  │  │   └─ app/calculator.Engine                       ││
-│  │  │       ├─ engine.go  — parser, pipeline, history  ││
-│  │  │       ├─ units.go   — unit DB + conversion       ││
-│  │  │       ├─ functions.go — built-in math functions  ││
-│  │  │       └─ variables.go — get/set/clear variables  ││
+│  │  │       ├─ engine.go    — parser, pipeline, history ││
+│  │  │       ├─ units.go     — unit DB + conversion      ││
+│  │  │       ├─ functions.go — built-in math functions   ││
+│  │  │       ├─ variables.go — get/set/clear variables   ││
+│  │  │       ├─ steps.go     — Step / EvalDetail types   ││
+│  │  │       └─ graph.go     — Point / GraphResult, EvaluateGraph ││
 │  │  └─ storage/                                        ││
-│  │      ├─ db.go          — SQLite notes CRUD          ││
-│  │      ├─ config.go      — config.toml parse/save     ││
-│  │      ├─ exporter.go    — Export/import note files   ││
-│  │      └─ fancyname.go   — "{Adj} {Noun}"             ││
+│  │      ├─ db.go          — SQLite notes CRUD           ││
+│  │      ├─ config.go      — config.toml parse/save      ││
+│  │      ├─ exporter.go    — Export/import notes + PDF   ││
+│  │      └─ fancyname.go   — "{Adj} {Noun}"              ││
 │  └─────────────────────────────────────────────────────┘│
 │                                                         │
 │  Frontend (WebView)                                     │
@@ -32,6 +34,7 @@ LineSolv is a cross-platform desktop application built with the **Wails v2** fra
 │  │  │              NotesPanel, VariableExplorer,        ││
 │  │  │              ContextMenu, ConfirmDialog,          ││
 │  │  │              ShortcutModal, SettingsModal,         ││
+│  │  │              StepsPanel, GraphPanel,               ││
 │  │  │              DocsViewer)                           ││
 │  │  ├─ style.css (Tailwind v4 + CSS vars)              ││
 │  │  └─ wailsjs/go/service/ (auto-generated bindings)   ││
@@ -48,19 +51,21 @@ Minimal entrypoint. Creates the service and calls `wails.Run`. The `AppService` 
 Wails-bound service layer exposing methods for evaluation, variables, history, notes CRUD, settings, export/import, and update checking.
 
 ### `app/calculator/`
-The natural-language arithmetic engine, split into four files:
+The natural-language arithmetic engine, split into six files:
 
 - **`engine.go`** — Core `Engine` struct, PEMDAS recursive descent parser, lexer, natural language preprocessing pipeline (`naturalize`), `EvaluateLine`/`EvaluateAll`, history tracking, helpers
 - **`units.go`** — `unitInfo` struct, `unitDB` map, `convertUnit` function, `RegisterUnit`
 - **`functions.go`** — Built-in math function dispatch (`sin`, `cos`, `sqrt`, etc.)
 - **`variables.go`** — `GetVariables`, `SetVariable`, `ClearVariables`
+- **`steps.go`** — `Step` and `EvalDetail` types used for step-by-step evaluation display
+- **`graph.go`** — `Point`, `GraphResult` types and `EvaluateGraph` for function plotting
 
 ### `app/storage/`
 Persistent storage layer with four modules:
 
 - **`db.go`** — SQLite database connection and CRUD operations for notes (`notes` table)
 - **`config.go`** — Parsing and saving `config.toml` with `[app]`, `[notes]`, `[behavior]`, `[settings]` sections
-- **`exporter.go`** — Export notes to `.lv`, `.txt`, `.md`, `.json`, `.toml` and import from `.json`
+- **`exporter.go`** — Export notes to `.lv`, `.txt`, `.md`, `.json`, `.toml`, `.pdf` and import from `.json`
 - **`fancyname.go`** — Random name generator for new notes
 
 ## TypeScript Frontend
@@ -72,12 +77,12 @@ Orchestrator that wires all UI components, uses `CalculatorStore` for reactive s
 Reactive store with subscriber pattern. Holds input, results, variables, eval state (idle/loading/error), error message, and computation history. Components subscribe to state changes.
 
 ### Components
-- **TitleBar** — Frameless drag region with app title and action buttons (notes, variables, history, docs, print, settings). Uses `--wails-draggable:drag` on the header with `--wails-draggable:no-drag` on all buttons per the Wails v2 pattern. Print button opens native print dialog via hidden iframe with watermark. Double-click toggles fullscreen.
+- **TitleBar** — Frameless drag region with app title and action buttons (notes, variables, history, steps, docs, print, settings). Uses `--wails-draggable:drag` on the header with `--wails-draggable:no-drag` on all buttons per the Wails v2 pattern. Print button opens native print dialog via hidden iframe with watermark. Double-click toggles fullscreen.
 - **CalculatorInput** — Textarea with synchronized line-number gutter
 - **ResultDisplay** — Right-aligned results column synced with input scroll, shows loading indicator and empty state
 - **NotesPanel** — Collapsible sidebar for managing multiple calculation notes, with right-click context menu (rename, delete, export, import, share)
 - **VariableExplorer** — Collapsible sidebar showing defined variables
-- **HistoryPanel** — Collapsible sidebar showing evaluation history, click to restore input
+- **HistoryPanel** — Collapsible sidebar showing evaluation history, click to restore input, real-time search/filter input
 - **ContextMenu** — Reusable right-click menu with submenus and SVG icons
 - **ConfirmDialog** — Modal confirmation dialog with "Don't ask again" option
 - **ShortcutModal** — Keyboard shortcut reference overlay

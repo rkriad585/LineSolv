@@ -8,6 +8,7 @@ type NoteAction = {
   exportNote: (id: string, format: string) => void;
   share: (id: string) => void;
   importNote: () => void;
+  reorder: (noteIDs: string[]) => void;
 };
 
 export class NotesPanel {
@@ -17,6 +18,11 @@ export class NotesPanel {
   private callback: (id: string) => void;
   private ctxMenu: ContextMenu;
   private actions: NoteAction;
+  private searchInput: HTMLInputElement;
+  private filterText = '';
+  private dirtyIds = new Set<string>();
+  private lastNotes: Note[] = [];
+  private lastActiveId = '';
 
   constructor(onSwitchNote: (id: string) => void, onNewNote: () => void, actions: NoteAction) {
     this.callback = onSwitchNote;
@@ -35,6 +41,27 @@ export class NotesPanel {
     header.style.cssText = 'color:var(--text-muted);border-color:var(--border);';
     header.textContent = 'Notes';
     this.el.appendChild(header);
+
+    this.searchInput = document.createElement('input');
+    this.searchInput.type = 'search';
+    this.searchInput.placeholder = 'Search notes...';
+    this.searchInput.className = 'mx-3 my-2 px-2 py-1 text-xs rounded shrink-0';
+    this.searchInput.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);color:var(--text);outline:none;';
+    this.searchInput.setAttribute('aria-label', 'Search notes');
+    this.searchInput.style.display = 'none';
+    this.searchInput.addEventListener('input', () => {
+      this.filterText = this.searchInput.value.toLowerCase();
+      this.render(this.lastNotes, this.lastActiveId);
+    });
+    this.searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.searchInput.value = '';
+        this.filterText = '';
+        this.render(this.lastNotes, this.lastActiveId);
+        this.searchInput.blur();
+      }
+    });
+    this.el.appendChild(this.searchInput);
 
     this.listEl = document.createElement('div');
     this.listEl.id = 'notes-list';
@@ -69,6 +96,7 @@ export class NotesPanel {
     this.newNoteBtn.className = 'mx-3 mb-3 mt-2 py-1.5 text-xs rounded transition-colors shrink-0';
     this.newNoteBtn.style.cssText = 'color:var(--text-muted);background:var(--surface-secondary);';
     this.newNoteBtn.textContent = '+ New Note';
+    this.newNoteBtn.setAttribute('aria-label', 'Create new note');
     this.el.appendChild(this.newNoteBtn);
 
     this.newNoteBtn.addEventListener('click', onNewNote);
@@ -76,11 +104,39 @@ export class NotesPanel {
     this.addHover(this.newNoteBtn);
   }
 
-  render(notes: Note[], activeId: string): void {
-    this.listEl.innerHTML = notes
+  setDirty(id: string, dirty: boolean): void {
+    if (dirty) {
+      this.dirtyIds.add(id);
+    } else {
+      this.dirtyIds.delete(id);
+    }
+    this.render(this.lastNotes, this.lastActiveId);
+  }
+
+  private filteredNotes(notes: Note[]): Note[] {
+    if (!this.filterText) return notes;
+    return notes.filter(n => n.name.toLowerCase().includes(this.filterText));
+  }
+
+  render(notes: Note[], activeId?: string): void {
+    this.lastNotes = notes;
+    this.lastActiveId = activeId ?? this.lastActiveId;
+    const filtered = this.filteredNotes(notes);
+    this.searchInput.style.display = notes.length > 1 ? '' : 'none';
+    if (filtered.length === 0 && this.filterText) {
+      this.listEl.innerHTML = `<div class="px-3 py-2 text-xs" style="color:var(--text-muted)">No matching notes</div>`;
+      return;
+    }
+    let dragId: string | null = null;
+
+    this.listEl.innerHTML = filtered
       .map(
-        n =>
-          `<div class="note-item px-3 py-1.5 text-sm cursor-pointer" tabindex="-1" data-note-id="${n.id}" style="color:${n.id === activeId ? 'var(--text)' : 'var(--text-muted)'};background:${n.id === activeId ? 'var(--note-bg)' : 'transparent'}">${escapeHtml(n.name)}</div>`
+        n => {
+          const isActive = n.id === (activeId ?? '');
+          const dirty = this.dirtyIds.has(n.id);
+          const dot = dirty ? `<span class="note-dirty" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:6px;flex-shrink:0;vertical-align:middle;"></span>` : '';
+          return `<div class="note-item px-3 py-1.5 text-sm cursor-pointer flex items-center" draggable="true" tabindex="-1" data-note-id="${n.id}" style="color:${isActive ? 'var(--text)' : 'var(--text-muted)'};background:${isActive ? 'var(--note-bg)' : 'transparent'}">${dot}<span class="truncate">${escapeHtml(n.name)}</span></div>`;
+        }
       )
       .join('');
     this.listEl.querySelectorAll('.note-item').forEach(el => {
@@ -94,6 +150,40 @@ export class NotesPanel {
         ev.stopPropagation();
         this.showContextMenu(nid, ev.clientX, ev.clientY);
       });
+      e.addEventListener('dragstart', () => {
+        dragId = nid;
+        e.style.opacity = '0.4';
+      });
+      e.addEventListener('dragend', () => {
+        dragId = null;
+        e.style.opacity = '';
+        this.listEl.querySelectorAll('.note-item').forEach(item => {
+          (item as HTMLElement).style.borderTop = '';
+        });
+      });
+      e.addEventListener('dragover', (ev) => {
+        ev.preventDefault();
+      });
+      e.addEventListener('dragenter', (ev) => {
+        ev.preventDefault();
+        if (dragId && dragId !== nid) {
+          e.style.borderTop = '2px solid var(--accent)';
+        }
+      });
+      e.addEventListener('dragleave', () => {
+        e.style.borderTop = '';
+      });
+      e.addEventListener('drop', () => {
+        e.style.borderTop = '';
+        if (!dragId || dragId === nid) return;
+        const ids = filtered.map(n => n.id);
+        const fromIdx = ids.indexOf(dragId);
+        const toIdx = ids.indexOf(nid);
+        if (fromIdx === -1 || toIdx === -1) return;
+        ids.splice(fromIdx, 1);
+        ids.splice(toIdx, 0, dragId);
+        this.actions.reorder(ids);
+      });
     });
   }
 
@@ -102,13 +192,14 @@ export class NotesPanel {
   }
 
   private showContextMenu(id: string, x: number, y: number): void {
-    const formatLabels: Record<string, string> = {
-      lv: '.lv',
-      txt: '.txt',
-      md: '.md',
-      json: '.json',
-      toml: '.toml',
-    };
+          const formatLabels: Record<string, string> = {
+            lv: '.lv',
+            txt: '.txt',
+            md: '.md',
+            json: '.json',
+            toml: '.toml',
+            pdf: '.pdf',
+          };
     const exportChildren = Object.entries(formatLabels).map(([fmt, label]) => ({
       label,
       action: () => this.actions.exportNote(id, fmt),
@@ -188,9 +279,17 @@ export class NotesPanel {
     });
   }
 
+  focusSearch(): void {
+    if (!this.isOpen()) this.open();
+    this.searchInput.style.display = '';
+    this.searchInput.focus();
+    this.searchInput.select();
+  }
+
   open(): void {
     this.el.style.width = '200px';
     this.el.style.borderRightWidth = '1px';
+    if (this.lastNotes.length > 1) this.searchInput.style.display = '';
     this.listEl.focus();
     setTimeout(() => this.listEl.focus(), 0);
   }

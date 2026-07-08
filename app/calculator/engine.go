@@ -101,6 +101,126 @@ func (e *Engine) EvaluateAll(input string) []string {
 	return results
 }
 
+// GetSteps evaluates a single expression and returns intermediate steps, without
+// modifying engine state (no history, no lastResult, no variable changes).
+func (e *Engine) GetSteps(input string) *EvalDetail {
+	s := strings.TrimSpace(input)
+	if s == "" || strings.HasPrefix(s, "#") || strings.HasPrefix(s, "//") || strings.HasSuffix(s, ":") {
+		return &EvalDetail{}
+	}
+	if len(s) > maxInputLength {
+		return &EvalDetail{Result: "Error: input too long"}
+	}
+
+	if strings.Contains(s, "=") && !strings.Contains(s, "==") {
+		parts := strings.SplitN(s, "=", 2)
+		name := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+		if isIdentifier(name) {
+			detail := e.evaluateExprDetailed(val)
+			if detail.Result == "" {
+				return &EvalDetail{Result: ""}
+			}
+			detail.Result = name + " = " + detail.Result
+			return detail
+		}
+	}
+
+	return e.evaluateExprDetailed(s)
+}
+
+func (e *Engine) evaluateExprDetailed(input string) *EvalDetail {
+	raw := strings.TrimSpace(input)
+
+	if result := computeDateMath(raw); result != raw {
+		return &EvalDetail{Result: result}
+	}
+
+	s := e.naturalize(raw)
+	var steps []Step
+	steps = append(steps, Step{Operation: "naturalize", Expression: raw, Result: s})
+
+	if result := computeDateMath(s); result != s {
+		steps = append(steps, Step{Operation: "date-math", Expression: s, Result: result})
+		return &EvalDetail{Result: result, Steps: steps}
+	}
+	if result := extractDateMath(s); result != s {
+		steps = append(steps, Step{Operation: "date-math", Expression: s, Result: result})
+		return &EvalDetail{Result: result, Steps: steps}
+	}
+	if result := computeAge(s); result != s {
+		steps = append(steps, Step{Operation: "age", Expression: s, Result: result})
+		return &EvalDetail{Result: result, Steps: steps}
+	}
+
+	{
+		convertMatch := regexp.MustCompile(`(?i)^(?:convert|change)\s+(.+)\s+to\s+(.+)$`).FindStringSubmatch(s)
+		if convertMatch != nil {
+			if m := unitConvPattern.FindStringSubmatch(convertMatch[1] + " in " + convertMatch[2]); m != nil {
+				val, err := strconv.ParseFloat(m[1], 64)
+				if err == nil {
+					result := convertUnit(val, m[2], m[3])
+					steps = append(steps, Step{Operation: "convert", Expression: s, Result: result})
+					return &EvalDetail{Result: result, Steps: steps}
+				}
+			}
+		}
+	}
+
+	if match := unitConvPattern.FindStringSubmatch(s); match != nil {
+		val, err := strconv.ParseFloat(match[1], 64)
+		if err != nil {
+			return &EvalDetail{Result: ""}
+		}
+		from := strings.TrimSpace(match[2])
+		to := strings.TrimSpace(match[3])
+		if from == "" {
+			if _, ok := unitDB[strings.ToLower(to)]; ok {
+				from = "usd"
+			}
+		}
+		result := convertUnit(val, from, to)
+		steps = append(steps, Step{Operation: "convert", Expression: s, Result: result})
+		return &EvalDetail{Result: result, Steps: steps}
+	}
+
+	if match := percentOfPattern.FindStringSubmatch(s); match != nil {
+		pct, err := strconv.ParseFloat(match[1], 64)
+		if err == nil {
+			val, err := strconv.ParseFloat(match[2], 64)
+			if err == nil {
+				result := formatNumber(pct / 100 * val)
+				steps = append(steps, Step{Operation: "percent", Expression: s, Result: result})
+				return &EvalDetail{Result: result, Steps: steps}
+			}
+		}
+	}
+
+	if match := percentAddPattern.FindStringSubmatch(s); match != nil {
+		base, err := strconv.ParseFloat(match[1], 64)
+		if err == nil {
+			pct, err := strconv.ParseFloat(match[3], 64)
+			if err == nil {
+				var result string
+				if match[2] == "+" {
+					result = formatNumber(base + base*pct/100)
+				} else {
+					result = formatNumber(base - base*pct/100)
+				}
+				steps = append(steps, Step{Operation: "percent", Expression: s, Result: result})
+				return &EvalDetail{Result: result, Steps: steps}
+			}
+		}
+	}
+
+	result, parseSteps, err := e.parseExprWithSteps(s)
+	if err != nil {
+		return &EvalDetail{Result: ""}
+	}
+	steps = append(steps, parseSteps...)
+	return &EvalDetail{Result: formatNumber(result), Steps: steps}
+}
+
 func (e *Engine) evaluateExpr(input string) (string, error) {
 	raw := strings.TrimSpace(input)
 
@@ -1386,6 +1506,7 @@ type parser struct {
 	pos    int
 	vars   map[string]float64
 	engine *Engine
+	steps  *[]Step
 }
 
 type token struct {
@@ -1480,6 +1601,14 @@ func (e *Engine) parseExpr(s string) (float64, error) {
 	return p.parseAddSub()
 }
 
+func (e *Engine) parseExprWithSteps(s string) (float64, []Step, error) {
+	toks := lex(s)
+	var steps []Step
+	p := &parser{tokens: toks, pos: 0, vars: e.variables, engine: e, steps: &steps}
+	result, err := p.parseAddSub()
+	return result, steps, err
+}
+
 func (p *parser) peek() token    { return p.tokens[p.pos] }
 func (p *parser) advance() token { t := p.tokens[p.pos]; p.pos++; return t }
 
@@ -1503,10 +1632,14 @@ func (p *parser) parseAddSub() (float64, error) {
 		if err != nil {
 			return 0, err
 		}
+		leftStr := fmtVal(left)
+		rightStr := fmtVal(right)
 		if op.kind == tokPlus {
-			left += right
+			left = left + right
+			p.recordStep("add", leftStr+" + "+rightStr, fmtVal(left))
 		} else {
-			left -= right
+			left = left - right
+			p.recordStep("subtract", leftStr+" - "+rightStr, fmtVal(left))
 		}
 	}
 	return left, nil
@@ -1524,19 +1657,24 @@ func (p *parser) parseMulDiv() (float64, error) {
 		if err != nil {
 			return 0, err
 		}
+		leftStr := fmtVal(left)
+		rightStr := fmtVal(right)
 		switch op.kind {
 		case tokMul:
-			left *= right
+			left = left * right
+			p.recordStep("multiply", leftStr+" × "+rightStr, fmtVal(left))
 		case tokDiv:
 			if right == 0 {
 				return 0, fmt.Errorf("division by zero")
 			}
-			left /= right
+			left = left / right
+			p.recordStep("divide", leftStr+" ÷ "+rightStr, fmtVal(left))
 		case tokMod:
 			if right == 0 {
 				return 0, fmt.Errorf("modulo by zero")
 			}
 			left = math.Mod(left, right)
+			p.recordStep("modulo", leftStr+" mod "+rightStr, fmtVal(left))
 		}
 	}
 	return left, nil
@@ -1550,11 +1688,13 @@ func (p *parser) parsePow() (float64, error) {
 	}
 	for p.peek().kind == tokPow {
 		p.advance()
+		leftStr := fmtVal(left)
 		right, err := p.parseUnary()
 		if err != nil {
 			return 0, err
 		}
 		left = math.Pow(left, right)
+		p.recordStep("power", leftStr+"^"+fmtVal(right), fmtVal(left))
 	}
 	return left, nil
 }
@@ -1567,7 +1707,9 @@ func (p *parser) parseUnary() (float64, error) {
 		if err != nil {
 			return 0, err
 		}
-		return -val, nil
+		result := -val
+		p.recordStep("negate", "-("+fmtVal(val)+")", fmtVal(result))
+		return result, nil
 	}
 	if p.peek().kind == tokPlus {
 		p.advance()
@@ -1593,7 +1735,12 @@ func (p *parser) parseAtom() (float64, error) {
 		}
 		if p.peek().kind == tokBang {
 			p.advance()
-			return factorial(val)
+			result, err := factorial(val)
+			if err != nil {
+				return 0, err
+			}
+			p.recordStep("factorial", fmtVal(val)+"!", fmtVal(result))
+			return result, nil
 		}
 		return val, nil
 	}
@@ -1610,7 +1757,12 @@ func (p *parser) parseAtom() (float64, error) {
 		}
 		if p.peek().kind == tokBang {
 			p.advance()
-			return factorial(val)
+			result, err := factorial(val)
+			if err != nil {
+				return 0, err
+			}
+			p.recordStep("factorial", "("+fmtVal(val)+")!", fmtVal(result))
+			return result, nil
 		}
 		return val, nil
 	}
@@ -1629,16 +1781,28 @@ func (p *parser) parseAtom() (float64, error) {
 			if err != nil {
 				return 0, err
 			}
-			return p.callBuiltinOrPlugin(name, args)
+			result, err := p.callBuiltinOrPlugin(name, args)
+			if err != nil {
+				return 0, err
+			}
+			argsStr := make([]string, len(args))
+			for i, a := range args {
+				argsStr[i] = fmtVal(a)
+			}
+			p.recordStep("function", name+"("+strings.Join(argsStr, ", ")+")", fmtVal(result))
+			return result, nil
 		}
 
 		switch name {
 		case "pi", "π":
+			p.recordStep("constant", "π", fmtVal(math.Pi))
 			return math.Pi, nil
 		case "e":
+			p.recordStep("constant", "e", fmtVal(math.E))
 			return math.E, nil
 		default:
 			if v, ok := p.vars[name]; ok {
+				p.recordStep("variable", name, fmtVal(v))
 				return v, nil
 			}
 			return 0, fmt.Errorf("unknown identifier: %s", name)

@@ -29,3 +29,6 @@ frontend/dist
 
 # OS
 Thumbs.db
+
+# Stale
+frontend/package.json.md5

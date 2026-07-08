@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+* {
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
 :root {
   --surface: #18181b;
   --surface-secondary: #27272a;
@@ -198,6 +202,10 @@ body {
   #confirm-dialog, .drag {
     display: none !important;
   }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Context menu */

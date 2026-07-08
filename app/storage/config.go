@@ -8,8 +8,6 @@ import (
 )
 
 type Config struct {
-	Theme   string `toml:"theme"`
-	Version string `toml:"version"`
 	App     struct {
 		Theme   string `toml:"theme"`
 		Version string `toml:"version"`
@@ -98,6 +96,7 @@ func parseConfigTOML(data string, cfg *Config) {
 		key := strings.TrimSpace(parts[0])
 		val := strings.TrimSpace(parts[1])
 		val = strings.Trim(val, "\"'")
+		val = strings.ReplaceAll(val, "\\\"", "\"")
 		switch section {
 		case "app":
 			switch key {
@@ -130,9 +129,9 @@ func parseConfigTOML(data string, cfg *Config) {
 		default:
 			switch key {
 			case "theme":
-				cfg.Theme = val
+				cfg.App.Theme = val
 			case "version":
-				cfg.Version = val
+				cfg.App.Version = val
 			}
 		}
 	}

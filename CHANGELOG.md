@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.7.0] — 2026-07-08
+
+### Added
+- **Step-by-step evaluation** — view intermediate computation steps (naturalize, parse-tree reductions) via StepsPanel toggle (⌘S)
+- **Function graphing** — auto-detect `plot`, `graph`, `y =` expressions, renders Chart.js line chart in a resizable bottom panel
+- **History search/filter** — filter history entries by input or output text in real-time
+- **Drag-and-drop note reordering** — rearrange notes in the sidebar via HTML5 drag-and-drop; position persisted to SQLite
+- **PDF note export** — export notes as proper A4 PDF with title, metadata, wrapped content, and page numbering (via gofpdf)
+
+### Changed
+- Parser instrumented to collect evaluation steps at every operation level
+- Notes DB schema: added `position INTEGER` column with `ALTER TABLE` migration; `GetAllNotes` orders by position
+- Backend dependencies: added `github.com/jung-kurt/gofpdf/v2` for PDF generation
+- Frontend dependencies: added `chart.js` for function plotting
+
 ## [0.6.1] — 2026-07-08
 
 ### Fixed

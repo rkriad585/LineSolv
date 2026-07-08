@@ -4,6 +4,7 @@ export interface Note {
   content: string;
   createdAt: number;
   updatedAt: number;
+  position?: number;
 }
 
 export interface ContextMenuItem {
@@ -20,6 +21,7 @@ export interface AppCallbacks {
   onToggleNotes: () => void;
   onToggleVars: () => void;
   onToggleHistory: () => void;
+  onToggleSteps: () => void;
   onSwitchNote: (id: string) => void;
   onClearAll: () => void;
   onToggleFullscreen: () => void;

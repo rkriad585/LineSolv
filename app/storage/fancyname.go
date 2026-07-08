@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"math/rand"
+	"time"
 )
 
 var fancyEmoji = []string{
@@ -28,6 +29,10 @@ var fancyNouns = []string{
 	"Fragments", "Horizons", "Mysteries", "Adventures", "Wonders",
 	"Memories", "Discoveries", "Creations", "Journeys",
 	"Experiments", "Formulas", "Theorems", "Hypotheses",
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }
 
 func GenerateFancyName() string {

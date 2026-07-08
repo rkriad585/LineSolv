@@ -43,10 +43,15 @@ type AppService struct {
 }
 
 func NewAppService(db *storage.DB) *AppService {
-	return &AppService{
+	s := &AppService{
 		engine:  calculator.NewEngine(),
 		storage: db,
 	}
+	cached, err := db.GetCachedCurrencyRates()
+	if err == nil && cached != nil {
+		calculator.SetCurrencyRates(cached.Rates)
+	}
+	return s
 }
 
 func (s *AppService) SetDocs(docs map[string]string) {
@@ -66,6 +71,22 @@ func (s *AppService) GetDocContent(name string) string {
 	return s.docsContent[name]
 }
 
+func (s *AppService) EvaluateGraph(input string) *calculator.GraphResult {
+	type result struct {
+		res *calculator.GraphResult
+	}
+	ch := make(chan result, 1)
+	go func() {
+		ch <- result{s.engine.EvaluateGraph(input)}
+	}()
+	select {
+	case r := <-ch:
+		return r.res
+	case <-time.After(evalTimeout):
+		return nil
+	}
+}
+
 func (s *AppService) EvaluateLine(input string) (string, error) {
 	type result struct {
 		res string
@@ -81,6 +102,22 @@ func (s *AppService) EvaluateLine(input string) (string, error) {
 		return r.res, r.err
 	case <-time.After(evalTimeout):
 		return "Error: evaluation timed out", nil
+	}
+}
+
+func (s *AppService) GetSteps(input string) *calculator.EvalDetail {
+	type result struct {
+		res *calculator.EvalDetail
+	}
+	ch := make(chan result, 1)
+	go func() {
+		ch <- result{s.engine.GetSteps(input)}
+	}()
+	select {
+	case r := <-ch:
+		return r.res
+	case <-time.After(evalTimeout):
+		return &calculator.EvalDetail{Result: "Error: evaluation timed out"}
 	}
 }
 
@@ -123,6 +160,10 @@ func (s *AppService) GetAllNotes() ([]storage.Note, error) {
 func (s *AppService) CreateNote() (*storage.Note, error) {
 	name := storage.GenerateFancyName()
 	return s.storage.CreateNote(name)
+}
+
+func (s *AppService) ReorderNotes(noteIDs []string) error {
+	return s.storage.ReorderNotes(noteIDs)
 }
 
 func (s *AppService) RenameNote(id, name string) error {
@@ -187,11 +228,16 @@ func (s *AppService) ExportNoteToFile(id, format string) (string, error) {
 		}
 		return r
 	}, note.Name)
+	safeName = strings.ReplaceAll(safeName, "..", "_")
 
+	defaultExt := format
+	if format == "pdf" {
+		defaultExt = "pdf"
+	}
 	filePath, err := runtime.SaveFileDialog(getCtx(), runtime.SaveDialogOptions{
-		DefaultFilename: safeName + "." + format,
+		DefaultFilename: safeName + "." + defaultExt,
 		Filters: []runtime.FileFilter{
-			{DisplayName: "LineSolv Files", Pattern: "*." + format},
+			{DisplayName: "LineSolv Files", Pattern: "*." + defaultExt},
 			{DisplayName: "All Files", Pattern: "*"},
 		},
 	})
@@ -249,6 +295,50 @@ func (s *AppService) ImportNoteFromFile() (*storage.Note, error) {
 }
 
 const appVersion = "0.1.45"
+
+type CurrencyCacheInfo struct {
+	Cached     bool   `json:"cached"`
+	UpdatedAt  int64  `json:"updatedAt"`
+	Source     string `json:"source"`
+}
+
+func (s *AppService) GetCurrencyCacheInfo() *CurrencyCacheInfo {
+	cached, err := s.storage.GetCachedCurrencyRates()
+	if err != nil || cached == nil {
+		return &CurrencyCacheInfo{Cached: false, Source: "hardcoded"}
+	}
+	return &CurrencyCacheInfo{
+		Cached:    true,
+		UpdatedAt: cached.UpdatedAt,
+		Source:    "cache",
+	}
+}
+
+func (s *AppService) UpdateCurrencyRates() (*CurrencyCacheInfo, error) {
+	resp, err := http.Get("https://api.exchangerate-api.com/v4/latest/USD")
+	if err != nil {
+		cached, cerr := s.storage.GetCachedCurrencyRates()
+		if cerr == nil && cached != nil {
+			calculator.SetCurrencyRates(cached.Rates)
+			return &CurrencyCacheInfo{Cached: true, UpdatedAt: cached.UpdatedAt, Source: "cache"}, nil
+		}
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Rates map[string]float64 `json:"rates"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	if err := s.storage.SaveCurrencyRates(result.Rates); err != nil {
+		return nil, err
+	}
+	calculator.SetCurrencyRates(result.Rates)
+	return &CurrencyCacheInfo{Cached: true, UpdatedAt: time.Now().UnixMilli(), Source: "live"}, nil
+}
 
 type SettingsData struct {
 	Theme             string `json:"theme"`

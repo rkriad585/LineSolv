@@ -16,6 +16,8 @@ export function DeleteNote(arg1:string):Promise<void>;
 
 export function EvaluateAll(arg1:string):Promise<Array<string>>;
 
+export function EvaluateGraph(arg1:string):Promise<calculator.GraphResult>;
+
 export function EvaluateLine(arg1:string):Promise<string>;
 
 export function ExportNote(arg1:string,arg2:string):Promise<string>;
@@ -25,6 +27,8 @@ export function ExportNoteToFile(arg1:string,arg2:string):Promise<string>;
 export function GetAllNotes():Promise<Array<storage.Note>>;
 
 export function GetAppVersion():Promise<string>;
+
+export function GetCurrencyCacheInfo():Promise<service.CurrencyCacheInfo>;
 
 export function GetDataDir():Promise<string>;
 
@@ -40,11 +44,15 @@ export function GetNote(arg1:string):Promise<storage.Note>;
 
 export function GetSettings():Promise<service.SettingsData>;
 
+export function GetSteps(arg1:string):Promise<calculator.EvalDetail>;
+
 export function GetVariables():Promise<Record<string, number>>;
 
 export function ImportNoteFromFile():Promise<storage.Note>;
 
 export function RenameNote(arg1:string,arg2:string):Promise<void>;
+
+export function ReorderNotes(arg1:Array<string>):Promise<void>;
 
 export function SaveNoteContent(arg1:string,arg2:string):Promise<void>;
 
@@ -53,3 +61,5 @@ export function SaveSettings(arg1:service.SettingsData):Promise<void>;
 export function SetDeleteWithoutConfirm(arg1:boolean):Promise<void>;
 
 export function SetDocs(arg1:Record<string, string>):Promise<void>;
+
+export function UpdateCurrencyRates():Promise<service.CurrencyCacheInfo>;

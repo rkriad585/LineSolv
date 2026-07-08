@@ -50,9 +50,12 @@ export class TitleBar {
     const minIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
     const maxIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
 
-    const closeBtn = winBtn(closeIcon, 'Close', () => { try { (window as any).runtime.Quit(); } catch {}; }, true);
-    const minBtn = winBtn(minIcon, 'Minimize', () => { try { (window as any).runtime.WindowMinimise(); } catch {}; });
-    const maxBtn = winBtn(maxIcon, 'Maximize', () => { try { (window as any).runtime.WindowToggleMaximise(); } catch {}; });
+  const closeBtn = winBtn(closeIcon, 'Close', () => { try { (window as any).runtime.Quit(); } catch {}; }, true);
+  closeBtn.setAttribute('aria-label', 'Close window');
+  const minBtn = winBtn(minIcon, 'Minimize', () => { try { (window as any).runtime.WindowMinimise(); } catch {}; });
+  minBtn.setAttribute('aria-label', 'Minimize window');
+  const maxBtn = winBtn(maxIcon, 'Maximize', () => { try { (window as any).runtime.WindowToggleMaximise(); } catch {}; });
+  maxBtn.setAttribute('aria-label', 'Maximize window');
 
     const controls = document.createElement('div');
     controls.style.cssText =
@@ -87,6 +90,10 @@ export class TitleBar {
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
       'History (⌘H)'
     );
+    const [stepsBtnEl, _st] = iconBtn(
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+      'Steps (⌘S)'
+    );
     const [docsBtnEl, _d] = iconBtn(
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
       'Documentation'
@@ -102,12 +109,20 @@ export class TitleBar {
       'Settings'
     );
 
-    [notesBtnEl, varsBtnEl, historyBtnEl, docsBtnEl, printBtnEl, settingsBtnEl].forEach(b => {
+    [notesBtnEl, varsBtnEl, historyBtnEl, stepsBtnEl, docsBtnEl, printBtnEl, settingsBtnEl].forEach(b => {
       b.addEventListener('mouseenter', () => b.style.background = 'var(--border)');
       b.addEventListener('mouseleave', () => b.style.background = 'transparent');
     });
 
-    btnRow.append(notesBtnEl, varsBtnEl, historyBtnEl, docsBtnEl, printBtnEl, settingsBtnEl);
+    notesBtnEl.setAttribute('aria-label', 'Toggle notes panel');
+    varsBtnEl.setAttribute('aria-label', 'Toggle variables panel');
+    historyBtnEl.setAttribute('aria-label', 'Toggle history panel');
+    stepsBtnEl.setAttribute('aria-label', 'Toggle steps panel');
+    docsBtnEl.setAttribute('aria-label', 'Open documentation');
+    printBtnEl.setAttribute('aria-label', 'Print');
+    settingsBtnEl.setAttribute('aria-label', 'Open settings');
+
+    btnRow.append(notesBtnEl, varsBtnEl, historyBtnEl, stepsBtnEl, docsBtnEl, printBtnEl, settingsBtnEl);
     this.el.append(btnRow);
 
     this.settingsBtn = settingsBtnEl;
@@ -117,6 +132,7 @@ export class TitleBar {
     notesBtnEl.addEventListener('click', () => cb.onToggleNotes());
     varsBtnEl.addEventListener('click', () => cb.onToggleVars());
     historyBtnEl.addEventListener('click', () => cb.onToggleHistory());
+    stepsBtnEl.addEventListener('click', () => cb.onToggleSteps());
     docsBtnEl.addEventListener('click', () => cb.onToggleDocs());
     printBtnEl.addEventListener('click', () => cb.onPrint());
     settingsBtnEl.addEventListener('click', () => cb.onToggleSettings());

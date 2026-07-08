@@ -4,7 +4,9 @@ import {escapeHtml} from '../utils/html';
 export class HistoryPanel {
   readonly el: HTMLElement;
   readonly contentEl: HTMLDivElement;
+  readonly searchInput: HTMLInputElement;
   private onRestore: (input: string) => void;
+  private allEntries: HistoryEntry[] = [];
 
   constructor(onRestore: (input: string) => void) {
     this.onRestore = onRestore;
@@ -15,10 +17,22 @@ export class HistoryPanel {
     this.el.style.borderRightWidth = '0';
 
     const header = document.createElement('div');
-    header.className = 'px-4 py-2.5 text-[10px] font-semibold tracking-wider uppercase border-b shrink-0';
+    header.className = 'px-4 py-2 text-[10px] font-semibold tracking-wider uppercase border-b shrink-0';
     header.style.cssText = 'color:var(--text-muted);border-color:var(--border);';
     header.textContent = 'History';
     this.el.appendChild(header);
+
+    this.searchInput = document.createElement('input');
+    this.searchInput.type = 'text';
+    this.searchInput.placeholder = 'Filter history\u2026';
+    this.searchInput.setAttribute('aria-label', 'Filter history');
+    this.searchInput.style.cssText =
+      'width:100%;padding:5px 8px;font-size:11px;background:var(--surface-secondary);' +
+      'color:var(--text);border:1px solid var(--border);border-radius:4px;outline:none;' +
+      'box-sizing:border-box;';
+    this.searchInput.addEventListener('input', () => this.applyFilter());
+    this.searchInput.addEventListener('click', (e) => e.stopPropagation());
+    this.el.appendChild(this.searchInput);
 
     this.contentEl = document.createElement('div');
     this.contentEl.id = 'history-content';
@@ -60,11 +74,22 @@ export class HistoryPanel {
   }
 
   render(entries: HistoryEntry[]): void {
-    if (entries.length === 0) {
-      this.contentEl.innerHTML = '<div class="text-xs p-2" style="color:var(--text-muted)">No history</div>';
+    this.allEntries = entries;
+    this.applyFilter();
+  }
+
+  private applyFilter(): void {
+    const q = this.searchInput.value.toLowerCase().trim();
+    const filtered = q ? this.allEntries.filter(e =>
+      e.input.toLowerCase().includes(q) || e.output.toLowerCase().includes(q)
+    ) : this.allEntries;
+
+    if (filtered.length === 0) {
+      this.contentEl.innerHTML = '<div class="text-xs p-2" style="color:var(--text-muted)">' +
+        (q ? 'No matching history' : 'No history') + '</div>';
       return;
     }
-    const html = entries.map((e) => {
+    const html = filtered.map((e) => {
       const shortInput = e.input.length > 40 ? e.input.slice(0, 40) + '...' : e.input;
       return `
         <div data-history-input="${escapeHtml(e.input)}" class="history-item" tabindex="-1" style="padding:6px 8px;border-radius:6px;cursor:pointer;margin-bottom:2px;">
@@ -85,6 +110,15 @@ export class HistoryPanel {
   close(): void {
     this.el.style.width = '0';
     this.el.style.borderRightWidth = '0';
+  }
+
+  focusSearch(): void {
+    this.searchInput.focus();
+    this.searchInput.select();
+  }
+
+  clearFilter(): void {
+    this.searchInput.value = '';
   }
 
   isOpen(): boolean {

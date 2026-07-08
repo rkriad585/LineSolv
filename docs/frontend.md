@@ -72,6 +72,7 @@ Frameless drag region at the top of the window. Contains:
 - **Notes** button (clipboard SVG, toggles sidebar)
 - **Variables** button (code SVG, toggles sidebar)
 - **History** button (clock SVG, toggles sidebar)
+- **Steps** button (list SVG, toggles steps panel)
 - **Documentation** button (book SVG, opens documentation viewer)
 - **Print** button (printer SVG, opens native print dialog for the current note)
 - **Settings** button (gear SVG, opens settings)
@@ -117,9 +118,26 @@ Collapsible sidebar (right side) showing defined variables:
 Collapsible sidebar (left side, before notes) showing evaluation history:
 - Each entry shows the input text (monospace, truncated at 40 chars) and its result
 - Click any entry to restore its input into the textarea and re-evaluate
+- Search field at the top filters entries by input/output text in real-time; auto-focused on open, cleared on close
 - Opens/closes via width animation (0px ↔ 200px)
 - Keyboard shortcut: `⌘H`
 - Automatically subscribes to store changes and re-renders when open
+
+### StepsPanel
+
+Bottom dock panel showing step-by-step evaluation details:
+- Displays the naturalized expression followed by each parse-tree reduction (addition, multiplication, exponentiation, etc.)
+- Toggle with the steps button in the TitleBar or `⌘S`
+- Only updates when the panel is open; queries the backend `GetSteps` method for the last evaluated expression
+- Closes on clicking the close button or pressing `Esc`
+
+### GraphPanel
+
+Auto-appearing bottom panel for function plotting:
+- Detects `plot`, `graph`, `y =` prefixed expressions in the input
+- Calls `EvaluateGraph` on the backend, renders a Chart.js line chart
+- Supports custom ranges via `from N to N` syntax
+- Shows a close button in the header bar; dismissed by clicking close
 
 ### ContextMenu
 
@@ -227,14 +245,16 @@ import * as serviceBindings from '../wailsjs/go/service/AppService';
 Available methods:
 - `serviceBindings.EvaluateAll(text)` → `string[]`
 - `serviceBindings.EvaluateLine(text)` → `string`
+- `serviceBindings.EvaluateGraph(text)` → `GraphResult | null`
+- `serviceBindings.GetSteps(text)` → `EvalDetail`
 - `serviceBindings.GetVariables()` → `Record<string, number>`
 - `serviceBindings.ClearVariables()` → `void`
 - `serviceBindings.GetHistory()` → `HistoryEntry[]`
 - `serviceBindings.ClearHistory()` → `void`
 - `serviceBindings.GetAllNotes()` → `Note[]`
 - `serviceBindings.CreateNote()` → `Note`
-- `serviceBindings.CreateNoteWithContent(content)` → `Note`
 - `serviceBindings.RenameNote(id, name)` → `void`
+- `serviceBindings.ReorderNotes(ids)` → `void`
 - `serviceBindings.DeleteNote(id)` → `void`
 - `serviceBindings.SaveNoteContent(id, content)` → `void`
 - `serviceBindings.GetNote(id)` → `Note`

@@ -8,6 +8,7 @@ export class ContextMenu {
   constructor() {
     this.el = document.createElement('div');
     this.el.className = 'context-menu';
+    this.el.setAttribute('role', 'menu');
     this.el.style.cssText =
       'position:fixed;z-index:9999;min-width:160px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 0;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none;';
     document.body.appendChild(this.el);

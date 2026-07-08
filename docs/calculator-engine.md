@@ -1,6 +1,6 @@
 # Calculator Engine
 
-The calculator engine (`app/calculator/`) is a complete natural-language arithmetic evaluator built in Go, split across four files for maintainability.
+The calculator engine (`app/calculator/`) is a complete natural-language arithmetic evaluator built in Go, split across six files for maintainability.
 
 | File | Responsibility |
 |---|---|
@@ -8,6 +8,8 @@ The calculator engine (`app/calculator/`) is a complete natural-language arithme
 | `units.go` | Unit conversion database (`unitDB`), `convertUnit`, `RegisterUnit` |
 | `functions.go` | Built-in math function dispatch (`sin`, `cos`, `sqrt`, etc.) |
 | `variables.go` | `GetVariables`, `SetVariable`, `ClearVariables` |
+| `steps.go` | `Step` and `EvalDetail` types, `GetSteps` method (read-only evaluation with intermediate steps) |
+| `graph.go` | `Point`, `GraphResult` types, `EvaluateGraph` method (function plotting via sampled points) |
 
 ## Overview
 
@@ -303,6 +305,42 @@ Built-in conversion for:
 - **Temperature**: Celsius, Fahrenheit
 - **Time**: second, minute, hour, day
 - **Currency**: USD, EUR, GBP, JPY, CNY, INR, CAD, AUD, CHF, KRW, RUB, BRL, MXN, ZAR, NZD, SEK, NOK, PLN, HKD, SGD, THB, ILS, VND, PHP, UAH, KZT, PYG, GHS, TRY, AZN, GEL, BDT, PKR, LKR, NPR, MYR, IDR, TWD, SAR, AED, KWD, EGP, NGN, COP, CLP, ARS, PEN, MAD, BTC, XAU, XAG
+
+## Step-by-Step Evaluation
+
+The `GetSteps(input)` method evaluates an expression in read-only mode — it runs the full parser pipeline but does not modify engine state (no history recording, no variable mutations). Each parser level records `Step` entries showing the operation performed and the intermediate result:
+
+| Parser Level | Example Step |
+|---|---|
+| Naturalize | `naturalize("what is 5 + 3 * 2")` → `"5 + 3 * 2"` |
+| Add/Subtract | `5 + 6` → `11` |
+| Multiply/Divide | `3 * 2` → `6` |
+| Power | `2 ^ 3` → `8` |
+| Negate | `-5` → `-5` |
+| Modulo | `17 % 5` → `2` |
+| Factorial | `5!` → `120` |
+| Function | `sqrt(144)` → `12` |
+| Constant | `pi` → `3.1416` |
+| Variable | `x` → `42` |
+
+Steps are returned as an `EvalDetail` struct containing the final result string and an ordered slice of `Step` objects.
+
+## Function Graphing
+
+The `EvaluateGraph(input)` method detects graphing commands and evaluates an expression across a range of x values:
+
+```
+plot x^2                 →  200 points from -10 to 10
+graph sin(x)             →  200 points from -10 to 10
+y = 2x + 1               →  200 points from -10 to 10
+graph x^2 from -5 to 5   →  200 points from -5 to 5
+```
+
+The implementation:
+1. Strips the leading `plot`/`graph`/`y =` prefix
+2. Extracts optional `from N to N` range specifier (defaults to -10 to 10)
+3. Saves the current `x` variable, evaluates the expression for 200 evenly spaced x values, and restores the original `x`
+4. Returns a `GraphResult` with the sampled `Point` slice, cleaned expression, and range bounds
 
 ## Error Handling
 
