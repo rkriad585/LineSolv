@@ -136,6 +136,14 @@ Right-click a note, go to **Export**, and choose a format. A native Save As dial
 ### How do I import a note?
 Right-click any note in the sidebar and select **Import**. A native Open file dialog will appear. Supported format: `.json` (with `name` and `content` fields).
 
+## Printing
+
+### How do I print my calculations?
+Click the printer icon in the title bar or press `Ctrl/Cmd+P`. This opens your operating system's native print dialog with a formatted document showing all your input lines, results, a note name header, and the LineSolv watermark on every page.
+
+### Can I choose what to print?
+The print output includes all lines currently in the input area. Clear or comment out lines you don't want before printing.
+
 ## Themes
 
 ### What themes are available?
@@ -168,6 +176,7 @@ Press `F11` or double-click the title bar to toggle fullscreen mode.
 | `Alt + ↑ / ↓` | Move line up/down |
 | `Ctrl/Cmd + ↑` | History: restore previous input |
 | `Ctrl/Cmd + ↓` | History: restore next input |
+| `Ctrl/Cmd + P` | Print current note |
 | `Ctrl/Cmd + /` | Show keyboard shortcuts |
 | `Ctrl/Cmd + ,` | Open settings |
 | `Shift + Enter` | Force evaluate immediately |

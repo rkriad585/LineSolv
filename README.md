@@ -97,6 +97,7 @@ Uninstall via Settings > Apps, then delete `%APPDATA%/neostore/linesolv` to remo
 - **Keyboard Shortcuts** — full shortcut reference available via `Ctrl/Cmd+/`
 - **Configurable Font** — font family and size adjustable in Settings
 - **Customizable Shortcuts** — rebind any keyboard shortcut in Settings
+- **Print Notes** — print calculations with A4 formatting, note name header, watermark, and date via the print button or `Ctrl/Cmd+P`
 - **Notepad-Style UI** — free-form textarea with live results column, loading indicators
 - **Delete Confirmation** — optional "Don't ask again" preference stored in config.toml
 

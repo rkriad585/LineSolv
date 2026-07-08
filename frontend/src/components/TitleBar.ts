@@ -10,19 +10,22 @@ export class TitleBar {
     this.el = document.createElement('header');
     this.el.style.cssText =
       'display:flex;align-items:center;justify-content:center;' +
-      'background:var(--surface);border-bottom:1px solid var(--border);height:34px;position:relative;';
+      'background:var(--surface);border-bottom:1px solid var(--border);height:34px;position:relative;' +
+      '--wails-draggable:drag;-webkit-user-select:none;';
 
     const dragRegion = document.createElement('div');
     dragRegion.style.cssText =
-      'display:flex;align-items:center;justify-content:center;gap:6px;height:100%;' +
-      '--wails-draggable:drag;-webkit-user-select:none;pointer-events:none;';
+      'display:flex;align-items:center;justify-content:center;gap:6px;height:100%;';
     dragRegion.innerHTML =
       `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">` +
       `<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/>` +
       `<line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/>` +
       `<line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>` +
       `<span style="font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted)">LineSolv</span>`;
-    dragRegion.addEventListener('dblclick', () => cb.onToggleFullscreen());
+    this.el.addEventListener('dblclick', (e) => {
+      if ((e.target as HTMLElement).closest('button')) return;
+      cb.onToggleFullscreen();
+    });
 
     const winBtn = (icon: string, title: string, action: () => void, isClose = false): HTMLButtonElement => {
       const b = document.createElement('button');
@@ -31,7 +34,7 @@ export class TitleBar {
       b.style.cssText =
         'display:flex;align-items:center;justify-content:center;width:32px;height:100%;' +
         'border:none;background:transparent;color:var(--text-muted);cursor:default;outline:none;' +
-        'transition:background 0.15s;';
+        'transition:background 0.15s;--wails-draggable:no-drag;';
       if (isClose) {
         b.addEventListener('mouseenter', () => { b.style.background = '#e81123'; b.style.color = '#fff'; });
         b.addEventListener('mouseleave', () => { b.style.background = 'transparent'; b.style.color = 'var(--text-muted)'; });
@@ -53,14 +56,14 @@ export class TitleBar {
 
     const controls = document.createElement('div');
     controls.style.cssText =
-      'display:flex;align-items:center;height:100%;position:absolute;left:4px;top:0;z-index:1;';
+      'display:flex;align-items:center;height:100%;position:absolute;left:4px;top:0;z-index:1;--wails-draggable:no-drag;';
     controls.append(minBtn, maxBtn, closeBtn);
 
     this.el.append(controls, dragRegion);
 
     const btnRow = document.createElement('div');
     btnRow.style.cssText =
-      'display:flex;align-items:center;gap:4px;padding-right:4px;position:absolute;right:0;top:0;height:100%;z-index:1;';
+      'display:flex;align-items:center;gap:4px;padding-right:4px;position:absolute;right:0;top:0;height:100%;z-index:1;--wails-draggable:no-drag;';
 
     const iconBtn = (svg: string, title: string): [HTMLButtonElement, HTMLButtonElement] => {
       const b = document.createElement('button');
@@ -68,7 +71,7 @@ export class TitleBar {
       b.innerHTML = svg;
       b.style.cssText =
         'display:flex;align-items:center;justify-content:center;width:26px;height:26px;' +
-        'border:none;border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;';
+        'border:none;border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;--wails-draggable:no-drag;';
       return [b, b];
     };
 

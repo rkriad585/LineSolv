@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.1] — 2026-07-08
+
+### Fixed
+- Window dragging in title bar: moved `--wails-draggable:drag` from inner `dragRegion` to the `<header>` element and added `--wails-draggable:no-drag` to all buttons and their container divs, matching the Wails v2 official pattern for frameless windows
+
+## [0.6.0] — 2026-07-07
+
+### Added
+- Print button in title bar (printer SVG icon, tooltip "Print (⌘P)")
+- `Ctrl/Cmd+P` keyboard shortcut to print the current note
+- Print output with A4 formatting, note name header, input/results table, LineSolv watermark (logo + name) and date footer on every page
+- Printing via hidden iframe for reliable `position: fixed` watermark repetition across all pages
+
 ## [0.5.0] — 2026-07-07
 
 ### Added

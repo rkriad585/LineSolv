@@ -56,6 +56,7 @@ State is managed through `CalculatorStore` (`stores/calculator.ts`), a reactive 
 | `Ctrl/Cmd + I` | Toggle variables sidebar |
 | `Ctrl/Cmd + H` | Toggle history sidebar |
 | `Ctrl/Cmd + K` | Clear all (input + variables + history) |
+| `Ctrl/Cmd + P` | Print current note |
 | `Ctrl/Cmd + ,` | Open settings |
 | `Ctrl/Cmd + ↑` | Navigate history back |
 | `Ctrl/Cmd + ↓` | Navigate history forward |
@@ -72,10 +73,11 @@ Frameless drag region at the top of the window. Contains:
 - **Variables** button (code SVG, toggles sidebar)
 - **History** button (clock SVG, toggles sidebar)
 - **Documentation** button (book SVG, opens documentation viewer)
+- **Print** button (printer SVG, opens native print dialog for the current note)
 - **Settings** button (gear SVG, opens settings)
 - **Double-click** on the drag region toggles fullscreen
 
-Uses `--wails-draggable:drag` CSS property for frameless window dragging. No theme toggle button — themes are managed exclusively in Settings.
+The `<header>` element carries `--wails-draggable:drag` for frameless window dragging; all buttons and their container divs override with `--wails-draggable:no-drag` so clicks on them pass through without initiating a drag. No theme toggle button — themes are managed exclusively in Settings.
 
 ### CalculatorInput
 
@@ -162,6 +164,23 @@ Full-screen documentation viewer with sidebar tab navigation:
 - **About** — version info, author, repo links, check for updates
 
 Opened via `Ctrl/Cmd+,` or the gear icon in the title bar. Settings are saved to the backend and persisted in `config.toml`.
+
+### Printing
+
+Printing is triggered by the print icon in the TitleBar or `Ctrl/Cmd+P`. The `onPrint` callback in `App.ts` builds a self-contained HTML document inside a hidden iframe and calls `iframe.contentWindow!.print()`.
+
+The print document contains:
+- A **header** with the currently active note name
+- An HTML **table** of all input lines and their results
+- A **watermark** (`position: fixed; bottom: 10mm; left: 15mm`) with the LineSolv logo SVG and "LineSolv" text at 15% opacity — uses `position: fixed` to repeat on every printed page
+- A **date footer** (`position: fixed; bottom: 10mm; right: 15mm`)
+
+The iframe approach was chosen because:
+1. It provides a clean, standalone document with `body` as the root, ensuring `position: fixed` elements repeat reliably on every printed page
+2. The print content is fully isolated from the app's screen UI
+3. All styles are inlined in the iframe document for self-containment
+
+A fallback `@media print` CSS block hides the screen chrome if the browser's native print dialog is triggered directly.
 
 ## Styling
 

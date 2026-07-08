@@ -19,7 +19,7 @@ Results appear to the right of each line. Empty lines and comment lines (startin
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ ● ● ●  LineSolv            [☰] [≡] [⏱] [📄] ☾ │  ← Title bar (drag to move)
+│ ● ● ●  LineSolv            [☰] [≡] [⏱] [📄] [🖨] ☾ │  ← Title bar (drag to move)
 ├────────┬────────────────────────┬───────────────┤
 │        │                        │               │
 │ Notes  │  # Textarea            │  Results      │
@@ -35,8 +35,8 @@ Results appear to the right of each line. Empty lines and comment lines (startin
 
 ### Title Bar
 - **Window controls**: Close (red), Minimize, Maximize
-- **Drag region**: Click and drag the title text to move the window; double-click to toggle fullscreen
-- **Buttons**: Notes (⌘B), Variables (⌘I), History (⌘H), Documentation, Settings (⌘,)
+- **Drag anywhere**: Click and drag any empty area of the title bar to move the window (buttons are exempted from drag); double-click to toggle fullscreen
+- **Buttons**: Notes (⌘B), Variables (⌘I), History (⌘H), Documentation, Print (⌘P), Settings (⌘,)
 
 ### Documentation Viewer
 Click the book icon in the title bar to open the built-in documentation viewer. It shows all guide files in a sidebar tab layout:
@@ -469,12 +469,25 @@ Right-click a note → **Share** copies the note name and content to your clipbo
 | `Ctrl/Cmd + H` | Toggle history panel |
 | `Ctrl/Cmd + K` | Clear all (input, history, variables) |
 | `Ctrl/Cmd + N` | Create new note |
+| `Ctrl/Cmd + P` | Print current note |
 | `Ctrl/Cmd + ,` | Open settings |
 | `Ctrl/Cmd + /` | Show keyboard shortcut reference |
 | `Ctrl/Cmd + ↑` | Restore previous input from history |
 | `Ctrl/Cmd + ↓` | Restore next input from history |
 
 Press `Ctrl/Cmd+/` at any time to see the full shortcut list in a modal overlay.
+
+## Printing
+
+Print your current note with the printer icon in the title bar or press `Ctrl/Cmd+P`.
+
+- Prints all input lines and their results as a clean A4-formatted table
+- Includes a **note name header** at the top of the document
+- Adds a semi-transparent **LineSolv logo + name watermark** at the bottom-left of every page
+- Prints the **current date** at the bottom-right of every page
+- Opens your operating system's native print dialog (choose printer, page range, etc.)
+
+The print output uses a monospaced font with the note name in a sans-serif header, input lines in dark gray, and results in the LineSolv purple accent color.
 
 ## Settings
 

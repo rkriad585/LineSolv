@@ -72,7 +72,7 @@ Orchestrator that wires all UI components, uses `CalculatorStore` for reactive s
 Reactive store with subscriber pattern. Holds input, results, variables, eval state (idle/loading/error), error message, and computation history. Components subscribe to state changes.
 
 ### Components
-- **TitleBar** — Frameless drag region with app title and action buttons (notes, variables, history, docs, settings). Double-click toggles fullscreen.
+- **TitleBar** — Frameless drag region with app title and action buttons (notes, variables, history, docs, print, settings). Uses `--wails-draggable:drag` on the header with `--wails-draggable:no-drag` on all buttons per the Wails v2 pattern. Print button opens native print dialog via hidden iframe with watermark. Double-click toggles fullscreen.
 - **CalculatorInput** — Textarea with synchronized line-number gutter
 - **ResultDisplay** — Right-aligned results column synced with input scroll, shows loading indicator and empty state
 - **NotesPanel** — Collapsible sidebar for managing multiple calculation notes, with right-click context menu (rename, delete, export, import, share)
