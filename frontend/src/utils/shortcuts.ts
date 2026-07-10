@@ -25,6 +25,7 @@ let fullscreen = false;
 const undoStack = new Map<HTMLTextAreaElement, string[]>();
 const redoStack = new Map<HTMLTextAreaElement, string[]>();
 const MAX_UNDO = 200;
+let programmaticChange = false;
 
 function pushSnapshot(ta: HTMLTextAreaElement): void {
   let stack = undoStack.get(ta);
@@ -35,7 +36,9 @@ function pushSnapshot(ta: HTMLTextAreaElement): void {
   if (stack.length > 0 && stack[stack.length - 1] === ta.value) return;
   stack.push(ta.value);
   if (stack.length > MAX_UNDO) stack.shift();
-  redoStack.delete(ta);
+  if (!programmaticChange) {
+    redoStack.delete(ta);
+  }
 }
 
 function undo(ta: HTMLTextAreaElement): void {
@@ -89,17 +92,21 @@ export function installGlobalShortcuts(
     // Undo/Redo
     if (mod && e.key === 'z') {
       e.preventDefault();
+      programmaticChange = true;
       if (e.shiftKey) {
         redo(textarea);
       } else {
         undo(textarea);
       }
+      programmaticChange = false;
       cmds.onInput();
       return;
     }
     if (mod && e.key === 'y') {
       e.preventDefault();
+      programmaticChange = true;
       redo(textarea);
+      programmaticChange = false;
       cmds.onInput();
       return;
     }
@@ -147,8 +154,10 @@ export function installGlobalShortcuts(
   });
 
   textarea.addEventListener('input', () => {
-    pushSnapshot(textarea);
-    cmds.onInput();
+    if (!programmaticChange) {
+      pushSnapshot(textarea);
+      cmds.onInput();
+    }
   });
 
   document.addEventListener('keydown', (e) => {

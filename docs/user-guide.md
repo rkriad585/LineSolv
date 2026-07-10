@@ -51,7 +51,7 @@ Click the book icon in the title bar to open the built-in documentation viewer. 
 - **Default** — the User Guide opens automatically when you first open the viewer
 
 ### Notes Panel (left)
-Manage multiple calculation notebooks. Each note is independent with its own content and variables.
+Manage multiple calculation notebooks. Each note is independent with its own content and variables. Sort notes by name, created date, or updated date using the sort button at the top of the panel.
 
 ### History Panel (left, behind Notes)
 Shows your recent evaluation history. Click any entry to restore its input. Use the search field at the top to filter entries by input or output text in real-time. The search input is auto-focused when the panel opens and cleared when it closes.
@@ -139,9 +139,13 @@ quarter of 100           →  25
 ```
 10 increased by 5        →  15
 20 decreased by 7        →  13
+decrease 100 by 5        →  95
 5 more than 10           →  15
 3 less than 8            →  5
 difference between 10 and 3  →  7
+which is bigger 5 or 6   →  6
+which is smaller 10 or 8 →  8
+which is larger pi or 5  →  5
 ```
 
 ### Division Phrases
@@ -294,6 +298,13 @@ how many times does 25 go into 5k     →  200
 how many times does 2 go into 1M      →  500000
 ```
 
+### Geometry
+Basic area and volume formulas expressed in natural language:
+```
+area of triangle with base 5 and height 10   →  25
+volume of cone radius 3 and height 5         →  47.124
+```
+
 ### Age Calculation
 
 Calculate your age from a birth year or full date (supports multiple date orderings):
@@ -316,6 +327,12 @@ LineSolv understands multi-item purchase scenarios with discounts and tax:
 5 items at $20 each                        →  100
 5 items at $20 each with a 15% discount    →  85
 5 items at $20 each with a 15% discount and 8% sales tax added on top  →  91.8
+what is the total cost of 5 items at $20 each with a 15% discount and 8% sales tax added on top  →  91.8
+I bought 8 items at $5 each with a 10% discount and 6% sales tax. What's the final price?  →  38.16
+I just made $200 from a side gig. I need to set aside 8% for sales tax. How much total with tax?  →  216
+That $200 jacket I've been eyeing is 25% off. What's the sale price?  →  150
+I got 25 hours of freelance work at $37 per hour. What did I earn?  →  925
+Game night is coming up. I need 5 pizzas, and each one costs $12. Just the pizzas, no discounts or tax for now.  →  60
 ```
 
 The full expression expands to `(((N * P) * (100 - D) / 100) * (100 + T) / 100)` where N = items, P = price per item, D = discount percent, T = tax percent.
@@ -333,6 +350,9 @@ log base 10 of 100 + 3 squared              →  11
 $5k in EUR                                  →  4385.96 EUR
 double a dozen                              →  24
 3 tens from 5 hundreds                      →  470
+half a dozen + 3 scores                     →  72
+2h30m in minutes                            →  150 minutes
+sin(pi/4) + cos(pi/4)                       →  1.4142
 ```
 
 ### Unit Conversion

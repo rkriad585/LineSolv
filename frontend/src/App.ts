@@ -519,23 +519,12 @@ export function renderApp(root: HTMLElement): void {
     clearAndEval();
   };
 
-  const handleReorderNotes = async (noteIDs: string[]) => {
-    try {
-      await serviceBindings.ReorderNotes(noteIDs);
-      const notes = await serviceBindings.GetAllNotes();
-      const activeId = notesMgr.getActiveId();
-      notesMgr.load(notes, activeId || notes[0]?.id || '');
-      refreshNotesUI();
-    } catch { /* ignore */ }
-  };
-
   const noteActions = {
     rename: handleRenameNote,
     del: handleDeleteNote,
     exportNote: handleExportNote,
     share: handleShareNote,
     importNote: handleImportNote,
-    reorder: handleReorderNotes,
     sort: (field: SortField, dir: SortDir) => {
       notesMgr.setSort(field, dir);
       refreshNotesUI();

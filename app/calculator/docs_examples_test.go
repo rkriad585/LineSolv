@@ -639,3 +639,47 @@ func TestDocExamples_CombinedPatterns(t *testing.T) {
 		}
 	}
 }
+
+func TestDocExamples_UserReportedPatterns(t *testing.T) {
+	e := NewEngine()
+	tests := []struct {
+		input    string
+		expected string
+		desc     string
+	}{
+		// Bare percentage
+		{"50%", "0.5", "bare 50%"},
+		// Comparisons
+		{"which is bigger 5 or 6", "6", "which is bigger 5 or 6"},
+		{"which is smaller 10 or 8", "8", "which is smaller 10 or 8"},
+		{"which is larger pi or 5", "5", "which is larger pi or 5"},
+		// Imperative decrease
+		{"decrease 100 by 5", "95", "decrease 100 by 5"},
+		// Triangle area
+		{"area of triangle with base 5 and height 10", "25", "triangle area"},
+		// Cone volume
+		{"volume of cone radius 3 and height 5", "47.12388980384689", "cone volume"},
+		// Purchase math with leading "bought" and trailing question
+		{"I bought 8 items at $5 each with a 10% discount and 6% sales tax. What's the final price?", "38.16", "bought items with discount and tax"},
+		// Sales tax on income
+		{"I just made $200 from a side gig. I need to set aside 8% for sales tax. How much total with tax?", "216", "side gig with sales tax"},
+		// Discount on item ("off" variant, not "discount")
+		{"That $200 jacket I've been eyeing is 25% off. What's the sale price?", "150", "jacket 25% off"},
+		// Hourly freelance work
+		{"I got 25 hours of freelance work at $37 per hour. What did I earn?", "925", "hourly freelance work"},
+		// Quantity × unit price (game night)
+		{"Game night is coming up. I need 5 pizzas, and each one costs $12. Just the pizzas, no discounts or tax for now.", "60", "pizza quantity unit price"},
+		// Standard purchase math with platform prefix
+		{"what is the total cost of 5 items at $20 each with a 15% discount and 8% sales tax added on top", "91.8", "standard purchase with discount and tax"},
+	}
+	for _, tt := range tests {
+		got, err := e.EvaluateLine(tt.input)
+		if err != nil {
+			t.Errorf("%s: EvaluateLine(%q) unexpected error: %v", tt.desc, tt.input, err)
+			continue
+		}
+		if got != tt.expected {
+			t.Errorf("%s: EvaluateLine(%q) = %q, want %q", tt.desc, tt.input, got, tt.expected)
+		}
+	}
+}

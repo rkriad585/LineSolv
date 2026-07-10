@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.9.0] — 2026-07-10
+
+### Added
+- **Comprehensive doc examples test** — `TestDocExamples_UserReportedPatterns` covers 13 real-world query patterns (comparisons, purchase math, geometry, freelance, discount)
+- **`examples.txt`** — exhaustive list of all supported query examples organized by category
+
+### Fixed
+- **Undo/Redo redo stack corruption** — `pushSnapshot()` was clearing the redo stack during programmatic `input` events triggered by `undo()`/`redo()`, making Ctrl+Y silently fail. Added `programmaticChange` flag to preserve the redo stack.
+- **File drop UI crash** — dropping a file onto the window caused the WebView to navigate away from the app (black screen). Set `DisableWebViewDrop: true` in Wails config.
+- **`discountOnItemPattern`** — added `.*?` to skip intervening words between item name and percentage (e.g. `That $200 jacket I've been eyeing is 25% off`)
+- **`purchasePattern`** — made `added on top` optional after `sales tax` (e.g. `6% sales tax. What's the final price?`)
+- **`salesTaxIncomePattern`** — changed `[Ww]hat` prefix to `(?i)what` for case-insensitive matching in phrases like `What did I earn?`
+- **Date extraction with "for now"** — `timeframePattern` changed from `\s+for\s+now` to `\s+for\b` to prevent greedy match eating trailing text (e.g. `no discounts or tax for now`)
+
+### Removed
+- **Drag-and-drop note reordering** — HTML5 Drag-and-Drop API is broken in Wails v2 WebView (`dragover` never fires). Mouse-based replacement could not match the expected UX. Removed entirely. Notes can still be managed via sort button (name/created/updated), rename, create, and delete.
+
 ## [0.8.0] — 2026-07-10
 
 ### Added

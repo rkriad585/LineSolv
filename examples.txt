@@ -1,0 +1,531 @@
+# Basic Arithmetic
+1 + 2
+10 - 3
+4 * 5
+20 / 4
+2 ^ 3
+17 % 5
+2+2
+3.5+1.2
+2+3*4
+2+3*4-6/2
+2^3
+2^3+1
+2^3^2
+10 % 3
+10 / 2
+10/0
+5 % 0
+5 % 3
+5 + 3
+5 * 3
+5 * 4
+5 ^ 3
+3 + 7
+3 / 2
+3 * 5
+10 - 3
+7 % 2.5
+5.7 % 2.3
+
+# PEMDAS
+2 + 3 * 4
+(2 + 3) * 4
+2^3+1
+2^3^2
+
+# Numeric Literals
+42
+0
+10
+4
+5
+3
+7
+42
+
+# Natural Language: basic questions
+what is 2+2
+what is 5+3 equal to
+what is one plus one
+what is one plus one?
+what is the square root of 144 plus 12
+what is the sum of twenty five and thirty
+what is twenty five plus three
+what does 2+2 equal
+what does 10*5 equal
+
+# Natural Language: imperative
+calculate 10*10
+calculate 15% of 200
+can you calculate 2+2
+could you find 5*3
+determine 2^10
+do you know 5+3
+figure out 10 * 5
+find the value of 2 times 3 plus 4
+give me 3 + 7
+show me 5 + 3
+tell me 10 + 20
+work out 2 + 3
+would you solve 10+5
+
+# Natural Language: conversational prefixes
+hello how much is 5 + 3
+hey there calculate 6 times 7
+hi what is one plus one
+alright 2+2
+approximately 5*3
+about 10+5
+exactly 5 plus 3
+i guess 10+5
+i think 5+3
+i want 5+3
+i would like 10+5
+i'd like 2*3
+i need to add 2+2
+let's calculate 5+3
+lets 2+2
+like 5 plus 3
+maybe 2+2
+now 2+2
+ok 5+3
+okay 10+5
+perhaps 5*3
+probably 10/2
+right 5*3
+roughly 2+2
+say 2+2
+so 5+3
+well 2+2
+we need 5*10
+we want 3+7
+will you compute 2^3
+
+# Fraction words
+one half
+one third
+two thirds
+one quarter
+three quarters
+
+# Mixed numbers
+2 1/2
+3 3/4
+2 1/2 + 1.5
+3/4
+
+# Number words
+twenty five
+twenty five plus 3
+twenty five percent of 200
+twenty five hundred
+one hundred
+two hundred
+
+# Negative
+10 - 3
+-5 + 3
+
+# Comparison phrases
+which is bigger 5 or 6
+which is smaller 10 or 8
+which is larger pi or 5
+10 increased by 5
+20 decreased by 7
+5 more than 10
+3 less than 8
+difference between 10 and 3
+5 added to 10
+10 from 100
+5 from 20
+8 fewer 3
+5 subtract 3
+10 minus 3
+
+# "From" subtraction
+10 from 100
+5 from 20
+
+# Division phrases
+10 over 2
+9 out of 3
+ratio of 10 to 2
+10 divided by 5
+20 divided by 5
+3 into 15
+
+# Multiplication phrases
+product of 4 and 3
+sum of 10 and 5
+5 lots of 3
+5 times 4
+3 times as much as 5
+3 times more than 5
+2 times as many as 10
+2 times more than 10
+10 times more than 3
+
+# Scale words
+double 5
+twice 10
+triple 3
+half of 20
+quarter of 100
+half a dozen
+half a couple
+half a million
+half as many as 20
+half as much as 10
+half as much as 100
+quarter as many as 40
+quarter as much as 20
+
+# Power words
+5 squared
+3 cubed
+cube 3
+square 5
+square root of 144
+cube root of 27
+the square root of 144
+the cube root of 27
+2 to the power of 3
+5 exponent 3
+5 to the 3
+
+# Percentages
+50%
+10% of 200
+100 + 15%
+200 - 10%
+10% less than 200
+20% more than 100
+50% more than 10
+25% less than 80
+100 with 8% tax
+200 after 10% discount
+200 minus 10% discount
+40 plus 15% tip
+how much is one hundred plus fifty percent
+10 per cent of 200
+10 pct of 200
+50 per cent of 80
+50 p.c. of 80
+10 out of 50 as a percent
+10 out of 50 as a percentage
+what percent of 50 is 10
+what percentage of 80 is 20
+10 is what percent of 50
+10 is what % of 50
+10 as a percentage of 50
+50 percent of what is 25
+50% of what is 25
+
+# Unit conversion
+10 inches in cm
+10 inches to cm
+1 m in cm
+1 kg in lb
+10 c to f
+100 c to f
+convert 10 inches to cm
+convert 100 km to miles
+change 100 c to f
+
+# Currency
+$100 + €20
+$20 in euro - 5% discount
+€5
+$1.5
+$10
+£20
+
+# Ordinal suffixes
+1st
+2nd
+3rd
+4th
+1st + 2
+
+# SI notation
+5k
+1.5K
+3M
+2B
+2B / 5k
+
+# Time durations
+2h30m
+2h30m in minutes
+2h + 1h15m
+
+# Fractions as operators
+3/4
+3/4 + 1/4
+
+# Operators: × ÷
+5 × 3
+5 ÷ 2
+10×5
+
+# Constants
+pi
+π
+e
+
+# Trig functions
+sin(0)
+sin(pi/4) + cos(pi/4)
+cos(0)
+tan(0)
+sine of 0
+cosine of 0
+tangent of 0
+asin(0)
+asin(1)
+acos(1)
+atan(0)
+atan2(1, 1)
+sinh(0)
+cosh(0)
+tanh(0)
+deg(3.141592653589793)
+rad(180)
+
+# Log / exp
+ln(1)
+ln of 100
+natural log of 100
+log(1)
+log of 100
+log10(100)
+log2(8)
+log base 2 of 8
+log base 10 of 100
+log base 10 of 100 + 3 squared
+exp(0)
+exp(1)
+
+# Rounding / sign
+round(3.7)
+ceil(3.2)
+floor(3.7)
+trunc(3.7)
+trunc(-3.7)
+sign(0)
+sign(-3)
+sign(5)
+abs(-5)
+absolute value of -5
+the absolute value of -5
+
+# Random
+rand()
+random(10)
+
+# Combinatorics / factorial
+5!
+0!
+3! + 2
+fact(0)
+fact(5)
+fact(-1)
+fact(1)
+fact(1.5)
+fact(10)
+factorial(100)
+factorial(1)
+factorial(1.5)
+factorial(10)
+5 choose 3
+10 choose 2
+5 choose 2 + 3!
+
+# Variadic functions
+avg(1, 2, 3)
+sum(1, 2, 3)
+min(1, 2, 3)
+min(-5, 0, 5)
+max(1, 2, 3)
+max(-5, 0, 5)
+
+# GCD / LCM
+gcd(12, 8)
+gcd(7, 13)
+lcm(4, 6)
+lcm(6, 8)
+
+# Advanced functions
+sqrt(2)
+sqrt(4)
+pow(2)
+pow(2, 3)
+fract(3.7)
+fract(5)
+
+# "How many times" division
+how many times does 5 go into 20
+how many times does 3 go in 15
+how many times does 25 go into 5k
+how many times does 2 go into 1M
+how many 3 are in 15
+how many 5 in 20
+
+# "Split / shared among / between"
+10 split among 2
+10 split between 2
+12 shared among 3
+12 shared between 3
+
+# "Along with / combined with / together with / without"
+5 along with 3
+5 combined with 3
+5 together with 3
+5 without 3
+
+# Purchase math
+5 items at $20 each
+5 items at $20 each with a 15% discount
+5 items at $20 each with a 15% discount and 8% sales tax added on top
+what is the total cost of 5 items at $20 each with a 15% discount and 8% sales tax added on top
+I bought 8 items at $5 each with a 10% discount and 6% sales tax. What's the final price?
+I got 25 hours of freelance work at $37 per hour. What did I earn?
+That $200 jacket I've been eyeing is 25% off. What's the sale price?
+Game night is coming up. I need 5 pizzas, and each one costs $12. Just the pizzas, no discounts or tax for now.
+I just made $200 from a side gig. I need to set aside 8% for sales tax. How much total with tax?
+100 with 8% tax
+200 after 10% discount
+
+# Triangle / cone geometry
+area of triangle with base 5 and height 10
+volume of cone radius 3 and height 5
+
+# Imperative verbs
+decrease 100 by 5
+5 items at $20 each
+
+# "more than / less than / as much as"
+10 times more than 3
+3 times more than 5
+3 times as much as 5
+2 times more than 10
+2 times as many as 10
+half as much as 10
+half as many as 20
+quarter as much as 20
+quarter as many as 40
+
+# Variables
+x = 42
+x * 2
+y = x + 8
+y / 2
+x * pi
+myvar
+myvar + 1
+y
+unknownVar
+
+# Context references
+42
+of that * 2
+then + 10
+result / 2
+that
+last
+last result
+previous
+previous result
+prior
+prior result
+last answer
+
+# "Percent" with "added to"
+100 + 15%
+200 - 10%
+100 with 8% tax
+200 after 10% discount
+200 minus 10% discount
+40 plus 15% tip
+
+# Collective nouns
+a couple
+a dozen
+a score
+half a dozen
+half a couple
+double a dozen
+
+# Possessive plurals
+3 tens
+2 hundreds
+5 thousands
+2 dozens
+3 scores
+5 tens
+5 thousands
+3 tens from 5 hundreds
+
+# Age / birth year
+born in 2007
+what is my age
+what is my current age
+born 1990
+born in 1990
+born 2007
+i am 25 years old
+i am 25
+i am twenty five years old
+i am born in 2007 show me my current age
+i was born in 2007
+my age is 30
+my age is thirty
+25 yrs of age
+25 yrs old
+30 yr old
+40 years old
+
+# "of that" / "then" chains
+42
+of that * 2
+then + 10
+result / 2
+
+# Date / time math
+today + 14 days
+today - 7 days
+March 1 + 30 days
+ssome text march 1 + 30 days rnbnoroihnotho
+last month
+next week
+what is next week
+2 weeks from now
+3 months ago
+
+# Date with trailing noise
+I completing a book at today + 14 days some others story
+I'm start a job on today - 7 days something more
+
+# "for now" handling
+Game night is coming up. I need 5 pizzas, and each one costs $12. Just the pizzas, no discounts or tax for now.
+
+# Graph / plot
+plot x^2
+plot x^2 from -5 to 5
+graph x^2 + 2*x + 1
+graph sin(x) from 0 to 6.2832
+y = 2*x + 3
+plot x^3 from -2 to 2
+
+# Combined patterns
+$100 + €20
+2B / 5k
+a dozen + 3 scores
+how many times does 25 go into 5k
+5 choose 2 + 3!
+log base 10 of 100 + 3 squared
+double a dozen
+3 tens from 5 hundreds
+2h30m in minutes
+10 inches in cm

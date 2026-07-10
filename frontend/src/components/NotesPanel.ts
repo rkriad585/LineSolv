@@ -9,7 +9,6 @@ type NoteAction = {
   exportNote: (id: string, format: string) => void;
   share: (id: string) => void;
   importNote: () => void;
-  reorder: (noteIDs: string[]) => void;
   sort?: (field: SortField, dir: SortDir) => void;
 };
 
@@ -195,15 +194,13 @@ export class NotesPanel {
       this.listEl.innerHTML = `<div class="px-3 py-2 text-xs" style="color:var(--text-muted)">No matching notes</div>`;
       return;
     }
-    let dragId: string | null = null;
-
     this.listEl.innerHTML = filtered
       .map(
         n => {
           const isActive = n.id === (activeId ?? '');
           const dirty = this.dirtyIds.has(n.id);
           const dot = dirty ? `<span class="note-dirty" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:6px;flex-shrink:0;vertical-align:middle;"></span>` : '';
-          return `<div class="note-item px-3 py-1.5 text-sm cursor-pointer flex items-center" draggable="true" tabindex="-1" data-note-id="${n.id}" style="color:${isActive ? 'var(--text)' : 'var(--text-muted)'};background:${isActive ? 'var(--note-bg)' : 'transparent'}">${dot}<span class="truncate">${escapeHtml(n.name)}</span></div>`;
+          return `<div class="note-item px-3 py-1.5 text-sm cursor-pointer flex items-center" tabindex="-1" data-note-id="${n.id}" style="color:${isActive ? 'var(--text)' : 'var(--text-muted)'};background:${isActive ? 'var(--note-bg)' : 'transparent'}">${dot}<span class="truncate">${escapeHtml(n.name)}</span></div>`;
         }
       )
       .join('');
@@ -217,40 +214,6 @@ export class NotesPanel {
         ev.preventDefault();
         ev.stopPropagation();
         this.showContextMenu(nid, ev.clientX, ev.clientY);
-      });
-      e.addEventListener('dragstart', () => {
-        dragId = nid;
-        e.style.opacity = '0.4';
-      });
-      e.addEventListener('dragend', () => {
-        dragId = null;
-        e.style.opacity = '';
-        this.listEl.querySelectorAll('.note-item').forEach(item => {
-          (item as HTMLElement).style.borderTop = '';
-        });
-      });
-      e.addEventListener('dragover', (ev) => {
-        ev.preventDefault();
-      });
-      e.addEventListener('dragenter', (ev) => {
-        ev.preventDefault();
-        if (dragId && dragId !== nid) {
-          e.style.borderTop = '2px solid var(--accent)';
-        }
-      });
-      e.addEventListener('dragleave', () => {
-        e.style.borderTop = '';
-      });
-      e.addEventListener('drop', () => {
-        e.style.borderTop = '';
-        if (!dragId || dragId === nid) return;
-        const ids = filtered.map(n => n.id);
-        const fromIdx = ids.indexOf(dragId);
-        const toIdx = ids.indexOf(nid);
-        if (fromIdx === -1 || toIdx === -1) return;
-        ids.splice(fromIdx, 1);
-        ids.splice(toIdx, 0, dragId);
-        this.actions.reorder(ids);
       });
     });
   }
