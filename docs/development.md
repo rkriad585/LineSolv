@@ -53,19 +53,20 @@ The binary is written to `build/bin/LineSolv`.
 LineSolv/
 ├── app/
 │   ├── calculator/
-│   │   ├── engine.go       # Core engine, parser, NL pipeline, history
-│   │   ├── units.go         # Unit database + conversion
-│   │   ├── functions.go     # Built-in math functions
-│   │   ├── variables.go     # Variable get/set/clear
-│   │   ├── steps.go         # Step / EvalDetail types + GetSteps
-│   │   └── graph.go         # Point / GraphResult + EvaluateGraph
+│   │   ├── engine.go           # Core engine, parser, NL pipeline, history
+│   │   ├── units.go            # Unit database + conversion
+│   │   ├── functions.go        # Built-in math functions
+│   │   ├── variables.go        # Variable get/set/clear
+│   │   ├── steps.go            # Step / EvalDetail types + GetSteps
+│   │   ├── graph.go            # Point / GraphResult + EvaluateGraph
+│   │   └── benchmark_test.go   # Benchmark tests for naturalize, EvaluateLine, NewEngine
 │   ├── service/
-│   │   └── app.go           # Wails-bound service methods (19 methods)
+│   │   └── app.go              # Wails-bound service methods (19 methods)
 │   └── storage/
-│       ├── db.go            # SQLite notes CRUD (includes position/reorder)
-│       ├── config.go        # config.toml parse/save
-│       ├── exporter.go      # Export/import: .lv, .txt, .md, .json, .toml, .pdf
-│       └── fancyname.go     # Random name generator
+│       ├── db.go               # SQLite notes CRUD (composite index idx_notes_sort)
+│       ├── config.go           # config.toml parse/save
+│       ├── exporter.go         # Export/import: .lv, .txt, .md, .json, .toml, .pdf
+│       └── fancyname.go        # Random name generator
 ├── frontend/
 │   ├── src/
 │   │   ├── App.ts           # Orchestrator (~360 lines)
@@ -96,13 +97,14 @@ LineSolv/
 │   ├── wailsjs/             # Auto-generated bindings (do not edit)
 │   └── index.html
 ├── docs/
-│   ├── architecture.md      # Architecture overview
-│   ├── api-reference.md     # Wails-bound method reference
-│   ├── calculator-engine.md # How the calculation engine works
-│   ├── frontend.md          # Frontend architecture guide
-│   ├── development.md       # Development setup and workflow
-│   ├── faq.md               # FAQ and troubleshooting
-│   └── user-guide.md        # User-facing documentation
+│   ├── architecture.md       # Architecture overview
+│   ├── api-reference.md      # Wails-bound method reference
+│   ├── calculator-engine.md  # How the calculation engine works
+│   ├── frontend.md           # Frontend architecture guide
+│   ├── development.md        # Development setup and workflow
+│   ├── faq.md                # FAQ and troubleshooting
+│   ├── from-words-to-numbers.md  # End-to-end walkthrough (query → result)
+│   └── user-guide.md         # User-facing documentation
 ├── main.go                  # Entry point
 ├── wails.json               # Wails configuration
 ├── go.mod
@@ -133,6 +135,30 @@ LineSolv/
 
 ```bash
 go test ./...
+```
+
+### Benchmarks
+
+Benchmark tests in `app/calculator/benchmark_test.go` cover the engine's core operations:
+
+```bash
+go test ./app/calculator/ -bench=. -benchmem
+```
+
+| Name | Iterations | Time/op |
+|---|---|---|
+| BenchmarkNaturalize | 280 | ~2,100,000 ns/op |
+| BenchmarkEvaluateLine | 170 | ~3,400,000 ns/op |
+| BenchmarkNaturalizeLong | 856 | ~657,000 ns/op |
+| BenchmarkEvaluateLineLong | 606 | ~957,000 ns/op |
+| BenchmarkEngineNew | 31,468,534 | ~20 ns/op |
+
+### Frontend
+
+```bash
+npx vitest run              # unit tests
+npx tsc --noEmit            # type checking
+npx vite build              # production build
 ```
 
 ## Build Configuration

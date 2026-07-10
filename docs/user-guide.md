@@ -308,6 +308,18 @@ what is my age                               →  19  (after a birth-year query)
 
 The age computation triggers whenever `born` is present in the input and finds any valid 4-digit year (1900–current year). After computing age, you can ask `what is my age` or `what is my current age` to recall the result without retyping the birth date.
 
+### Purchase Math
+
+LineSolv understands multi-item purchase scenarios with discounts and tax:
+
+```
+5 items at $20 each                        →  100
+5 items at $20 each with a 15% discount    →  85
+5 items at $20 each with a 15% discount and 8% sales tax added on top  →  91.8
+```
+
+The full expression expands to `(((N * P) * (100 - D) / 100) * (100 + T) / 100)` where N = items, P = price per item, D = discount percent, T = tax percent.
+
 ### Putting It All Together
 Mix patterns across all three phases in a single line:
 ```

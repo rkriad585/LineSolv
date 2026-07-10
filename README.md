@@ -104,6 +104,10 @@ Uninstall via Settings > Apps, then delete `%APPDATA%/neostore/linesolv` to remo
 - **PDF Export** — export any note as a formatted A4 PDF with title, dates, and page numbers
 - **Print Notes** — print calculations with A4 formatting, note name header, watermark, and date via the print button or `Ctrl/Cmd+P`
 - **Notepad-Style UI** — free-form textarea with live results column, loading indicators
+- **Purchase Math** — `5 items at $20 each`, `3 items at $10 each with a 15% discount and 8% sales tax`
+- **Toast Notifications** — non-modal feedback for save/export/import/delete actions
+- **Dirty-State Indicator** — accent dot shows unsaved changes on note tabs
+- **Undo/Redo** — 200-entry custom stack (Ctrl/Cmd+Z / Ctrl/Cmd+Shift+Z)
 - **Delete Confirmation** — optional "Don't ask again" preference stored in config.toml
 
 ## Installation

@@ -10,6 +10,8 @@ export class ResultDisplay {
   }
 
   setResults(html: string): void {
+    const st = this.el.scrollTop;
     this.el.innerHTML = html;
+    this.el.scrollTop = st;
   }
 }

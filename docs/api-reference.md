@@ -159,6 +159,36 @@ await svc.ClearVariables();
 await svc.ClearHistory();
 ```
 
+## `UpdateCurrencyRates`
+
+```typescript
+interface CurrencyCacheInfo {
+  cached: boolean;
+  updatedAt: string;
+  source: string;
+}
+
+function UpdateCurrencyRates(): Promise<CurrencyCacheInfo>
+```
+
+Fetches live exchange rates from exchangerate-api.com. Falls back to cached rates on network failure. Returns cache info (cached status, last updated timestamp, source).
+
+## `GetCurrencyCacheInfo`
+
+```typescript
+function GetCurrencyCacheInfo(): Promise<CurrencyCacheInfo>
+```
+
+Returns the current currency cache status without attempting a refresh.
+
+## `GetDataDir`
+
+```typescript
+function GetDataDir(): Promise<string>
+```
+
+Returns the application data directory path (e.g. `~/.config/neostore/linesolv`).
+
 ## Error Handling
 
 All Go errors result in an empty string being returned to the frontend. No error messages are displayed to the user. The frontend wraps every call in `try/catch` to handle cases where the Wails runtime is not yet initialized.

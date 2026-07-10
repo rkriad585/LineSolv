@@ -5,6 +5,7 @@ import (
 	"LineSolv/app/storage"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ledongthuc/pdf"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -220,7 +222,12 @@ func (s *AppService) ExportNoteToFile(id, format string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	content := storage.ExportNote(*note, format)
+
+	// Use ExportNoteBytes for binary-safe export (PDF), string-based for text
+	contentBytes := storage.ExportNoteBytes(*note, format)
+	if contentBytes == nil {
+		return "", fmt.Errorf("failed to generate %s export", format)
+	}
 
 	safeName := strings.Map(func(r rune) rune {
 		if r == '/' || r == '\\' || r == ':' {
@@ -230,14 +237,11 @@ func (s *AppService) ExportNoteToFile(id, format string) (string, error) {
 	}, note.Name)
 	safeName = strings.ReplaceAll(safeName, "..", "_")
 
-	defaultExt := format
-	if format == "pdf" {
-		defaultExt = "pdf"
-	}
+	ext := format
 	filePath, err := runtime.SaveFileDialog(getCtx(), runtime.SaveDialogOptions{
-		DefaultFilename: safeName + "." + defaultExt,
+		DefaultFilename: safeName + "." + ext,
 		Filters: []runtime.FileFilter{
-			{DisplayName: "LineSolv Files", Pattern: "*." + defaultExt},
+			{DisplayName: "LineSolv Files", Pattern: "*." + ext},
 			{DisplayName: "All Files", Pattern: "*"},
 		},
 	})
@@ -248,7 +252,7 @@ func (s *AppService) ExportNoteToFile(id, format string) (string, error) {
 		return "", nil
 	}
 
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filePath, contentBytes, 0644); err != nil {
 		return "", err
 	}
 	return filePath, nil
@@ -257,7 +261,7 @@ func (s *AppService) ExportNoteToFile(id, format string) (string, error) {
 func (s *AppService) ImportNoteFromFile() (*storage.Note, error) {
 	filePath, err := runtime.OpenFileDialog(getCtx(), runtime.OpenDialogOptions{
 		Filters: []runtime.FileFilter{
-			{DisplayName: "Supported Files", Pattern: "*.lv;*.txt;*.md;*.json;*.toml"},
+			{DisplayName: "Supported Files", Pattern: "*.lv;*.txt;*.md;*.json;*.toml;*.pdf"},
 			{DisplayName: "All Files", Pattern: "*"},
 		},
 	})
@@ -268,29 +272,85 @@ func (s *AppService) ImportNoteFromFile() (*storage.Note, error) {
 		return nil, nil
 	}
 
+	base := filepath.Base(filePath)
+	name := strings.TrimSuffix(base, filepath.Ext(base))
+	ext := strings.ToLower(filepath.Ext(base))
+
+	// PDF import: extract text content
+	if ext == ".pdf" {
+		return s.importPDF(filePath, name)
+	}
+
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
 
 	content := string(data)
-	base := filepath.Base(filePath)
-	name := strings.TrimSuffix(base, filepath.Ext(base))
 
-	ext := strings.ToLower(filepath.Ext(base))
 	if ext == ".json" {
 		var parsed struct {
-			Name    string `json:"name"`
-			Content string `json:"content"`
+			Name      string `json:"name"`
+			Content   string `json:"content"`
+			CreatedAt int64  `json:"createdAt"`
+			UpdatedAt int64  `json:"updatedAt"`
 		}
 		if err := json.Unmarshal(data, &parsed); err == nil && parsed.Name != "" {
 			name = parsed.Name
 			if parsed.Content != "" {
 				content = parsed.Content
 			}
+			// Preserve timestamps when available
+			if parsed.CreatedAt > 0 || parsed.UpdatedAt > 0 {
+				return s.storage.CreateNoteWithContentAndDates(name, content, parsed.CreatedAt, parsed.UpdatedAt)
+			}
 		}
 	}
 
+	if ext == ".toml" {
+		// Use simple string parsing for TOML name extraction (no toml library dependency)
+		for _, line := range strings.Split(content, "\n") {
+			line = strings.TrimSpace(line)
+			if strings.HasPrefix(line, "name = ") {
+				val := strings.Trim(strings.TrimPrefix(line, "name = "), "\"")
+				if val != "" {
+					name = val
+				}
+			}
+			if strings.HasPrefix(line, "content = ") {
+				val := strings.Trim(strings.TrimPrefix(line, "content = "), "\"")
+				if val != "" {
+					content = val
+				}
+			}
+		}
+	}
+
+	return s.storage.CreateNoteWithContent(name, content)
+}
+
+func (s *AppService) importPDF(filePath, name string) (*storage.Note, error) {
+	f, r, err := pdf.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open PDF: %w", err)
+	}
+	defer f.Close()
+
+	var textBuilder strings.Builder
+	totalPage := r.NumPage()
+	for pageNum := 1; pageNum <= totalPage; pageNum++ {
+		p := r.Page(pageNum)
+		text, err := p.GetPlainText(nil)
+		if err != nil {
+			continue
+		}
+		textBuilder.WriteString(text)
+		if pageNum < totalPage {
+			textBuilder.WriteString("\n\n")
+		}
+	}
+
+	content := textBuilder.String()
 	return s.storage.CreateNoteWithContent(name, content)
 }
 

@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-* {
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+/* Only transition specific interactive elements, not everything (avoids flicker) */
+button, .panel-toggle, .note-item, aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 :root {
@@ -206,6 +207,34 @@ body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  button, .panel-toggle, .note-item, aside,
+  #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
+    transition: none !important;
+  }
+}
+
+button:focus-visible, select:focus-visible, input:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+/* Aggressive default outline for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 1px !important;
+}
+/* Remove mouse-focus outlines */
+:focus:not(:focus-visible) {
+  outline: none !important;
 }
 
 /* Context menu */

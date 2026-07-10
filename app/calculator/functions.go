@@ -219,10 +219,142 @@ func (p *parser) callBuiltinOrPlugin(name string, args []float64) (float64, erro
 			v += a
 		}
 		return v / float64(len(args)), nil
+	case "hypot", "pythag", "hypotenuse":
+		if len(args) != 2 {
+			return 0, fmt.Errorf("hypot expects 2 arguments, got %d", len(args))
+		}
+		return math.Hypot(args[0], args[1]), nil
+	case "median":
+		if len(args) < 1 {
+			return 0, fmt.Errorf("median expects at least 1 argument")
+		}
+		sorted := make([]float64, len(args))
+		copy(sorted, args)
+		// Simple bubble sort for small lists
+		for i := 0; i < len(sorted); i++ {
+			for j := i + 1; j < len(sorted); j++ {
+				if sorted[j] < sorted[i] {
+					sorted[i], sorted[j] = sorted[j], sorted[i]
+				}
+			}
+		}
+		n := len(sorted)
+		if n%2 == 0 {
+			return (sorted[n/2-1] + sorted[n/2]) / 2, nil
+		}
+		return sorted[n/2], nil
+	case "mode":
+		if len(args) < 1 {
+			return 0, fmt.Errorf("mode expects at least 1 argument")
+		}
+		freq := map[float64]int{}
+		for _, v := range args {
+			freq[v]++
+		}
+		maxFreq := 0
+		modeVal := args[0]
+		for v, f := range freq {
+			if f > maxFreq {
+				maxFreq = f
+				modeVal = v
+			}
+		}
+		return modeVal, nil
+	case "stdev", "stddev":
+		if len(args) < 2 {
+			return 0, fmt.Errorf("stdev expects at least 2 arguments")
+		}
+		mean := 0.0
+		for _, v := range args {
+			mean += v
+		}
+		mean /= float64(len(args))
+		variance := 0.0
+		for _, v := range args {
+			d := v - mean
+			variance += d * d
+		}
+		return math.Sqrt(variance / float64(len(args))), nil
+	case "variance", "var":
+		if len(args) < 2 {
+			return 0, fmt.Errorf("variance expects at least 2 arguments")
+		}
+		mean := 0.0
+		for _, v := range args {
+			mean += v
+		}
+		mean /= float64(len(args))
+		variance := 0.0
+		for _, v := range args {
+			d := v - mean
+			variance += d * d
+		}
+		return variance / float64(len(args)), nil
+	case "range":
+		if len(args) < 1 {
+			return 0, fmt.Errorf("range expects at least 1 argument")
+		}
+		minVal := args[0]
+		maxVal := args[0]
+		for _, v := range args[1:] {
+			if v < minVal {
+				minVal = v
+			}
+			if v > maxVal {
+				maxVal = v
+			}
+		}
+		return maxVal - minVal, nil
+	case "isprime", "is_prime":
+		if len(args) != 1 {
+			return 0, fmt.Errorf("isprime expects 1 argument, got %d", len(args))
+		}
+		n := int64(math.Round(args[0]))
+		if n < 2 {
+			return 0, nil
+		}
+		if n == 2 || n == 3 {
+			return 1, nil
+		}
+		if n%2 == 0 || n%3 == 0 {
+			return 0, nil
+		}
+		for i := int64(5); i*i <= n; i += 6 {
+			if n%i == 0 || n%(i+2) == 0 {
+				return 0, nil
+			}
+		}
+		return 1, nil
 	case "pi", "π":
 		return math.Pi, nil
 	case "e":
 		return math.E, nil
+	case "speed_of_light", "lightspeed", "c_light":
+		return 299792458, nil
+	case "gravity", "g_force":
+		return 9.80665, nil
+	case "planck", "planck_constant":
+		return 6.62607015e-34, nil
+	case "boltzmann", "boltzmann_constant":
+		return 1.380649e-23, nil
+	case "gas_constant", "gasconstant":
+		return 8.314462618, nil
+	case "avogadro", "avogadro_constant":
+		return 6.02214076e23, nil
+	case "stefan_boltzmann", "stefanboltzmann":
+		return 5.670367e-8, nil
+	case "electron_mass", "me":
+		return 9.10938356e-31, nil
+	case "proton_mass", "mp":
+		return 1.67262192369e-27, nil
+	case "neutron_mass", "mn":
+		return 1.67492749804e-27, nil
+	case "electron_charge", "e_charge":
+		return 1.602176634e-19, nil
+	case "bohr_radius", "bohrradius":
+		return 5.29177210903e-11, nil
+	case "rydberg", "rydberg_constant":
+		return 10973731.568160, nil
 	default:
 		return 0, fmt.Errorf("unknown function: %s", name)
 	}

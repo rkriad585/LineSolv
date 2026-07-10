@@ -1,4 +1,5 @@
 import type {Note} from '../types';
+import type {SortField, SortDir} from '../stores/notes';
 import {escapeHtml} from '../utils/html';
 import {ContextMenu} from './ContextMenu';
 
@@ -9,6 +10,7 @@ type NoteAction = {
   share: (id: string) => void;
   importNote: () => void;
   reorder: (noteIDs: string[]) => void;
+  sort?: (field: SortField, dir: SortDir) => void;
 };
 
 export class NotesPanel {
@@ -23,6 +25,10 @@ export class NotesPanel {
   private dirtyIds = new Set<string>();
   private lastNotes: Note[] = [];
   private lastActiveId = '';
+  private needsRender = true;
+  private sortField: SortField = 'updated';
+  private sortDir: SortDir = 'desc';
+  private sortBtn: HTMLButtonElement;
 
   constructor(onSwitchNote: (id: string) => void, onNewNote: () => void, actions: NoteAction) {
     this.callback = onSwitchNote;
@@ -51,17 +57,30 @@ export class NotesPanel {
     this.searchInput.style.display = 'none';
     this.searchInput.addEventListener('input', () => {
       this.filterText = this.searchInput.value.toLowerCase();
-      this.render(this.lastNotes, this.lastActiveId);
+      this.needsRender = true;
+      if (this.isOpen()) this.renderNow();
     });
     this.searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.searchInput.value = '';
         this.filterText = '';
-        this.render(this.lastNotes, this.lastActiveId);
+        this.needsRender = true;
+        if (this.isOpen()) this.renderNow();
         this.searchInput.blur();
       }
     });
     this.el.appendChild(this.searchInput);
+
+    // Sort button
+    this.sortBtn = document.createElement('button');
+    this.sortBtn.className = 'mx-3 mb-1.5 px-2 py-1 text-[10px] rounded transition-colors shrink-0 flex items-center gap-1';
+    this.sortBtn.style.cssText = 'color:var(--text-muted);background:var(--surface-secondary);';
+    this.sortBtn.setAttribute('aria-label', 'Sort notes');
+    this.updateSortButtonLabel();
+    this.el.appendChild(this.sortBtn);
+
+    this.sortBtn.addEventListener('click', () => this.cycleSort());
+    this.addHover(this.sortBtn);
 
     this.listEl = document.createElement('div');
     this.listEl.id = 'notes-list';
@@ -104,13 +123,48 @@ export class NotesPanel {
     this.addHover(this.newNoteBtn);
   }
 
+  setSort(field: SortField, dir: SortDir): void {
+    this.sortField = field;
+    this.sortDir = dir;
+    this.updateSortButtonLabel();
+    this.needsRender = true;
+    if (this.isOpen()) this.renderNow();
+  }
+
+  private updateSortButtonLabel(): void {
+    const labels: Record<string, string> = {
+      name: 'Name',
+      created: 'Created',
+      updated: 'Updated',
+    };
+    const arrow = this.sortDir === 'asc' ? '\u2191' : '\u2193';
+    this.sortBtn.textContent = `${labels[this.sortField] || 'Updated'} ${arrow}`;
+  }
+
+  private cycleSort(): void {
+    const fields: SortField[] = ['updated', 'name', 'created'];
+    const idx = fields.indexOf(this.sortField);
+    const nextField = fields[(idx + 1) % fields.length];
+    // Toggle direction when cycling back to same field
+    const nextDir = nextField === this.sortField
+      ? (this.sortDir === 'asc' ? 'desc' as const : 'asc' as const)
+      : 'desc' as const;
+    this.sortField = nextField;
+    this.sortDir = nextDir;
+    this.updateSortButtonLabel();
+    if (this.actions.sort) {
+      this.actions.sort(this.sortField, this.sortDir);
+    }
+  }
+
   setDirty(id: string, dirty: boolean): void {
     if (dirty) {
       this.dirtyIds.add(id);
     } else {
       this.dirtyIds.delete(id);
     }
-    this.render(this.lastNotes, this.lastActiveId);
+    this.needsRender = true;
+    if (this.isOpen()) this.renderNow();
   }
 
   private filteredNotes(notes: Note[]): Note[] {
@@ -118,9 +172,23 @@ export class NotesPanel {
     return notes.filter(n => n.name.toLowerCase().includes(this.filterText));
   }
 
-  render(notes: Note[], activeId?: string): void {
+  render(notes: Note[], activeId?: string, sortField?: SortField, sortDir?: SortDir): void {
     this.lastNotes = notes;
     this.lastActiveId = activeId ?? this.lastActiveId;
+    if (sortField) this.sortField = sortField;
+    if (sortDir) this.sortDir = sortDir;
+    this.updateSortButtonLabel();
+    if (!this.isOpen()) {
+      this.needsRender = true;
+      return;
+    }
+    this.renderNow();
+  }
+
+  private renderNow(): void {
+    this.needsRender = false;
+    const notes = this.lastNotes;
+    const activeId = this.lastActiveId;
     const filtered = this.filteredNotes(notes);
     this.searchInput.style.display = notes.length > 1 ? '' : 'none';
     if (filtered.length === 0 && this.filterText) {
@@ -287,6 +355,7 @@ export class NotesPanel {
   }
 
   open(): void {
+    if (this.needsRender) this.renderNow();
     this.el.style.width = '200px';
     this.el.style.borderRightWidth = '1px';
     if (this.lastNotes.length > 1) this.searchInput.style.display = '';

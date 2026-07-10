@@ -3,6 +3,8 @@ import {escapeHtml} from '../utils/html';
 export class VariableExplorer {
   readonly el: HTMLElement;
   readonly contentEl: HTMLDivElement;
+  private lastVars: Record<string, number> | null = null;
+  private needsRender = true;
 
   constructor() {
     this.el = document.createElement('aside');
@@ -25,6 +27,15 @@ export class VariableExplorer {
   }
 
   render(vars: Record<string, number>): void {
+    this.lastVars = vars;
+    if (!this.isOpen()) {
+      this.needsRender = true;
+      return;
+    }
+    this.buildDOM(vars);
+  }
+
+  private buildDOM(vars: Record<string, number>): void {
     const entries = Object.entries(vars);
     if (entries.length === 0) {
       this.contentEl.innerHTML = '<div class="text-xs" style="color:var(--text-muted)">No variables</div>';
@@ -37,9 +48,13 @@ export class VariableExplorer {
         return `<div class="flex justify-between text-xs py-1"><span style="color:var(--accent)">${escapeHtml(k)}</span><span style="color:var(--text-muted)">${val}</span></div>`;
       })
       .join('');
+    this.needsRender = false;
   }
 
   open(): void {
+    if (this.needsRender && this.lastVars !== null) {
+      this.buildDOM(this.lastVars);
+    }
     this.el.style.width = '180px';
     this.el.style.borderLeftWidth = '1px';
     this.contentEl.focus();

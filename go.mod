@@ -5,6 +5,7 @@ go 1.25
 require (
 	github.com/google/uuid v1.6.0
 	github.com/jung-kurt/gofpdf/v2 v2.17.3
+	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
 	github.com/mattn/go-sqlite3 v1.14.47
 	github.com/wailsapp/wails/v2 v2.12.0
 )

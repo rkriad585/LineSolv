@@ -1,7 +1,7 @@
 import type {ShortcutMap} from './utils/shortcuts';
-import type {AppCallbacks, SettingsData} from './types';
+import type {AppCallbacks, Note, SettingsData} from './types';
 import {CalculatorStore} from './stores/calculator';
-import {NotesManager} from './stores/notes';
+import {NotesManager, type SortField, type SortDir} from './stores/notes';
 import {TitleBar} from './components/TitleBar';
 import {CalculatorInput} from './components/CalculatorInput';
 import {ResultDisplay} from './components/ResultDisplay';
@@ -71,6 +71,8 @@ export function renderApp(root: HTMLElement): void {
     } catch { /* runtime not ready */ }
   }
 
+  let loadingTimeout: number | null = null;
+
   async function evaluateAll(): Promise<void> {
     const version = ++evalVersion;
     const text = input.text;
@@ -82,19 +84,27 @@ export function renderApp(root: HTMLElement): void {
     }
 
     const lines = text.split('\n');
-    input.updateGutter(lines.length);
+    input.updateGutter();
 
     store.setInput(text);
-    store.setEvalState('loading');
-    results.setResults(buildLineResults(lines, [], true));
+
+    // Defer loading state — only show if eval takes > 60ms (avoids "..." flicker for fast evals)
+    const visualInfo = input.getLineVisualInfo();
+    loadingTimeout = window.setTimeout(() => {
+      if (version !== evalVersion) return;
+      store.setEvalState('loading');
+      results.setResults(buildLineResults(lines, [], true, visualInfo));
+    }, 60);
 
     try {
       const res = await serviceBindings.EvaluateAll(text);
       if (version !== evalVersion) return;
+      if (loadingTimeout) { clearTimeout(loadingTimeout); loadingTimeout = null; }
 
-      store.setResults(res);
       store.setEvalState('idle');
-      results.setResults(buildLineResults(lines, res, false));
+      store.setResults(res);
+      // Only set results if we didn't show the loading state — otherwise we'd cause a double flash
+      results.setResults(buildLineResults(lines, res, false, visualInfo));
 
       for (const r of res) {
         if (r) store.pushHistory({input: text, output: r});
@@ -127,6 +137,7 @@ export function renderApp(root: HTMLElement): void {
       }
     } catch {
       if (version !== evalVersion) return;
+      if (loadingTimeout) { clearTimeout(loadingTimeout); loadingTimeout = null; }
       store.setEvalState('error');
       store.setError('Connection error');
     }
@@ -156,24 +167,64 @@ export function renderApp(root: HTMLElement): void {
   }
 
   function refreshNotesUI(): void {
-    notesPanel.render(notesMgr.getNotes(), notesMgr.getActiveId());
+    notesPanel.render(notesMgr.getNotes(), notesMgr.getActiveId(), notesMgr.getSortField(), notesMgr.getSortDir());
   }
 
   // --- Note operations ---
+
+  let notesLoaded = false;
+
+  const WELCOME_CONTENT = '# Type your calculations here...\n# Examples:\n2 + 2\n25 * 37\n200 with 25% discount';
+  const LS_ACTIVE_KEY = 'linesolv_active_note';
 
   async function loadNotes(): Promise<void> {
     try {
       const notes = await serviceBindings.GetAllNotes();
       if (notes.length === 0) {
         const note = await serviceBindings.CreateNote();
+        // Seed the first note with welcome content
+        await serviceBindings.SaveNoteContent(note.id, WELCOME_CONTENT);
+        note.content = WELCOME_CONTENT;
         notesMgr.load([note], note.id);
-        input.text = '';
+        input.text = WELCOME_CONTENT;
       } else {
-        notesMgr.load(notes, notes[0].id);
-        input.text = notesMgr.activeNote().content;
+        // Restore last active note from localStorage, fallback to first note
+        const savedId = localStorage.getItem(LS_ACTIVE_KEY);
+        const activeId = savedId && notes.some(n => n.id === savedId) ? savedId : notes[0].id;
+        notesMgr.load(notes, activeId);
+        const content = notesMgr.activeNote().content;
+        input.text = content || WELCOME_CONTENT;
       }
+      notesLoaded = true;
       refreshNotesUI();
-    } catch { /* runtime not ready */ }
+    } catch { /* runtime not ready — will use fallback */ }
+  }
+
+  /** Create a local in-memory fallback note when backend is unavailable. */
+  function initFallbackNote(): void {
+    if (notesLoaded) return;
+    const fallback: Note = {
+      id: 'local-fallback',
+      name: 'Welcome',
+      content: WELCOME_CONTENT,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      position: 0,
+    };
+    notesMgr.load([fallback], fallback.id);
+    input.text = fallback.content;
+    refreshNotesUI();
+    // Try to persist via backend so it survives restart
+    (async () => {
+      try {
+        const note = await serviceBindings.CreateNote();
+        await serviceBindings.SaveNoteContent(note.id, WELCOME_CONTENT);
+        note.content = WELCOME_CONTENT;
+        notesMgr.load([note], note.id);
+        localStorage.setItem(LS_ACTIVE_KEY, note.id);
+        refreshNotesUI();
+      } catch { /* backend still not ready, keep in-memory fallback */ }
+    })();
   }
 
   async function handleNewNote(): Promise<void> {
@@ -460,7 +511,10 @@ export function renderApp(root: HTMLElement): void {
     input.text = content;
     lastSavedContent = content;
     const activeId = notesMgr.getActiveId();
-    if (activeId) notesPanel.setDirty(activeId, false);
+    if (activeId) {
+      notesPanel.setDirty(activeId, false);
+      localStorage.setItem(LS_ACTIVE_KEY, activeId);
+    }
     refreshNotesUI();
     clearAndEval();
   };
@@ -482,6 +536,10 @@ export function renderApp(root: HTMLElement): void {
     share: handleShareNote,
     importNote: handleImportNote,
     reorder: handleReorderNotes,
+    sort: (field: SortField, dir: SortDir) => {
+      notesMgr.setSort(field, dir);
+      refreshNotesUI();
+    },
   };
 
   const cb: AppCallbacks = {
@@ -587,7 +645,7 @@ export function renderApp(root: HTMLElement): void {
 
   // --- Init ---
 
-  input.updateGutter(1);
+  input.updateGutter();
   input.textarea.focus();
   store.setEvalState('idle');
 
@@ -601,6 +659,8 @@ export function renderApp(root: HTMLElement): void {
         await new Promise(r => setTimeout(r, 100));
       }
     }
+    // If notes didn't load from backend, create a local fallback
+    initFallbackNote();
     try {
       const settings = await serviceBindings.GetSettings();
       applyTheme(settings.theme || 'dark');

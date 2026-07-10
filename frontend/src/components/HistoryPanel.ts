@@ -7,6 +7,7 @@ export class HistoryPanel {
   readonly searchInput: HTMLInputElement;
   private onRestore: (input: string) => void;
   private allEntries: HistoryEntry[] = [];
+  private needsRender = true;
 
   constructor(onRestore: (input: string) => void) {
     this.onRestore = onRestore;
@@ -30,7 +31,7 @@ export class HistoryPanel {
       'width:100%;padding:5px 8px;font-size:11px;background:var(--surface-secondary);' +
       'color:var(--text);border:1px solid var(--border);border-radius:4px;outline:none;' +
       'box-sizing:border-box;';
-    this.searchInput.addEventListener('input', () => this.applyFilter());
+    this.searchInput.addEventListener('input', () => { this.needsRender = true; this.applyFilter(); });
     this.searchInput.addEventListener('click', (e) => e.stopPropagation());
     this.el.appendChild(this.searchInput);
 
@@ -75,6 +76,10 @@ export class HistoryPanel {
 
   render(entries: HistoryEntry[]): void {
     this.allEntries = entries;
+    if (!this.isOpen()) {
+      this.needsRender = true;
+      return;
+    }
     this.applyFilter();
   }
 
@@ -98,9 +103,11 @@ export class HistoryPanel {
         </div>`;
     }).join('');
     this.contentEl.innerHTML = html;
+    this.needsRender = false;
   }
 
   open(): void {
+    if (this.needsRender) this.applyFilter();
     this.el.style.width = '200px';
     this.el.style.borderRightWidth = '1px';
     this.contentEl.focus();

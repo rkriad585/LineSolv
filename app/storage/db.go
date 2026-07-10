@@ -69,6 +69,9 @@ func NewDB() (*DB, error) {
 	if _, err := conn.Exec(`ALTER TABLE notes ADD COLUMN position INTEGER NOT NULL DEFAULT 0`); err == nil {
 		conn.Exec(`UPDATE notes SET position = rowid`)
 	}
+	if _, err := conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_sort ON notes(position, updated_at)`); err != nil {
+		return nil, fmt.Errorf("create sort index: %w", err)
+	}
 	return &DB{conn: conn}, nil
 }
 
@@ -90,6 +93,7 @@ func NewTestDB() *DB {
 		rates TEXT NOT NULL,
 		updated_at INTEGER NOT NULL
 	)`)
+	conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_sort ON notes(position, updated_at)`)
 	return &DB{conn: conn}
 }
 
@@ -148,6 +152,27 @@ func (d *DB) CreateNoteWithContent(name, content string) (*Note, error) {
 		return nil, err
 	}
 	return &Note{ID: id, Name: name, Content: content, CreatedAt: now, UpdatedAt: now, Position: pos}, nil
+}
+
+// CreateNoteWithContentAndDates creates a note preserving original timestamps.
+// If createdAt or updatedAt is 0, current time is used.
+func (d *DB) CreateNoteWithContentAndDates(name, content string, createdAt, updatedAt int64) (*Note, error) {
+	now := time.Now().UnixMilli()
+	id := uuid.NewString()
+	var pos int
+	d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM notes`).Scan(&pos)
+	if createdAt == 0 {
+		createdAt = now
+	}
+	if updatedAt == 0 {
+		updatedAt = now
+	}
+	_, err := d.conn.Exec(`INSERT INTO notes (id, name, content, created_at, updated_at, position) VALUES (?, ?, ?, ?, ?, ?)`,
+		id, name, content, createdAt, updatedAt, pos)
+	if err != nil {
+		return nil, err
+	}
+	return &Note{ID: id, Name: name, Content: content, CreatedAt: createdAt, UpdatedAt: updatedAt, Position: pos}, nil
 }
 
 func (d *DB) ReorderNotes(noteIDs []string) error {

@@ -27,6 +27,17 @@ func ExportNote(note Note, format string) string {
 	}
 }
 
+// ExportNoteBytes returns the exported content as raw bytes.
+// For binary formats (PDF), this avoids string round-trip corruption.
+func ExportNoteBytes(note Note, format string) []byte {
+	switch strings.ToLower(format) {
+	case "pdf":
+		return exportPDFBytes(note)
+	default:
+		return []byte(ExportNote(note, format))
+	}
+}
+
 func exportLV(note Note) string {
 	return note.Content
 }
@@ -77,6 +88,16 @@ func exportTOML(note Note) string {
 }
 
 func exportPDF(note Note) string {
+	return string(exportPDFBytes(note))
+}
+
+func exportPDFBytes(note Note) []byte {
+	defer func() {
+		if r := recover(); r != nil {
+			// PDF generation panicked; return nil
+		}
+	}()
+
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.SetMargins(20, 20, 20)
 	pdf.SetAutoPageBreak(true, 25)
@@ -130,7 +151,7 @@ func exportPDF(note Note) string {
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
-		return ""
+		return nil
 	}
-	return buf.String()
+	return buf.Bytes()
 }

@@ -45,6 +45,7 @@ words before any pattern matching.
 | 12b–12e. Comparison/ratio | `times more/less`, `% more/less`, `added to` | `3 times more than 5` → `5 + 5 * 3` |
 | 13. Complex phrases | Comparison, division, multiplication, `half as much as`, `how many X in Y` | `10 increased by 5` → `10 + 5`, `half as much as 10` → `5` |
 | 13b. Shape patterns | Rectangle/circle area, cube/cylinder/sphere volume, `by`/`x` multiply | `area of rectangle 10 by 20` → `200` |
+| 13c. Purchase math | `N items at $P each` → `(N * P)`, full expression with discount + tax | `5 items at $20 each` → `100`, `5 items at $20 each with a 15% discount and 8% sales tax added on top` → `91.8` |
 | 14. Natural functions | `square root of`, `cube root of`, `absolute value of`, `sine of`, `log of` | `square root of 144` → `sqrt(144)`, `sine of 0` → `sin(0)` |
 | 14b. Natural trig/log | `sine of X`, `cosine of X`, `log of X`, `ln of X` | `sine of 0` → `sin(0)`, `log of 100` → `ln(100)` |
 | 14c. "per cent" / "pct" | Converts `per cent` / `pct` → `percent` | `10 per cent of 200` → `10 percent of 200`, `10 pct of 200` → `10 percent of 200` |

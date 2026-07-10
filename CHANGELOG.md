@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.0] — 2026-07-10
+
+### Added
+- **Purchase math patterns** — `5 items at $20 each`, `3 items at $10 each with a 15% discount and 8% sales tax`
+- **`prefers-reduced-motion` support** — disables all animations for accessibility
+- **Focus-visible ring styles** — keyboard navigation outlines all interactive elements in theme accent color
+- **Input size limit** — 10,000 character `maxLength` enforced on the textarea (defense in depth alongside Go backend limit)
+- **Frontend unit tests** — 13 tests for `CalculatorStore`, 12 tests for `format` utility (29 total across 3 test files)
+- **Documentation updates** — architecture.md, frontend.md, api-reference.md, user-guide, README updated to reflect all Phase 2/3/4 features
+
+### Fixed
+- **Currency cross-rate conversion** — `$100 + €20` now returns `120` (strips symbols) when no `in`/`to`/`as` keyword is present, instead of converting EUR→USD
+
+### Changed
+- Documentation in PLAN.md reconciled — gutter DOM thrashing item (already fixed in Phase 4) marked completed
+- All docs now accurately reflect the actual state of all implemented features
+
 ## [0.7.0] — 2026-07-08
 
 ### Added

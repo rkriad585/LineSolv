@@ -55,12 +55,16 @@ State is managed through `CalculatorStore` (`stores/calculator.ts`), a reactive 
 | `Ctrl/Cmd + B` | Toggle notes sidebar |
 | `Ctrl/Cmd + I` | Toggle variables sidebar |
 | `Ctrl/Cmd + H` | Toggle history sidebar |
+| `Ctrl/Cmd + S` | Toggle steps panel |
 | `Ctrl/Cmd + K` | Clear all (input + variables + history) |
 | `Ctrl/Cmd + P` | Print current note |
 | `Ctrl/Cmd + ,` | Open settings |
 | `Ctrl/Cmd + ↑` | Navigate history back |
 | `Ctrl/Cmd + ↓` | Navigate history forward |
 | `Ctrl/Cmd + /` | Show keyboard shortcut reference |
+| `Ctrl/Cmd + Z` | Undo (custom 200-entry stack) |
+| `Ctrl/Cmd + Shift + Z` / `Ctrl/Cmd + Y` | Redo |
+| `Ctrl/Cmd + F` | Focus notes search input |
 
 ## UI Components
 
@@ -83,10 +87,12 @@ The `<header>` element carries `--wails-draggable:drag` for frameless window dra
 ### CalculatorInput
 
 The main input area consisting of:
-- **Gutter** (`#gutter`) — line numbers, synced scroll with textarea
+- **Gutter** (`#gutter`) — line numbers, synced scroll with textarea, virtualized
 - **Textarea** (`#input-area`) — free-form natural language input
 
 Wrapped in a flex row container (`#notepad`). The textarea emits `input` events that trigger `scheduleEval()`.
+
+**Gutter virtualization**: The gutter only creates DOM elements for lines visible in the viewport rather than for every line in the input. When the textarea scrolls, the gutter's `scrollTop` is synced via the `scroll` event. On rebuild (e.g. after typing a new line), the gutter's `innerHTML` is cleared and repopulated, then `scrollTop` is restored to prevent the line-number display from jumping to the top. An early return guard (`clientHeight === 0`) avoids unnecessary rebuilds when the gutter is not visible.
 
 ### ResultDisplay
 
@@ -100,9 +106,13 @@ A `<div>` column to the right of the textarea. Results are rendered as HTML with
 
 Collapsible sidebar (left side) for managing multiple calculation notes:
 - **Note list** — clickable note names, active note highlighted
+- **Real-time search** — search input visible when >1 note exists, filters by name case-insensitively (Ctrl+F to focus)
+- **Drag-and-drop reorder** — HTML5 drag-and-drop API: drag handles, visual drop indicator (accent border), persisted to SQLite via `ReorderNotes`
+- **Dirty-state indicator** — accent-colored dot (6px) shown next to note name when unsaved changes exist; cleared on auto-save
 - **+ New Note** button
 - Opens/closes via width animation (0px ↔ 200px)
 - Keyboard shortcut: `⌘B`
+- **Lazy rendering** — uses a `needsRender` flag that is set to `true` on state changes but only triggers a DOM rebuild when the panel is open. This avoids wasted work when the panel is collapsed.
 
 ### VariableExplorer
 
@@ -112,6 +122,7 @@ Collapsible sidebar (right side) showing defined variables:
 - Shows "No variables" when empty
 - Opens/closes via width animation (0px ↔ 180px)
 - Keyboard shortcut: `⌘I`
+- **Lazy rendering** — uses `needsRender` flag to rebuild DOM only when open
 
 ### HistoryPanel
 
@@ -121,7 +132,7 @@ Collapsible sidebar (left side, before notes) showing evaluation history:
 - Search field at the top filters entries by input/output text in real-time; auto-focused on open, cleared on close
 - Opens/closes via width animation (0px ↔ 200px)
 - Keyboard shortcut: `⌘H`
-- Automatically subscribes to store changes and re-renders when open
+- **Lazy rendering** — uses `needsRender` flag to rebuild DOM only when open; automatically subscribes to store changes on open
 
 ### StepsPanel
 
@@ -200,6 +211,36 @@ The iframe approach was chosen because:
 
 A fallback `@media print` CSS block hides the screen chrome if the browser's native print dialog is triggered directly.
 
+### Toast Notifications
+
+A lightweight toast notification system (`utils/toast.ts`) provides non-modal feedback:
+- Three types: `success` (green), `error` (red), `info` (indigo)
+- Auto-dismiss after 2500ms (configurable)
+- Slide-in animation from the right
+- Wired to note create/rename/delete/export/import and clipboard copy actions
+
+### Undo / Redo
+
+Custom 200-entry undo/redo stack (`utils/shortcuts.ts`) replaces the deprecated `document.execCommand('undo'/'redo')`:
+- `pushSnapshot()` captures textarea state on every keystroke before input events fire
+- `undo()` restores previous state; `redo()` restores the undone state
+- Bound to Ctrl/Cmd+Z (undo) and Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y (redo)
+- Stacks are per-textarea-instance via `Map<HTMLTextAreaElement, string[]>`
+
+### Loading Spinner
+
+A CSS-animated spinner appears when evaluation takes >60ms (prevents flicker on fast operations):
+- Created in `App.ts` as a 16px spinning ring (border + `@keyframes spin`)
+- Positioned at the bottom center of the notepad
+- Visibility toggled by `CalculatorStore.evalState` subscription
+
+### Accessibility
+
+- **ARIA labels**: 15 `aria-label` attributes across TitleBar (9), NotesPanel (3), HistoryPanel (1), GraphPanel (1), plus `role="menu"` on ContextMenu
+- **Focus rings**: `:focus-visible` outlines all interactive elements in theme accent color; `:focus:not(:focus-visible)` hides mouse-focus outlines
+- **Reduced motion**: `@media (prefers-reduced-motion: reduce)` disables all animations and transitions for accessibility
+- **Input limit**: Textarea enforces 10,000 character `maxLength`
+
 ## Styling
 
 ### Tailwind CSS v4
@@ -232,7 +273,11 @@ The active theme is set by adding a `theme-{name}` class to `<html>`. Font setti
 
 ### Custom Scrollbar
 
-Thin custom scrollbar (5px) using `::-webkit-scrollbar` pseudo-elements, colored with `--text-subtle` and `--text-muted`.
+Scrollbars are hidden globally (kept functional via `overflow: auto`) since the app uses a custom frameless window with no native scrollbar chrome.
+
+### Theme Transitions
+
+Interactive elements (buttons, panels, notes, toggles) use `transition: background 0.15s ease, border-color 0.15s ease` for smooth theme switching. Panel slide-in/slide-out animations use `transition-all duration-150 ease-out`.
 
 ## Wails Bindings
 

@@ -485,6 +485,24 @@ func (e *Engine) naturalize(s string) string {
 	s = sphereVolumePattern.ReplaceAllString(s, "(4/3) * pi * $1^3")
 	s = byDimensionPattern.ReplaceAllString(s, "($1 * $2)")
 	s = xMultiplyPattern.ReplaceAllString(s, "($1 * $2)")
+	// 13c. Purchase math: "N items at $P each" → "(N * P)", with discount/tax
+	s = purchasePattern.ReplaceAllStringFunc(s, func(m string) string {
+		parts := purchasePattern.FindStringSubmatch(m)
+		if len(parts) < 3 {
+			return m
+		}
+		n := parts[1]
+		p := parts[2]
+		d := parts[3]
+		t := parts[4]
+		if d != "" && t != "" {
+			return fmt.Sprintf("((( %s * %s ) * ( 100 - %s ) / 100) * ( 100 + %s ) / 100)", n, p, d, t)
+		}
+		if d != "" {
+			return fmt.Sprintf("(( %s * %s ) * ( 100 - %s ) / 100)", n, p, d)
+		}
+		return fmt.Sprintf("( %s * %s )", n, p)
+	})
 	// 14. Natural function call patterns
 	s = squareRootOfPattern.ReplaceAllString(s, "sqrt($1)")
 	s = cubeRootOfPattern.ReplaceAllString(s, "cbrt($1)")
@@ -954,16 +972,27 @@ func convertCurrencies(s string) string {
 		return strings.Replace(s, matches[0].full, matches[0].numStr, 1)
 	}
 
-	// Multiple currencies — convert all to the first one's code
-	targetCode := matches[0].code
+	// Multiple currencies:
+	// - If a conversion keyword is present, convert all to the first one's code.
+	// - Otherwise, just strip symbols and do raw addition/subtraction.
+	if strings.Contains(s, " in ") || strings.Contains(s, " to ") || strings.Contains(s, " as ") {
+		targetCode := matches[0].code
+		idx := 0
+		return currencyAnyPattern.ReplaceAllStringFunc(s, func(full string) string {
+			mi := matches[idx]
+			idx++
+			if mi.code == "" || mi.code == targetCode {
+				return mi.numStr
+			}
+			return fmt.Sprintf("(%s * %s)", mi.numStr, formatNumber(getCrossRate(mi.code, targetCode)))
+		})
+	}
+	// No conversion keyword — just strip all currency symbols
 	idx := 0
 	return currencyAnyPattern.ReplaceAllStringFunc(s, func(full string) string {
 		mi := matches[idx]
 		idx++
-		if mi.code == "" || mi.code == targetCode {
-			return mi.numStr
-		}
-		return fmt.Sprintf("(%s * %s)", mi.numStr, formatNumber(getCrossRate(mi.code, targetCode)))
+		return mi.numStr
 	})
 }
 
@@ -1446,6 +1475,9 @@ var byDimensionPattern = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)\s+by\s+(\d+(?:\
 
 // "XxY" or "X×Y" multiplication (e.g., "5x10", "2×3")
 var xMultiplyPattern = regexp.MustCompile(`(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)`)
+
+// purchasePattern matches "N items at $P each" with optional discount and tax
+var purchasePattern = regexp.MustCompile(`(?i)(?:(?:total\s+)?(?:cost|price|value|amount)\s+of\s+)?(\d+(?:\.\d+)?)\s+items?\s+at\s+\$?(\d+(?:\.\d+)?)\s+each(?:\s+with\s+a\s+(\d+(?:\.\d+)?)\s*%\s+discount)?(?:\s+and\s+(\d+(?:\.\d+)?)\s*%\s+sales\s+tax\s+added\s+on\s+top)?`)
 
 // Shape area/volume patterns
 var rectAreaPattern = regexp.MustCompile(`(?i)(?:rectangle|rect)\s+(\d+(?:\.\d+)?)\s+by\s+(\d+(?:\.\d+)?)`)
