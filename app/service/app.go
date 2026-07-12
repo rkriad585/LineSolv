@@ -372,7 +372,7 @@ var appVersion = "0.11.17"
 // SetVersion sets the application version (called from main.go with ldflags value).
 func SetVersion(v string) {
 	if v != "" && v != "dev" {
-		appVersion = v
+		appVersion = strings.TrimPrefix(v, "v")
 	}
 }
 

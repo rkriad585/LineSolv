@@ -164,29 +164,31 @@ export class ContextMenu {
         this.openSubs.push(sub);
         sub.style.display = 'block';
 
-        const triggerRect = trigger.getBoundingClientRect();
-        const subRect = sub.getBoundingClientRect();
-        const margin = 8;
+        requestAnimationFrame(() => {
+          const triggerRect = trigger.getBoundingClientRect();
+          const subRect = sub.getBoundingClientRect();
+          const margin = 8;
 
-        let left = triggerRect.right + 2;
-        let top = triggerRect.top;
+          let left = triggerRect.right + 2;
+          let top = triggerRect.top;
 
-        if (left + subRect.width > window.innerWidth - margin) {
-          left = triggerRect.left - subRect.width - 2;
-        }
-        if (left < margin) {
-          left = margin;
-        }
+          if (left + subRect.width > window.innerWidth - margin) {
+            left = triggerRect.left - subRect.width - 2;
+          }
+          if (left < margin) {
+            left = margin;
+          }
 
-        if (top + subRect.height > window.innerHeight - margin) {
-          top = Math.max(margin, window.innerHeight - subRect.height - margin);
-        }
-        if (top < margin) {
-          top = margin;
-        }
+          if (top + subRect.height > window.innerHeight - margin) {
+            top = Math.max(margin, window.innerHeight - subRect.height - margin);
+          }
+          if (top < margin) {
+            top = margin;
+          }
 
-        sub.style.left = left + 'px';
-        sub.style.top = top + 'px';
+          sub.style.left = left + 'px';
+          sub.style.top = top + 'px';
+        });
       }, 80);
     };
 
