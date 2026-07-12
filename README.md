@@ -219,6 +219,8 @@ Auto-detect plot/graph expressions and render live charts:
 | **Enable/Disable** | Toggle plugins on/off without restarting |
 | **No Code Execution** | Safe expression-only evaluation |
 
+See the [LineSolv Plugins](https://github.com/rkriad585/linesolv-plugins) repository for available community plugins.
+
 ### Keyboard Shortcuts
 
 | Action | Shortcut |
