@@ -141,6 +141,7 @@ export class DocsViewer {
   private tabButtons = new Map<string, HTMLButtonElement>();
   private isVisible = false;
   private loadingEl: HTMLDivElement;
+  private searchInput: HTMLInputElement | null = null;
 
   constructor() {
     this.el = document.createElement('div');
@@ -181,15 +182,34 @@ export class DocsViewer {
     const body = document.createElement('div');
     body.style.cssText = 'display:flex;flex:1;min-height:0;';
 
+    const sidebar = document.createElement('div');
+    sidebar.style.cssText = 'width:200px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--surface-secondary);';
+
+    const searchWrap = document.createElement('div');
+    searchWrap.style.cssText = 'position:relative;padding:8px 8px 0;--wails-draggable:no-drag;';
+
+    this.searchInput = document.createElement('input');
+    this.searchInput.type = 'text';
+    this.searchInput.placeholder = 'Search docs...';
+    this.searchInput.style.cssText =
+      'width:100%;padding:6px 10px 6px 28px;border:1px solid var(--border);border-radius:4px;' +
+      'font-size:12px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box;';
+
+    const searchIcon = document.createElement('span');
+    searchIcon.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+    searchIcon.style.cssText = 'position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;';
+
+    searchWrap.append(searchIcon, this.searchInput);
+
     this.tabsEl = document.createElement('div');
-    this.tabsEl.style.cssText =
-      'width:200px;flex-shrink:0;overflow-y:auto;border-right:1px solid var(--border);' +
-      'background:var(--surface-secondary);padding:8px 0;';
+    this.tabsEl.style.cssText = 'flex:1;overflow-y:auto;padding:4px 0;';
+
+    sidebar.append(searchWrap, this.tabsEl);
 
     this.contentEl = document.createElement('div');
     this.contentEl.style.cssText =
       'flex:1;overflow-y:auto;padding:24px 32px;' +
-      'font-size:14px;line-height:1.6;color:var(--text);';
+      'font-size:14px;line-height:1.6;color:var(--text);user-select:text;-webkit-user-select:text;';
 
     this.loadingEl = document.createElement('div');
     this.loadingEl.style.cssText =
@@ -197,7 +217,7 @@ export class DocsViewer {
       'font-size:13px;color:var(--text-muted);';
     this.loadingEl.textContent = 'Loading...';
 
-    body.append(this.tabsEl, this.contentEl);
+    body.append(sidebar, this.contentEl);
     this.el.append(header, body);
   }
 
@@ -207,6 +227,7 @@ export class DocsViewer {
     this.el.style.display = 'flex';
     this.contentEl.innerHTML = '';
     this.contentEl.appendChild(this.loadingEl);
+    if (this.searchInput) this.searchInput.value = '';
 
     try {
       const names = await serviceBindings.GetDocList();
@@ -220,6 +241,9 @@ export class DocsViewer {
       this.contentEl.innerHTML = '<p style="color:var(--error);padding:20px;">Failed to load documentation.</p>';
     }
 
+    if (this.searchInput) {
+      this.searchInput.addEventListener('input', this.handleSearch);
+    }
     document.addEventListener('keydown', this.handleKeydown);
   }
 
@@ -227,6 +251,9 @@ export class DocsViewer {
     if (!this.isVisible) return;
     this.isVisible = false;
     this.el.style.display = 'none';
+    if (this.searchInput) {
+      this.searchInput.removeEventListener('input', this.handleSearch);
+    }
     document.removeEventListener('keydown', this.handleKeydown);
   }
 
@@ -239,6 +266,24 @@ export class DocsViewer {
       this.close();
     }
   };
+
+  private handleSearch = (): void => {
+    this.filterTabs();
+  };
+
+  private filterTabs(): void {
+    const query = (this.searchInput?.value || '').toLowerCase().trim();
+    for (const name of this.docNames) {
+      const btn = this.tabButtons.get(name);
+      if (!btn) continue;
+      if (!query) {
+        btn.style.display = '';
+        continue;
+      }
+      const display = name.replace(/\.md$/, '').replace(/-/g, ' ').toLowerCase();
+      btn.style.display = display.includes(query) ? '' : 'none';
+    }
+  }
 
   private renderTabs(): void {
     this.tabsEl.innerHTML = '';

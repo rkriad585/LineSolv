@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "1.24"
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -100,7 +100,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "1.24"
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -178,12 +178,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "1.24"
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
       - name: Install NSIS
-        run: choco install nsis -y
+        shell: pwsh
+        run: |
+          choco install nsis -y
+          echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
       - name: Build + NSIS installer
@@ -202,7 +205,11 @@ jobs:
         shell: bash
         run: |
           VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
-          sha256sum "LineSolv-${VERSION}-windows-amd64.exe" "LineSolv-${VERSION}-windows-amd64-installer.exe" > "SHA256SUMS-windows-${VERSION}"
+          if [ -f "LineSolv-${VERSION}-windows-amd64-installer.exe" ]; then
+            sha256sum "LineSolv-${VERSION}-windows-amd64.exe" "LineSolv-${VERSION}-windows-amd64-installer.exe" > "SHA256SUMS-windows-${VERSION}"
+          else
+            sha256sum "LineSolv-${VERSION}-windows-amd64.exe" > "SHA256SUMS-windows-${VERSION}"
+          fi
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:

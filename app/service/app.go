@@ -367,7 +367,7 @@ func (s *AppService) importPDF(filePath, name string) (*storage.Note, error) {
 	return s.storage.CreateNoteWithContent(name, content)
 }
 
-var appVersion = "0.10.16"
+var appVersion = "0.11.17"
 
 // SetVersion sets the application version (called from main.go with ldflags value).
 func SetVersion(v string) {

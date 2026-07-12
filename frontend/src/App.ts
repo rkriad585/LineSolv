@@ -334,8 +334,10 @@ export function renderApp(root: HTMLElement): void {
 
   async function handleExportNote(id: string, format: string): Promise<void> {
     try {
-      await serviceBindings.ExportNoteToFile(id, format);
-      toast.show('Note exported', 'success');
+      const result = await serviceBindings.ExportNoteToFile(id, format);
+      if (result) {
+        toast.show('Note exported', 'success');
+      }
     } catch {
       toast.show('Failed to export note', 'error');
     }
@@ -693,15 +695,36 @@ export function renderApp(root: HTMLElement): void {
     const notes = notesMgr.getNotes();
 
     const items: ContextMenuItem[] = [
-      {label: 'Cut', icon: '✂', shortcut: mod + '+X', action: () => document.execCommand('cut'), disabled: !hasSelection},
-      {label: 'Copy', icon: '📋', shortcut: mod + '+C', action: () => document.execCommand('copy'), disabled: !hasSelection},
-      {label: 'Paste', icon: '📋', shortcut: mod + '+V', action: () => document.execCommand('paste')},
-      {label: 'Select All', icon: '✅', shortcut: mod + '+A', action: () => { input.textarea.select(); }},
+      {label: 'Cut', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>', shortcut: mod + '+X', action: () => {
+        const ta = input.textarea;
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        if (start === end) return;
+        const selected = ta.value.substring(start, end);
+        navigator.clipboard.writeText(selected).then(() => {
+          ta.setRangeText('', start, end, 'end');
+          ta.dispatchEvent(new Event('input', {bubbles: true}));
+        });
+      }, disabled: !hasSelection},
+      {label: 'Copy', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', shortcut: mod + '+C', action: () => {
+        const ta = input.textarea;
+        const selected = ta.value.substring(ta.selectionStart, ta.selectionEnd);
+        if (selected) navigator.clipboard.writeText(selected);
+      }, disabled: !hasSelection},
+      {label: 'Paste', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>', shortcut: mod + '+V', action: () => {
+        navigator.clipboard.readText().then(text => {
+          const ta = input.textarea;
+          const start = ta.selectionStart;
+          ta.setRangeText(text, start, ta.selectionEnd, 'end');
+          ta.dispatchEvent(new Event('input', {bubbles: true}));
+        }).catch(() => {});
+      }},
+      {label: 'Select All', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>', shortcut: mod + '+A', action: () => { input.textarea.select(); }},
       {separator: true},
-      {label: 'Format Expression', icon: '📐', shortcut: mod + '+F', action: () => scheduleEval(), disabled: !hasText},
-      {label: 'Clear Line', icon: '🗑', action: () => { input.text = ''; forceEval(); }, disabled: !hasText},
+      {label: 'Format Expression', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>', shortcut: mod + '+F', action: () => scheduleEval(), disabled: !hasText},
+      {label: 'Clear Line', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>', action: () => { input.text = ''; forceEval(); }, disabled: !hasText},
       {separator: true},
-      {label: 'New Note', icon: '📝', shortcut: mod + '+N', action: handleNewNote},
+      {label: 'New Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>', shortcut: mod + '+N', action: handleNewNote},
     ];
 
     if (notes.length > 1) {
@@ -709,16 +732,16 @@ export function renderApp(root: HTMLElement): void {
         label: n.name || 'Untitled',
         action: () => switchNote(n.id),
       }));
-      items.push({label: 'Switch Note', icon: '📂', children: switchChildren});
+      items.push({label: 'Switch Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>', children: switchChildren});
     }
 
     items.push(
       {separator: true},
-      {label: 'Open Docs', icon: '📖', action: shortcuts.onToggleDocs},
-      {label: 'Open Plugins', icon: '🧩', action: shortcuts.onTogglePlugins},
-      {label: 'Open Settings', icon: '⚙', action: shortcuts.onToggleSettings},
+      {label: 'Open Docs', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>', action: shortcuts.onToggleDocs},
+      {label: 'Open Plugins', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/><circle cx="12" cy="12" r="3"/></svg>', action: shortcuts.onTogglePlugins},
+      {label: 'Open Settings', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>', action: shortcuts.onToggleSettings},
       {separator: true},
-      {label: 'About LineSolv', icon: 'ℹ', action: () => { /* settings modal shows about tab */ shortcuts.onToggleSettings(); }},
+      {label: 'About LineSolv', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>', action: () => { settingsModal.open('About'); }},
     );
 
     ctxMenu.show(items, e.clientX, e.clientY);

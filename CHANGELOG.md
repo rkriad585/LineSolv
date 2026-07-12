@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.11.17] — 2026-07-11
+
+### Added
+- **Docs search** — search input in Documentation sidebar filters tabs by name in real time.
+- **Privacy Policy** — new `docs/privacy-policy.md` covering data collection, local storage, network activity, and user rights. Linked from Settings → About tab.
+
+### Fixed
+- **Context menu submenus clipped** — Switch Note and Export submenus were invisible due to `overflow-y: auto` on the main menu implicitly setting `overflow-x: auto` (CSS spec), clipping absolutely-positioned submenus. Submenus now render directly on `document.body` with `position: fixed`.
+- **Export false success toast** — cancelling the save dialog showed "Note exported". Now checks the backend return value before showing the toast.
+- **Docs text selection** — added `user-select: text` directly to content element inline style to override parent's `select-none` class.
+- **Context menu positioning** — rewrote `show()` to measure menu first, then calculate optimal position with viewport clamping. Only flips upward when there's truly no room below.
+- **Context menu responsive** — added `max-height: calc(100vh - 16px)` with `overflow-y: auto` on both main menu and submenus.
+- **Submenu positioning** — submenus now use viewport-relative coordinates calculated from trigger element's bounding rect, with proper boundary clamping.
+- **Cut/Copy/Paste** — replaced deprecated `document.execCommand()` with `navigator.clipboard` API and `setRangeText()` for reliable clipboard operations in Wails WebView.
+- **About LineSolv tab** — now opens Settings directly to the About tab instead of General.
+- **NSIS installer** — added NSIS to PATH after choco install; conditional checksum generation for missing installer.
+- **CI Node compatibility** — added `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true` env var.
+- **CI Go version** — bumped release workflow Go from 1.23 to 1.24.
+
+### Changed
+- **Context menu icons** — replaced all emoji icons with Lucide-style inline SVGs matching the project's design system.
+- **Context menu hover** — removed redundant JS hover handlers, relying on CSS `:hover` rule.
+
 ## [0.10.16] — 2026-07-11
 
 ### Added
@@ -210,6 +233,7 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
+[0.11.17]: https://github.com/rkriad585/LineSolv/releases/tag/v0.11.17
 [0.10.16]: https://github.com/rkriad585/LineSolv/releases/tag/v0.10.16
 [0.9.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.9.0
 [0.8.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.8.0

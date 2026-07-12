@@ -658,6 +658,18 @@ export class SettingsModal {
     });
     repoEl.appendChild(repoLink);
 
+    const privacyEl = document.createElement('div');
+    privacyEl.style.cssText = 'font-size:13px;user-select:none;';
+    const privacyLink = document.createElement('a');
+    privacyLink.href = '#';
+    privacyLink.textContent = 'Privacy Policy';
+    privacyLink.style.cssText = 'color:var(--accent);text-decoration:none;';
+    privacyLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      try { (window as any).runtime.BrowserOpenURL('https://github.com/rkriad585/LineSolv/blob/main/docs/privacy-policy.md'); } catch {}
+    });
+    privacyEl.appendChild(privacyLink);
+
     const updateSection = document.createElement('div');
     updateSection.style.cssText = 'margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;';
 
@@ -687,7 +699,7 @@ export class SettingsModal {
     this.updateStatusEl.style.cssText = 'font-size:12px;color:var(--text-muted);text-align:center;user-select:none;';
 
     updateSection.append(this.checkBtn, this.updateProgressEl, this.updateStatusEl);
-    center.append(logo, nameEl, versionEl, divider, authorEl, emailEl, repoEl, updateSection);
+    center.append(logo, nameEl, versionEl, divider, authorEl, emailEl, repoEl, privacyEl, updateSection);
     panel.appendChild(center);
   }
 
@@ -775,7 +787,7 @@ export class SettingsModal {
     this.close();
   }
 
-  async open(): Promise<void> {
+  async open(tab?: string): Promise<void> {
     if (this.isVisible) return;
     this.isVisible = true;
 
@@ -826,7 +838,7 @@ export class SettingsModal {
     }
 
     this.el.style.display = 'flex';
-    this.switchTab('General');
+    this.switchTab(tab || 'General');
   }
 
   close(): void {

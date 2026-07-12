@@ -242,16 +242,6 @@ textarea:focus-visible, [tabindex]:focus-visible, a:focus-visible {
   background: var(--surface-hover) !important;
 }
 
-.ctx-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  color: var(--text-muted);
-}
-
 /* Docs viewer */
 #docs-viewer h1 { font-size:22px;font-weight:700;margin:0 0 16px;color:var(--text);padding-bottom:8px;border-bottom:1px solid var(--border); }
 #docs-viewer h2 { font-size:17px;font-weight:600;margin:20px 0 10px;color:var(--text); }
