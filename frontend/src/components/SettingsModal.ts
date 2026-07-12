@@ -1,6 +1,7 @@
 import type {SettingsData} from '../types';
 import * as serviceBindings from '../../wailsjs/go/service/AppService';
 import {toast} from '../utils/toast';
+import {EventsOn} from '../../wailsjs/runtime/runtime';
 
 interface CustomSelect {
   el: HTMLElement;
@@ -33,21 +34,6 @@ const SETTINGS_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="non
 
 const LOGO_SVG = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
 
-function platformDownloadURL(version: string): string {
-  const ua = navigator.userAgent;
-  const v = version.startsWith('v') ? version.slice(1) : version;
-  if (ua.includes('Linux')) {
-    return `https://github.com/rkriad585/LineSolv/releases/download/v${v}/linesolv-${v}-linux-amd64.deb`;
-  }
-  if (ua.includes('Mac')) {
-    if (ua.includes('ARM64') || ua.includes('arm64')) {
-      return `https://github.com/rkriad585/LineSolv/releases/download/v${v}/LineSolv-${v}-darwin-arm64.dmg`;
-    }
-    return `https://github.com/rkriad585/LineSolv/releases/download/v${v}/LineSolv-${v}-darwin-amd64.dmg`;
-  }
-  return `https://github.com/rkriad585/LineSolv/releases/download/v${v}/LineSolv-${v}-windows-amd64.exe`;
-}
-
 function keyEventToCombo(e: KeyboardEvent): string {
   const parts: string[] = [];
   if (e.ctrlKey || e.metaKey) parts.push('Ctrl/Cmd');
@@ -76,6 +62,8 @@ export class SettingsModal {
   private fontFamilySelect!: CustomSelect;
   private previewEl!: HTMLDivElement;
   private updateStatusEl!: HTMLDivElement;
+  private updateProgressEl!: HTMLDivElement;
+  private updateProgressBarEl!: HTMLDivElement;
   private checkBtn!: HTMLButtonElement;
   private overrides: Record<string, string> = {};
   private shortcutKbds: Map<string, HTMLElement> = new Map();
@@ -671,21 +659,34 @@ export class SettingsModal {
     repoEl.appendChild(repoLink);
 
     const updateSection = document.createElement('div');
-    updateSection.style.cssText = 'margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:8px;';
+    updateSection.style.cssText = 'margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;';
 
     this.checkBtn = document.createElement('button');
-    this.checkBtn.textContent = 'Check for Updates';
+    this.checkBtn.textContent = 'Update';
     this.checkBtn.style.cssText =
       'padding:7px 18px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;' +
       'background:var(--accent);color:#fff;transition:opacity .15s;';
     this.checkBtn.addEventListener('mouseenter', () => { this.checkBtn.style.opacity = '0.85'; });
     this.checkBtn.addEventListener('mouseleave', () => { this.checkBtn.style.opacity = '1'; });
-    this.checkBtn.addEventListener('click', () => this.checkForUpdate());
+    this.checkBtn.addEventListener('click', () => this.performUpdate());
+
+    this.updateProgressEl = document.createElement('div');
+    this.updateProgressEl.style.cssText = 'width:100%;max-width:260px;display:none;';
+
+    this.updateProgressBarEl = document.createElement('div');
+    this.updateProgressBarEl.style.cssText =
+      'height:4px;border-radius:2px;background:var(--border);overflow:hidden;width:100%;';
+
+    const progressFill = document.createElement('div');
+    progressFill.style.cssText = 'height:100%;background:var(--accent);width:0%;transition:width 0.3s;';
+    progressFill.id = 'update-progress-fill';
+    this.updateProgressBarEl.appendChild(progressFill);
+    this.updateProgressEl.appendChild(this.updateProgressBarEl);
 
     this.updateStatusEl = document.createElement('div');
     this.updateStatusEl.style.cssText = 'font-size:12px;color:var(--text-muted);text-align:center;user-select:none;';
 
-    updateSection.append(this.checkBtn, this.updateStatusEl);
+    updateSection.append(this.checkBtn, this.updateProgressEl, this.updateStatusEl);
     center.append(logo, nameEl, versionEl, divider, authorEl, emailEl, repoEl, updateSection);
     panel.appendChild(center);
   }
@@ -697,28 +698,61 @@ export class SettingsModal {
     this.previewEl.style.fontFamily = this.fontFamilySelect.value;
   }
 
-  private async checkForUpdate(): Promise<void> {
+  private setProgress(percent: number): void {
+    const fill = this.updateProgressBarEl.querySelector('#update-progress-fill') as HTMLElement;
+    if (fill) {
+      fill.style.width = percent + '%';
+    }
+  }
+
+  private async performUpdate(): Promise<void> {
     this.checkBtn.disabled = true;
     this.checkBtn.textContent = 'Checking...';
     this.updateStatusEl.textContent = '';
+    this.updateProgressEl.style.display = 'none';
+    this.setProgress(0);
+
+    const removeListener = EventsOn('update-progress', (data: {status: string; message: string}) => {
+      this.updateStatusEl.textContent = data.message;
+      this.updateProgressEl.style.display = 'block';
+
+      switch (data.status) {
+        case 'checking':
+          this.setProgress(10);
+          this.checkBtn.textContent = 'Checking...';
+          break;
+        case 'downloading':
+          this.setProgress(50);
+          this.checkBtn.textContent = 'Updating...';
+          break;
+        case 'restarting':
+          this.setProgress(100);
+          this.checkBtn.textContent = 'Restarting...';
+          break;
+      }
+    });
 
     try {
-      const info = await serviceBindings.CheckForUpdate();
-      if (info.update_available) {
-        const url = platformDownloadURL(info.latest_version);
-        this.updateStatusEl.innerHTML =
-          `<span style="color:var(--accent);font-weight:600">Update ${info.latest_version} available!</span><br>` +
-          `<a href="${url}" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:underline">Download for your platform</a>` +
-          `<br><span style="font-size:11px;color:var(--text-muted)">or visit <a href="${info.download_url}" target="_blank" style="color:var(--text-muted);text-decoration:underline">all releases</a></span>`;
-      } else {
+      const info = await serviceBindings.PerformUpdate();
+
+      if (!info.update_available) {
         this.updateStatusEl.innerHTML =
           `<span style="color:var(--text-muted)">\u2713 You're up to date (${info.current_version})</span>`;
+        this.updateProgressEl.style.display = 'none';
+        this.checkBtn.textContent = 'Update';
+      } else {
+        this.updateStatusEl.innerHTML =
+          `<span style="color:var(--accent);font-weight:600">Updated to v${info.latest_version}! Restarting...</span>`;
       }
-    } catch {
-      this.updateStatusEl.textContent = 'Failed to check for updates.';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.updateStatusEl.innerHTML =
+        `<span style="color:var(--text-muted)">Update failed: ${msg}</span>`;
+      this.updateProgressEl.style.display = 'none';
+      this.checkBtn.textContent = 'Update';
     } finally {
+      removeListener();
       this.checkBtn.disabled = false;
-      this.checkBtn.textContent = 'Check for Updates';
     }
   }
 

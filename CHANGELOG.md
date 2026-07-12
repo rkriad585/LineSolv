@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.10.16] — 2026-07-11
+
+### Added
+- **Auto-update** — app now queries GitHub Releases, downloads the matching platform binary, and restarts with the new version. Settings modal shows live progress bar.
+- **Right-click context menu** — textarea context menu with Cut/Copy/Paste/Select All, separator support, and keyboard shortcuts displayed per-platform.
+- **Plus button in title bar** — "+" icon button for quick new note creation.
+- **Test coverage reporting** — `npm run test:coverage` + Go `coverprofile` in CI, artifacts uploaded for 14 days.
+- **CI coverage artifacts** — frontend lcov/json-summary and backend coverage.out uploaded per-platform.
+- **Dockerfile** — Ubuntu 24.04 containerized build with Go 1.24, Node 20, Wails v2.12.0, WebKit/GTK deps.
+- **.dockerignore** — excludes build artifacts, node_modules, .git, coverage.
+- **CODE_OF_CONDUCT.md** — Contributor Covenant v2.1, linked from README and CONTRIBUTING.
+- **ACCESSIBILITY.md** — WCAG 2.1 AA target, keyboard nav, screen reader matrix, known limitations.
+- **pprof profiling** — `app/pprof_dev.go` auto-starts on `localhost:6060` in dev builds; no-op in production.
+- **Release workflow raw binaries** — each platform now uploads raw binary + SHA256SUMS for self-update verification.
+
+### Changed
+- **Self-update rewritten** — replaced browser "Check for Updates" link with real in-app auto-update using `rhysd/go-github-selfupdate`.
+- **CI Go version bumped** to 1.24.
+- **`appVersion` changed from `const` to `var`** — set via `SetVersion()` at startup, still overridable via ldflags.
+
+### Fixed
+- **Context menu disappearing immediately** — added `e.stopPropagation()` to textarea's `contextmenu` handler to prevent the global close listener from firing.
+
 ## [0.9.0] — 2026-07-10
 
 ### Added
@@ -187,6 +210,12 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
+[0.10.16]: https://github.com/rkriad585/LineSolv/releases/tag/v0.10.16
+[0.9.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.9.0
+[0.8.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.8.0
+[0.7.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.7.0
+[0.6.1]: https://github.com/rkriad585/LineSolv/releases/tag/v0.6.1
+[0.6.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.6.0
 [0.5.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.5.0
 [0.4.1]: https://github.com/rkriad585/LineSolv/releases/tag/v0.4.1
 [0.4.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.4.0

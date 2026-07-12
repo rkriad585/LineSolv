@@ -1136,7 +1136,7 @@ Customize any shortcut in **Settings > Keyboard Shortcuts**. Overrides are saved
 ```toml
 [app]
 theme = "dark"
-version = "0.9.0"
+version = "0.10.16"
 
 [notes]
 last_active = "note-uuid-here"

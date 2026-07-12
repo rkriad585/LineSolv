@@ -7,13 +7,16 @@ export interface Note {
   position?: number;
 }
 
-export interface ContextMenuItem {
+export type ContextMenuItem = {
   label: string;
   icon?: string;
+  shortcut?: string;
   action?: () => void;
   disabled?: boolean;
   children?: ContextMenuItem[];
-}
+} | {
+  separator: true;
+};
 
 export interface AppCallbacks {
   onEvaluateAll: () => Promise<void>;

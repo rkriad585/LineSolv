@@ -21,7 +21,7 @@ The configuration file uses TOML format. A typical `config.toml` looks like:
 
 [app]
 theme = "dark"
-version = "0.9.0"
+version = "0.10.16"
 
 [notes]
 last_active = "abc123-def456"

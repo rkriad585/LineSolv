@@ -72,11 +72,23 @@ jobs:
           ENDDESK
           dpkg-deb --build "${PKG}"
           mv "${PKG}.deb" "linesolv-${VERSION}-linux-amd64.deb"
+      - name: Prepare binary for self-update
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
+          cp build/bin/LineSolv "LineSolv-${VERSION}-linux-amd64"
+          chmod +x "LineSolv-${VERSION}-linux-amd64"
+      - name: Generate checksums
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
+          sha256sum "linesolv-${VERSION}-linux-amd64.deb" "LineSolv-${VERSION}-linux-amd64" > "SHA256SUMS-linux-${VERSION}"
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.version.outputs.version }}
-          files: linesolv-*.deb
+          files: |
+            linesolv-*.deb
+            LineSolv-*-linux-amd64
+            SHA256SUMS-linux-*
 
   macos:
     needs: version
@@ -137,11 +149,27 @@ jobs:
         run: |
           VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
           hdiutil create -volname "LineSolv" -srcfolder LineSolv.app -ov -format UDZO "LineSolv-${VERSION}-darwin-${{ matrix.arch }}.dmg"
+      - name: Prepare binary for self-update
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
+          if [ -d build/bin/LineSolv.app ]; then
+            cp build/bin/LineSolv.app/Contents/MacOS/LineSolv "LineSolv-${VERSION}-darwin-${{ matrix.arch }}"
+          else
+            cp build/bin/LineSolv "LineSolv-${VERSION}-darwin-${{ matrix.arch }}"
+          fi
+          chmod +x "LineSolv-${VERSION}-darwin-${{ matrix.arch }}"
+      - name: Generate checksums
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
+          shasum -a 256 "LineSolv-${VERSION}-darwin-${{ matrix.arch }}.dmg" "LineSolv-${VERSION}-darwin-${{ matrix.arch }}" > "SHA256SUMS-darwin-${{ matrix.arch }}-${VERSION}"
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.version.outputs.version }}
-          files: LineSolv-*-darwin-*.dmg
+          files: |
+            LineSolv-*-darwin-*.dmg
+            LineSolv-*-darwin-*
+            SHA256SUMS-darwin-*
 
   windows:
     needs: version
@@ -170,6 +198,11 @@ jobs:
           VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
           mv "build/bin/LineSolv.exe" "LineSolv-${VERSION}-windows-amd64.exe"
           mv "build/bin/LineSolv-amd64-installer.exe" "LineSolv-${VERSION}-windows-amd64-installer.exe" 2>/dev/null || true
+      - name: Generate checksums
+        shell: bash
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
+          sha256sum "LineSolv-${VERSION}-windows-amd64.exe" "LineSolv-${VERSION}-windows-amd64-installer.exe" > "SHA256SUMS-windows-${VERSION}"
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:
@@ -177,3 +210,4 @@ jobs:
           files: |
             LineSolv-*-windows-amd64.exe
             LineSolv-*-windows-amd64-installer.exe
+            SHA256SUMS-windows-*

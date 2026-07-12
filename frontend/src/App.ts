@@ -15,6 +15,8 @@ import {HistoryPanel} from './components/HistoryPanel';
 import {StepsPanel} from './components/StepsPanel';
 import {GraphPanel} from './components/GraphPanel';
 import {PluginPanel} from './components/PluginPanel';
+import {ContextMenu} from './components/ContextMenu';
+import type {ContextMenuItem} from './types';
 import {buildLineResults} from './utils/format';
 import {installGlobalShortcuts, toggleFullscreen} from './utils/shortcuts';
 import {escapeHtml} from './utils/html';
@@ -676,6 +678,51 @@ export function renderApp(root: HTMLElement): void {
   });
 
   installGlobalShortcuts(input.textarea, shortcuts);
+
+  // --- Context Menu ---
+
+  const ctxMenu = new ContextMenu();
+
+  const mod = navigator.platform.includes('Mac') ? '⌘' : 'Ctrl';
+
+  input.textarea.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const hasSelection = input.textarea.selectionStart !== input.textarea.selectionEnd;
+    const hasText = input.text.length > 0;
+    const notes = notesMgr.getNotes();
+
+    const items: ContextMenuItem[] = [
+      {label: 'Cut', icon: '✂', shortcut: mod + '+X', action: () => document.execCommand('cut'), disabled: !hasSelection},
+      {label: 'Copy', icon: '📋', shortcut: mod + '+C', action: () => document.execCommand('copy'), disabled: !hasSelection},
+      {label: 'Paste', icon: '📋', shortcut: mod + '+V', action: () => document.execCommand('paste')},
+      {label: 'Select All', icon: '✅', shortcut: mod + '+A', action: () => { input.textarea.select(); }},
+      {separator: true},
+      {label: 'Format Expression', icon: '📐', shortcut: mod + '+F', action: () => scheduleEval(), disabled: !hasText},
+      {label: 'Clear Line', icon: '🗑', action: () => { input.text = ''; forceEval(); }, disabled: !hasText},
+      {separator: true},
+      {label: 'New Note', icon: '📝', shortcut: mod + '+N', action: handleNewNote},
+    ];
+
+    if (notes.length > 1) {
+      const switchChildren: ContextMenuItem[] = notes.map(n => ({
+        label: n.name || 'Untitled',
+        action: () => switchNote(n.id),
+      }));
+      items.push({label: 'Switch Note', icon: '📂', children: switchChildren});
+    }
+
+    items.push(
+      {separator: true},
+      {label: 'Open Docs', icon: '📖', action: shortcuts.onToggleDocs},
+      {label: 'Open Plugins', icon: '🧩', action: shortcuts.onTogglePlugins},
+      {label: 'Open Settings', icon: '⚙', action: shortcuts.onToggleSettings},
+      {separator: true},
+      {label: 'About LineSolv', icon: 'ℹ', action: () => { /* settings modal shows about tab */ shortcuts.onToggleSettings(); }},
+    );
+
+    ctxMenu.show(items, e.clientX, e.clientY);
+  });
 
   store.subscribe((state) => {
     loadingSpinner.style.display = state.evalState === 'loading' ? '' : 'none';

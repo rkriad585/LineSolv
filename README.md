@@ -6,7 +6,7 @@
     <a href="https://github.com/rkriad585/LineSolv/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
     </a>
-    <img src="https://img.shields.io/badge/version-0.9.0-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/version-0.10.16-green.svg" alt="Version">
     <img src="https://img.shields.io/badge/platform-linux%20|%20macOS%20|%20windows-lightgrey" alt="Platform">
     <img src="https://img.shields.io/badge/go-1.23+-00ADD8?logo=go&logoColor=white" alt="Go">
     <img src="https://img.shields.io/badge/wails-v2-5c2d91?logo=wails&logoColor=white" alt="Wails">
@@ -456,12 +456,15 @@ LineSolv/
 ├── main.go                 # Entrypoint
 ├── wails.json              # Wails configuration
 ├── go.mod                  # Go module definition
-├── .version                # Current version (0.9.0)
+├── .version                # Current version (0.10.16)
 ├── logo.svg                # Project logo
 ├── docs/examples.txt       # Input examples
 ├── CHANGELOG.md            # Version history
 ├── CONTRIBUTING.md         # Contribution guidelines
+├── CODE_OF_CONDUCT.md      # Community standards
+├── ACCESSIBILITY.md        # Accessibility statement and WCAG compliance
 ├── SECURITY.md             # Security policy
+├── Dockerfile              # Containerized build environment
 └── LICENSE                 # MIT License
 ```
 
@@ -481,6 +484,7 @@ LineSolv/
 | [API Reference](docs/api-reference.md) | Wails-bound Go method reference |
 | [Calculator Engine](docs/calculator-engine.md) | How the natural-language calculation engine works |
 | [From Words to Numbers](docs/from-words-to-numbers.md) | End-to-end pipeline walkthrough |
+| [Accessibility](ACCESSIBILITY.md) | WCAG 2.1 AA compliance and assistive technology support |
 
 ## Building from Source
 
@@ -520,6 +524,13 @@ cd frontend && npx vitest run
 cd frontend && npx tsc --noEmit
 ```
 
+### Docker
+
+```bash
+docker build -t linesolv .
+docker run linesolv
+```
+
 ## License
 
 [MIT](LICENSE) — LineSolv (c) 2026 rkriad585.
@@ -530,4 +541,4 @@ See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards, and [ACCESSIBILITY.md](ACCESSIBILITY.md) for accessibility information.

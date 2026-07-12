@@ -82,6 +82,17 @@ export class TitleBar {
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
       'Notes (⌘B)'
     );
+
+    const newNoteBtn = document.createElement('button');
+    newNoteBtn.title = 'New Note (⌘N)';
+    newNoteBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+    newNoteBtn.style.cssText =
+      'display:flex;align-items:center;justify-content:center;width:26px;height:26px;' +
+      'border:none;border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;--wails-draggable:no-drag;';
+    newNoteBtn.setAttribute('aria-label', 'New note');
+    newNoteBtn.addEventListener('mouseenter', () => { newNoteBtn.style.background = 'var(--border)'; });
+    newNoteBtn.addEventListener('mouseleave', () => { newNoteBtn.style.background = 'transparent'; });
+    newNoteBtn.addEventListener('click', () => cb.onNewNote());
     const [varsBtnEl, _v] = iconBtn(
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>',
       'Variables (⌘I)'
@@ -114,7 +125,7 @@ export class TitleBar {
       'Settings'
     );
 
-    [notesBtnEl, varsBtnEl, historyBtnEl, stepsBtnEl, docsBtnEl, printBtnEl, pluginsBtnEl, settingsBtnEl].forEach(b => {
+    [newNoteBtn, notesBtnEl, varsBtnEl, historyBtnEl, stepsBtnEl, docsBtnEl, printBtnEl, pluginsBtnEl, settingsBtnEl].forEach(b => {
       b.addEventListener('mouseenter', () => b.style.background = 'var(--border)');
       b.addEventListener('mouseleave', () => b.style.background = 'transparent');
     });
@@ -128,7 +139,7 @@ export class TitleBar {
     pluginsBtnEl.setAttribute('aria-label', 'Toggle plugins panel');
     settingsBtnEl.setAttribute('aria-label', 'Open settings');
 
-    btnRow.append(notesBtnEl, varsBtnEl, historyBtnEl, stepsBtnEl, docsBtnEl, printBtnEl, pluginsBtnEl, settingsBtnEl);
+    btnRow.append(newNoteBtn, notesBtnEl, varsBtnEl, historyBtnEl, stepsBtnEl, docsBtnEl, printBtnEl, pluginsBtnEl, settingsBtnEl);
     this.el.append(btnRow);
 
     this.settingsBtn = settingsBtnEl;

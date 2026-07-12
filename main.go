@@ -50,6 +50,7 @@ func main() {
 
 	svc := service.NewAppService(db)
 	svc.SetDocs(docs)
+	service.SetVersion(version)
 
 	// Initialize plugin system
 	dataDir, err := os.UserConfigDir()

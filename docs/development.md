@@ -226,6 +226,29 @@ go test ./app/calculator/ -bench=. -benchmem
 | BenchmarkEvaluateLineLong | 606 | ~957,000 ns/op |
 | BenchmarkEngineNew | 31,468,534 | ~20 ns/op |
 
+## Profiling
+
+pprof is available in development builds (automatic when using `wails dev`):
+
+```bash
+# Start dev server (pprof auto-starts on localhost:6060)
+wails dev -tags "webkit2_41"
+
+# In another terminal — CPU profile (30s sample)
+go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
+
+# Heap snapshot
+go tool pprof http://localhost:6060/debug/pprof/heap
+
+# Interactive web UI with flame graphs
+go tool pprof -http=:8080 http://localhost:6060/debug/pprof/heap
+
+# Goroutine dump
+curl http://localhost:6060/debug/pprof/goroutine?debug=1
+```
+
+Profiling is disabled in production builds via build tags (`app/pprof_dev.go` / `app/pprof_prod.go`).
+
 ## Build Configuration
 
 Key flags:

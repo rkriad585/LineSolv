@@ -61,6 +61,8 @@ export function InitPlugins(arg1:string):Promise<void>;
 
 export function InstallPlugin(arg1:string,arg2:string,arg3:string):Promise<void>;
 
+export function PerformUpdate():Promise<service.UpdateInfo>;
+
 export function ReloadPlugins():Promise<void>;
 
 export function RemovePlugin(arg1:string,arg2:string):Promise<void>;

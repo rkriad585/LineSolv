@@ -114,6 +114,10 @@ export function InstallPlugin(arg1, arg2, arg3) {
   return window['go']['service']['AppService']['InstallPlugin'](arg1, arg2, arg3);
 }
 
+export function PerformUpdate() {
+  return window['go']['service']['AppService']['PerformUpdate']();
+}
+
 export function ReloadPlugins() {
   return window['go']['service']['AppService']['ReloadPlugins']();
 }

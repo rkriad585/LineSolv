@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,8 +15,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/blang/semver"
 	"github.com/ledongthuc/pdf"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/rhysd/go-github-selfupdate/selfupdate"
+	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 const evalTimeout = 5 * time.Second
@@ -250,9 +251,9 @@ func (s *AppService) ExportNoteToFile(id, format string) (string, error) {
 	safeName = strings.ReplaceAll(safeName, "..", "_")
 
 	ext := format
-	filePath, err := runtime.SaveFileDialog(getCtx(), runtime.SaveDialogOptions{
+	filePath, err := wailsruntime.SaveFileDialog(getCtx(), wailsruntime.SaveDialogOptions{
 		DefaultFilename: safeName + "." + ext,
-		Filters: []runtime.FileFilter{
+		Filters: []wailsruntime.FileFilter{
 			{DisplayName: "LineSolv Files", Pattern: "*." + ext},
 			{DisplayName: "All Files", Pattern: "*"},
 		},
@@ -271,8 +272,8 @@ func (s *AppService) ExportNoteToFile(id, format string) (string, error) {
 }
 
 func (s *AppService) ImportNoteFromFile() (*storage.Note, error) {
-	filePath, err := runtime.OpenFileDialog(getCtx(), runtime.OpenDialogOptions{
-		Filters: []runtime.FileFilter{
+	filePath, err := wailsruntime.OpenFileDialog(getCtx(), wailsruntime.OpenDialogOptions{
+		Filters: []wailsruntime.FileFilter{
 			{DisplayName: "Supported Files", Pattern: "*.lv;*.txt;*.md;*.json;*.toml;*.pdf"},
 			{DisplayName: "All Files", Pattern: "*"},
 		},
@@ -366,7 +367,14 @@ func (s *AppService) importPDF(filePath, name string) (*storage.Note, error) {
 	return s.storage.CreateNoteWithContent(name, content)
 }
 
-const appVersion = "0.9.0"
+var appVersion = "0.10.16"
+
+// SetVersion sets the application version (called from main.go with ldflags value).
+func SetVersion(v string) {
+	if v != "" && v != "dev" {
+		appVersion = v
+	}
+}
 
 type CurrencyCacheInfo struct {
 	Cached     bool   `json:"cached"`
@@ -456,24 +464,84 @@ func (s *AppService) GetAppVersion() string {
 }
 
 func (s *AppService) CheckForUpdate() (*UpdateInfo, error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/rkriad585/LineSolv/refs/heads/main/.version")
+	latest, found, err := selfupdate.DetectLatest("rkriad585/LineSolv")
 	if err != nil {
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, fmt.Errorf("failed to check for updates: %w", err)
+	}
+	if !found {
 		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, nil
 	}
-	defer resp.Body.Close()
-	data, err := io.ReadAll(resp.Body)
-	if err != nil || len(data) == 0 {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, nil
+
+	current, err := semver.Make(appVersion)
+	if err != nil {
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, fmt.Errorf("invalid current version: %w", err)
 	}
-	latest := strings.TrimSpace(string(data))
-	if latest == "" {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, nil
-	}
+
 	return &UpdateInfo{
-		UpdateAvailable: latest != appVersion,
+		UpdateAvailable: latest.Version.GT(current),
 		CurrentVersion:  appVersion,
-		LatestVersion:   latest,
+		LatestVersion:   latest.Version.String(),
 		DownloadURL:     "https://github.com/rkriad585/LineSolv/releases/latest",
+	}, nil
+}
+
+func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
+	ctx := getCtx()
+
+	wailsruntime.EventsEmit(ctx, "update-progress", map[string]interface{}{
+		"status":  "checking",
+		"message": "Checking for updates...",
+	})
+
+	latest, found, err := selfupdate.DetectLatest("rkriad585/LineSolv")
+	if err != nil {
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, fmt.Errorf("failed to check for updates: %w", err)
+	}
+	if !found {
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, nil
+	}
+
+	current, err := semver.Make(appVersion)
+	if err != nil {
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, fmt.Errorf("invalid current version: %w", err)
+	}
+
+	if !latest.Version.GT(current) {
+		return &UpdateInfo{
+			UpdateAvailable: false,
+			CurrentVersion:  appVersion,
+			LatestVersion:   latest.Version.String(),
+		}, nil
+	}
+
+	wailsruntime.EventsEmit(ctx, "update-progress", map[string]interface{}{
+		"status":  "downloading",
+		"message": "Downloading v" + latest.Version.String() + "...",
+	})
+
+	exePath, err := os.Executable()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get executable path: %w", err)
+	}
+
+	if err := selfupdate.UpdateTo(latest.AssetURL, exePath); err != nil {
+		return nil, fmt.Errorf("failed to apply update: %w", err)
+	}
+
+	wailsruntime.EventsEmit(ctx, "update-progress", map[string]interface{}{
+		"status":  "restarting",
+		"message": "Update applied. Restarting...",
+	})
+
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		wailsruntime.Quit(ctx)
+	}()
+
+	return &UpdateInfo{
+		UpdateAvailable: true,
+		CurrentVersion:  appVersion,
+		LatestVersion:   latest.Version.String(),
 	}, nil
 }
 

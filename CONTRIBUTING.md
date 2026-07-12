@@ -24,6 +24,10 @@ Contributions are welcome! Here's how you can help.
 3. If adding a feature, update the relevant documentation
 4. Ensure the project builds cleanly
 
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold its standards.
+
 ## Questions?
 
 Open a [discussion](https://github.com/rkriad585/LineSolv/discussions) or issue.

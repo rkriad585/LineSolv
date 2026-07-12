@@ -17,10 +17,12 @@ build/bin
 *.dll
 *.dylib
 go.work
+coverage.out
 
 # Node
 node_modules
 frontend/dist
+frontend/coverage
 
 # Editor
 .vscode/
