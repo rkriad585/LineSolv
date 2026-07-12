@@ -1730,9 +1730,9 @@ func lex(s string) []token {
 					i++
 				}
 				toks = append(toks, token{tokNum, string(runes[start:i])})
-			} else if unicode.IsLetter(ch) {
+			} else if unicode.IsLetter(ch) || ch == '_' {
 				start := i
-				for i < len(runes) && (unicode.IsLetter(runes[i]) || unicode.IsDigit(runes[i])) {
+				for i < len(runes) && (unicode.IsLetter(runes[i]) || unicode.IsDigit(runes[i]) || runes[i] == '_') {
 					i++
 				}
 				toks = append(toks, token{tokIdent, string(runes[start:i])})
