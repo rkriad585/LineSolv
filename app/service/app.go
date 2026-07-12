@@ -2,6 +2,7 @@ package service
 
 import (
 	"LineSolv/app/calculator"
+	"LineSolv/app/plugin"
 	"LineSolv/app/storage"
 	"context"
 	"encoding/json"
@@ -39,9 +40,11 @@ func getCtx() context.Context {
 }
 
 type AppService struct {
-	engine      *calculator.Engine
-	storage     *storage.DB
-	docsContent map[string]string
+	engine       *calculator.Engine
+	storage      *storage.DB
+	docsContent  map[string]string
+	pluginMgr    *plugin.Manager
+	pluginThemes []plugin.ThemeDef
 }
 
 func NewAppService(db *storage.DB) *AppService {
@@ -54,6 +57,15 @@ func NewAppService(db *storage.DB) *AppService {
 		calculator.SetCurrencyRates(cached.Rates)
 	}
 	return s
+}
+
+// InitPlugins initializes the plugin system with the given plugins directory.
+func (s *AppService) InitPlugins(pluginsDir string) {
+	s.pluginMgr = plugin.NewManager(pluginsDir)
+	if err := s.pluginMgr.Scan(); err != nil {
+		fmt.Printf("plugin scan error: %v\n", err)
+	}
+	s.registerPluginFunctions()
 }
 
 func (s *AppService) SetDocs(docs map[string]string) {
@@ -354,7 +366,7 @@ func (s *AppService) importPDF(filePath, name string) (*storage.Note, error) {
 	return s.storage.CreateNoteWithContent(name, content)
 }
 
-const appVersion = "0.1.45"
+const appVersion = "0.9.0"
 
 type CurrencyCacheInfo struct {
 	Cached     bool   `json:"cached"`
@@ -463,4 +475,109 @@ func (s *AppService) CheckForUpdate() (*UpdateInfo, error) {
 		LatestVersion:   latest,
 		DownloadURL:     "https://github.com/rkriad585/LineSolv/releases/latest",
 	}, nil
+}
+
+// --- Plugin Management ---
+
+// registerPluginFunctions registers all enabled plugin functions and variables with the engine.
+func (s *AppService) registerPluginFunctions() {
+	if s.pluginMgr == nil {
+		return
+	}
+	s.engine.ClearPluginFunctions()
+	s.pluginThemes = nil
+	for _, p := range s.pluginMgr.Enabled() {
+		for name, fn := range p.GetFunctionMap() {
+			s.engine.RegisterPluginFunction(name, fn)
+		}
+		for name, value := range p.GetVarMap() {
+			s.engine.RegisterPluginVariable(name, value)
+		}
+		s.pluginThemes = append(s.pluginThemes, p.GetThemes()...)
+	}
+}
+
+// GetPlugins returns all loaded plugins.
+func (s *AppService) GetPlugins() []*plugin.PluginInfo {
+	if s.pluginMgr == nil {
+		return nil
+	}
+	var result []*plugin.PluginInfo
+	for _, p := range s.pluginMgr.All() {
+		result = append(result, p.Info())
+	}
+	return result
+}
+
+// SetPluginEnabled enables or disables a plugin.
+func (s *AppService) SetPluginEnabled(name string, enabled bool) error {
+	if s.pluginMgr == nil {
+		return fmt.Errorf("plugin system not initialized")
+	}
+	if err := s.pluginMgr.SetEnabled(name, enabled); err != nil {
+		return err
+	}
+	s.registerPluginFunctions()
+	return nil
+}
+
+// ReloadPlugins rescans the plugins directory.
+func (s *AppService) ReloadPlugins() error {
+	if s.pluginMgr == nil {
+		return fmt.Errorf("plugin system not initialized")
+	}
+	if err := s.pluginMgr.Reload(); err != nil {
+		return err
+	}
+	s.registerPluginFunctions()
+	return nil
+}
+
+// GetPluginThemes returns all themes from enabled plugins.
+func (s *AppService) GetPluginThemes() []plugin.ThemeDef {
+	return s.pluginThemes
+}
+
+// GetPluginsDir returns the plugins directory path.
+func (s *AppService) GetPluginsDir() string {
+	if s.pluginMgr == nil {
+		return ""
+	}
+	return s.pluginMgr.GetPluginsDir()
+}
+
+// InstallPlugin installs a plugin by writing its manifest to the plugins directory,
+// then triggers a rescan to activate it.
+func (s *AppService) InstallPlugin(pluginsDir, pluginDir, manifestJSON string) error {
+	dir := filepath.Join(pluginsDir, pluginDir)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create plugin directory: %w", err)
+	}
+
+	manifestPath := filepath.Join(dir, "plugin.json")
+	if err := os.WriteFile(manifestPath, []byte(manifestJSON), 0644); err != nil {
+		return fmt.Errorf("failed to write manifest: %w", err)
+	}
+
+	if s.pluginMgr != nil {
+		s.pluginMgr.Reload()
+		s.registerPluginFunctions()
+	}
+
+	return nil
+}
+
+// RemovePlugin removes a plugin directory, then triggers a rescan.
+func (s *AppService) RemovePlugin(pluginsDir, pluginDir string) error {
+	dir := filepath.Join(pluginsDir, pluginDir)
+	if err := os.RemoveAll(dir); err != nil {
+		return fmt.Errorf("failed to remove plugin: %w", err)
+	}
+
+	if s.pluginMgr != nil {
+		s.pluginMgr.Reload()
+		s.registerPluginFunctions()
+	}
+
+	return nil
 }

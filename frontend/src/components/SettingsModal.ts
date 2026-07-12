@@ -1,5 +1,6 @@
 import type {SettingsData} from '../types';
 import * as serviceBindings from '../../wailsjs/go/service/AppService';
+import {toast} from '../utils/toast';
 
 interface CustomSelect {
   el: HTMLElement;
@@ -27,6 +28,8 @@ const THEMES = [
 const EDIT_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
 
 const CLOSE_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
+const SETTINGS_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 
 const LOGO_SVG = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
 
@@ -57,8 +60,14 @@ function keyEventToCombo(e: KeyboardEvent): string {
 
 export class SettingsModal {
   readonly el: HTMLDivElement;
-  private tabBtns: HTMLButtonElement[] = [];
+  private tabsEl: HTMLDivElement;
+  private contentEl: HTMLDivElement;
+  private headerTitleEl: HTMLDivElement;
+  private isVisible = false;
+
+  private tabButtons = new Map<string, HTMLButtonElement>();
   private tabPanels: HTMLDivElement[] = [];
+  private activeTab: string | null = null;
 
   private onApply: (s: SettingsData) => void;
   private selectedTheme: string;
@@ -78,149 +87,143 @@ export class SettingsModal {
     this.el = document.createElement('div');
     this.el.id = 'settings-modal';
     this.el.style.cssText =
-      'display:none;position:fixed;inset:0;z-index:1001;' +
-      'background:rgba(0,0,0,0.5);align-items:center;justify-content:center;';
-    this.el.addEventListener('click', (e) => {
-      if (e.target === this.el) this.close();
-    });
+      'position:fixed;inset:0;z-index:1000;display:none;flex-direction:column;' +
+      'background:var(--surface);';
 
-    const box = document.createElement('div');
-    box.style.cssText =
-      'background:var(--surface);border:1px solid var(--border);' +
-      'border-radius:12px;width:540px;max-height:85vh;' +
-      'display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.4);';
-
-    this.buildHeader(box);
-    this.buildTabBar(box);
-    this.buildContent(box);
-    this.buildFooter(box);
-
-    this.el.appendChild(box);
-    document.body.appendChild(this.el);
-  }
-
-  private buildHeader(box: HTMLElement): void {
     const header = document.createElement('div');
-    header.style.cssText = 'display:flex;align-items:center;gap:10px;padding:18px 22px 0;';
+    header.style.cssText =
+      'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;' +
+      'background:var(--surface-secondary);border-bottom:1px solid var(--border);--wails-draggable:drag;';
 
-    const icon = document.createElement('span');
-    icon.innerHTML =
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">' +
-      '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+    this.headerTitleEl = document.createElement('div');
+    this.headerTitleEl.style.cssText = 'display:flex;align-items:center;gap:8px;color:var(--text);font-weight:600;--wails-draggable:drag;';
+    this.headerTitleEl.innerHTML = `${SETTINGS_ICON}<span>Settings</span>`;
 
-    const title = document.createElement('h2');
-    title.textContent = 'Settings';
-    title.style.cssText = 'margin:0;font-size:15px;font-weight:600;color:var(--text);flex:1;user-select:none;';
+    const headerActions = document.createElement('div');
+    headerActions.style.cssText = 'display:flex;align-items:center;gap:8px;--wails-draggable:no-drag;';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    saveBtn.style.cssText =
+      'padding:6px 16px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;' +
+      'background:var(--accent);color:var(--surface);transition:opacity 0.15s;';
+    saveBtn.addEventListener('mouseenter', () => { saveBtn.style.opacity = '0.85'; });
+    saveBtn.addEventListener('mouseleave', () => { saveBtn.style.opacity = '1'; });
+    saveBtn.addEventListener('click', () => this.save());
 
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = CLOSE_ICON;
+    closeBtn.title = 'Close (Esc)';
     closeBtn.style.cssText =
       'display:flex;align-items:center;justify-content:center;width:28px;height:28px;' +
-      'border:none;border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;';
+      'border:none;border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;' +
+      'transition:background 0.15s;';
     closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'var(--surface-hover)'; });
     closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'transparent'; });
     closeBtn.addEventListener('click', () => this.close());
 
-    header.append(icon, title, closeBtn);
-    box.appendChild(header);
+    headerActions.append(saveBtn, closeBtn);
+    header.append(this.headerTitleEl, headerActions);
+
+    const body = document.createElement('div');
+    body.style.cssText = 'display:flex;flex:1;min-height:0;';
+
+    this.tabsEl = document.createElement('div');
+    this.tabsEl.style.cssText =
+      'width:200px;flex-shrink:0;overflow-y:auto;border-right:1px solid var(--border);' +
+      'background:var(--surface-secondary);padding:8px 0;';
+
+    this.contentEl = document.createElement('div');
+    this.contentEl.style.cssText =
+      'flex:1;overflow-y:auto;padding:24px 32px;' +
+      'font-size:14px;line-height:1.6;color:var(--text);';
+
+    body.append(this.tabsEl, this.contentEl);
+    this.el.append(header, body);
+
+    this.buildTabs();
+    this.buildPanels();
+
+    document.body.appendChild(this.el);
+
+    document.addEventListener('keydown', this.handleKeydown);
   }
 
-  private buildTabBar(box: HTMLElement): void {
-    const bar = document.createElement('div');
-    bar.style.cssText = 'display:flex;gap:4px;padding:14px 22px 0;';
+  private handleKeydown = (e: KeyboardEvent): void => {
+    if (e.key === 'Escape' && this.isVisible) {
+      this.close();
+    }
+  };
 
-    ['General', 'Theme', 'Keyboard Shortcuts', 'About'].forEach((label, i) => {
+  private buildTabs(): void {
+    this.tabsEl.innerHTML = '';
+    this.tabButtons.clear();
+
+    const tabs = ['General', 'Theme', 'Keyboard Shortcuts', 'About'];
+    for (const name of tabs) {
       const btn = document.createElement('button');
-      btn.textContent = label;
+      btn.textContent = name;
       btn.style.cssText =
-        `padding:6px 14px;font-size:13px;font-weight:500;cursor:pointer;` +
-        `border:none;border-radius:6px;background:${i === 0 ? 'var(--surface-secondary)' : 'transparent'};` +
-        `color:${i === 0 ? 'var(--text)' : 'var(--text-muted)'};` +
-        `transition:background .15s,color .15s;`;
+        'display:block;width:100%;padding:8px 16px;border:none;background:transparent;' +
+        'color:var(--text-muted);cursor:pointer;font-size:13px;text-align:left;outline:none;' +
+        'transition:background 0.15s,color 0.15s;';
       btn.addEventListener('mouseenter', () => {
-        if (i !== this.tabBtns.indexOf(btn)) btn.style.background = 'var(--surface-hover)';
+        if (this.activeTab !== name) btn.style.background = 'var(--surface-hover)';
       });
       btn.addEventListener('mouseleave', () => {
-        if (i !== this.tabBtns.indexOf(btn)) btn.style.background = 'transparent';
+        if (this.activeTab !== name) btn.style.background = 'transparent';
       });
-      btn.addEventListener('click', () => this.switchTab(i));
-      bar.appendChild(btn);
-      this.tabBtns.push(btn);
-    });
-
-    box.appendChild(bar);
+      btn.addEventListener('click', () => this.switchTab(name));
+      this.tabsEl.appendChild(btn);
+      this.tabButtons.set(name, btn);
+    }
   }
 
-  private buildContent(box: HTMLElement): void {
-    const area = document.createElement('div');
-    area.style.cssText = 'flex:1;overflow-y:auto;padding:18px 22px 14px;';
-
-    const panels: HTMLDivElement[] = [];
+  private buildPanels(): void {
+    this.contentEl.innerHTML = '';
+    this.tabPanels = [];
 
     const generalPanel = document.createElement('div');
     this.buildGeneral(generalPanel);
-    panels.push(generalPanel);
-    area.appendChild(generalPanel);
+    this.tabPanels.push(generalPanel);
+    this.contentEl.appendChild(generalPanel);
 
     const themePanel = document.createElement('div');
     themePanel.style.display = 'none';
     this.buildTheme(themePanel);
-    panels.push(themePanel);
-    area.appendChild(themePanel);
+    this.tabPanels.push(themePanel);
+    this.contentEl.appendChild(themePanel);
 
     const shortcutsPanel = document.createElement('div');
     shortcutsPanel.style.display = 'none';
     this.buildShortcuts(shortcutsPanel);
-    panels.push(shortcutsPanel);
-    area.appendChild(shortcutsPanel);
+    this.tabPanels.push(shortcutsPanel);
+    this.contentEl.appendChild(shortcutsPanel);
 
     const aboutPanel = document.createElement('div');
     aboutPanel.style.display = 'none';
     this.buildAbout(aboutPanel);
-    panels.push(aboutPanel);
-    area.appendChild(aboutPanel);
-
-    this.tabPanels = panels;
-    box.appendChild(area);
+    this.tabPanels.push(aboutPanel);
+    this.contentEl.appendChild(aboutPanel);
   }
 
-  private switchTab(idx: number): void {
-    this.tabBtns.forEach((btn, i) => {
-      btn.style.background = i === idx ? 'var(--surface-secondary)' : 'transparent';
-      btn.style.color = i === idx ? 'var(--text)' : 'var(--text-muted)';
-    });
+  private switchTab(name: string): void {
+    this.activeTab = name;
+    const tabNames = ['General', 'Theme', 'Keyboard Shortcuts', 'About'];
+    const idx = tabNames.indexOf(name);
+
+    for (const [n, btn] of this.tabButtons) {
+      if (n === name) {
+        btn.style.background = 'var(--accent)';
+        btn.style.color = '#fff';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-muted)';
+      }
+    }
     this.tabPanels.forEach((p, i) => {
       p.style.display = i === idx ? 'block' : 'none';
     });
-  }
-
-  private buildFooter(box: HTMLElement): void {
-    const footer = document.createElement('div');
-    footer.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;padding:12px 22px;border-top:1px solid var(--border);';
-
-    const cancelBtn = this.createBtn('Cancel', false);
-    cancelBtn.addEventListener('click', () => this.close());
-
-    const saveBtn = this.createBtn('Save', true);
-    saveBtn.addEventListener('click', () => this.save());
-
-    footer.append(cancelBtn, saveBtn);
-    box.appendChild(footer);
-  }
-
-  private createBtn(label: string, primary: boolean): HTMLButtonElement {
-    const btn = document.createElement('button');
-    btn.textContent = label;
-    btn.style.cssText =
-      'padding:7px 18px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;' +
-      (primary
-        ? 'background:var(--accent);color:#fff;'
-        : 'background:var(--surface-secondary);color:var(--text);');
-    if (!primary) {
-      btn.addEventListener('mouseenter', () => { btn.style.background = 'var(--surface-hover)'; });
-      btn.addEventListener('mouseleave', () => { btn.style.background = 'var(--surface-secondary)'; });
-    }
-    return btn;
   }
 
   private styledInput(type: string, extra = ''): HTMLInputElement {
@@ -328,10 +331,21 @@ export class SettingsModal {
     };
   }
 
+  private fieldRow(label: string, makeCtrl: () => HTMLElement): HTMLDivElement {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
+
+    const lbl = document.createElement('span');
+    lbl.textContent = label;
+    lbl.style.cssText = 'font-size:13px;color:var(--text);user-select:none;';
+
+    row.append(lbl, makeCtrl());
+    return row;
+  }
+
   private buildGeneral(panel: HTMLDivElement): void {
     panel.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
 
-    // Font Family
     const familyRow = this.fieldRow('Font Family', () => {
       const sel = this.styledSelect([
         '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif',
@@ -346,7 +360,6 @@ export class SettingsModal {
       return sel.el;
     });
 
-    // Font Size
     const sizeRow = this.fieldRow('Font Size', () => {
       const wrap = document.createElement('div');
       wrap.style.cssText = 'display:flex;align-items:center;gap:6px;';
@@ -388,7 +401,6 @@ export class SettingsModal {
       return wrap;
     });
 
-    // Preview section
     const previewSection = document.createElement('div');
     previewSection.style.cssText =
       'margin-top:14px;padding:12px 14px;border:1px solid var(--border);' +
@@ -403,7 +415,6 @@ export class SettingsModal {
     this.previewEl.style.cssText = 'font-size:14px;font-family:monospace;color:var(--text);padding:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
 
     previewSection.append(previewLabel, this.previewEl);
-
     panel.append(familyRow, sizeRow, previewSection);
   }
 
@@ -419,9 +430,10 @@ export class SettingsModal {
 
     const thumbnails: Map<string, HTMLDivElement> = new Map();
 
-    THEMES.forEach((t) => {
+    const addThemeCard = (t: {id: string; label: string; bg: string; accent: string; text: string}, isPlugin = false) => {
       const card = document.createElement('div');
       card.tabIndex = 0;
+      (card as any).themeId = t.id;
       card.style.cssText =
         'border:2px solid var(--border);border-radius:8px;cursor:pointer;' +
         'overflow:hidden;transition:border-color .15s;outline:none;';
@@ -455,10 +467,18 @@ export class SettingsModal {
       swatch.append(sampleText, sampleBody, check);
 
       const label = document.createElement('div');
-      label.textContent = t.label;
       label.style.cssText =
         'padding:6px 10px;font-size:12px;font-weight:500;' +
-        'background:var(--surface-secondary);color:var(--text);user-select:none;';
+        'background:var(--surface-secondary);color:var(--text);user-select:none;display:flex;align-items:center;justify-content:space-between;';
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = t.label;
+      label.appendChild(labelSpan);
+      if (isPlugin) {
+        const badge = document.createElement('span');
+        badge.textContent = 'Plugin';
+        badge.style.cssText = 'font-size:10px;padding:1px 6px;border-radius:8px;background:var(--accent);color:var(--surface);font-weight:500;';
+        label.appendChild(badge);
+      }
 
       card.append(swatch, label);
       grid.appendChild(card);
@@ -478,9 +498,10 @@ export class SettingsModal {
           card.click();
         }
       });
-    });
+    };
 
-    // Apply initial selection
+    THEMES.forEach((t) => addThemeCard(t));
+
     requestAnimationFrame(() => {
       const initial = thumbnails.get(this.selectedTheme);
       if (initial) {
@@ -490,26 +511,28 @@ export class SettingsModal {
       }
     });
 
+    serviceBindings.GetPluginThemes().then((pluginThemes) => {
+      if (pluginThemes && pluginThemes.length > 0) {
+        for (const pt of pluginThemes) {
+          const colors = pt.colors || {};
+          addThemeCard({
+            id: pt.id,
+            label: pt.label,
+            bg: colors['--surface'] || '#18181b',
+            accent: colors['--accent'] || '#a78bfa',
+            text: colors['--text'] || '#f4f4f5',
+          }, true);
+        }
+        const initial = thumbnails.get(this.selectedTheme);
+        if (initial) {
+          initial.style.borderColor = 'var(--accent)';
+          const chk = initial.querySelector('span:last-child') as HTMLElement;
+          if (chk) chk.style.display = '';
+        }
+      }
+    }).catch(() => {});
+
     panel.append(note, grid);
-  }
-
-  private fieldRow(label: string, makeCtrl: () => HTMLElement): HTMLDivElement {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
-
-    const lbl = document.createElement('span');
-    lbl.textContent = label;
-    lbl.style.cssText = 'font-size:13px;color:var(--text);user-select:none;';
-
-    row.append(lbl, makeCtrl());
-    return row;
-  }
-
-  private updatePreview(): void {
-    if (!this.previewEl) return;
-    const size = this.fontSizeInput.value || '16';
-    this.previewEl.style.fontSize = size + 'px';
-    this.previewEl.style.fontFamily = this.fontFamilySelect.value;
   }
 
   private buildShortcuts(panel: HTMLDivElement): void {
@@ -667,6 +690,13 @@ export class SettingsModal {
     panel.appendChild(center);
   }
 
+  private updatePreview(): void {
+    if (!this.previewEl) return;
+    const size = this.fontSizeInput.value || '16';
+    this.previewEl.style.fontSize = size + 'px';
+    this.previewEl.style.fontFamily = this.fontFamilySelect.value;
+  }
+
   private async checkForUpdate(): Promise<void> {
     this.checkBtn.disabled = true;
     this.checkBtn.textContent = 'Checking...';
@@ -703,12 +733,18 @@ export class SettingsModal {
     try {
       await serviceBindings.SaveSettings(settings);
       this.onApply(settings);
-    } catch { /* ignore */ }
+      toast.show('Settings saved', 'success');
+    } catch {
+      toast.show('Failed to save settings', 'error');
+    }
 
     this.close();
   }
 
   async open(): Promise<void> {
+    if (this.isVisible) return;
+    this.isVisible = true;
+
     try {
       const [settings, version] = await Promise.all([
         serviceBindings.GetSettings(),
@@ -732,14 +768,12 @@ export class SettingsModal {
       }
       this.updatePreview();
 
-      // Update theme thumbnail highlights
       const thumbGrid = this.el.querySelector('div[style*="grid-template-columns:1fr 1fr"]');
       if (thumbGrid) {
         const cards = thumbGrid.children;
         for (let i = 0; i < cards.length; i++) {
-          const card = cards[i] as HTMLDivElement;
-          const label = card.querySelector('div:last-child');
-          const themeId = label ? THEMES.find(t => t.label === label.textContent)?.id : null;
+          const card = cards[i] as any;
+          const themeId = card.themeId || null;
           const isActive = themeId === this.selectedTheme;
           card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
           const chk = card.querySelector('span:last-child') as HTMLElement;
@@ -753,20 +787,26 @@ export class SettingsModal {
       this.shortcutKbds.forEach((kbd, id) => {
         if (this.overrides[id]) kbd.textContent = this.overrides[id];
       });
-    } catch { /* ignore */ }
+    } catch {
+      toast.show('Failed to load settings', 'error');
+    }
 
     this.el.style.display = 'flex';
+    this.switchTab('General');
   }
 
   close(): void {
+    if (!this.isVisible) return;
+    this.isVisible = false;
     this.el.style.display = 'none';
   }
 
   isOpen(): boolean {
-    return this.el.style.display === 'flex';
+    return this.isVisible;
   }
 
   destroy(): void {
+    document.removeEventListener('keydown', this.handleKeydown);
     if (this.el.parentElement) this.el.parentElement.removeChild(this.el);
   }
 }

@@ -54,59 +54,94 @@ LineSolv/
 ├── app/
 │   ├── calculator/
 │   │   ├── engine.go           # Core engine, parser, NL pipeline, history
+│   │   ├── engine_test.go      # Engine unit tests
 │   │   ├── units.go            # Unit database + conversion
+│   │   ├── units_test.go       # Unit conversion tests
 │   │   ├── functions.go        # Built-in math functions
+│   │   ├── functions_test.go   # Function tests
 │   │   ├── variables.go        # Variable get/set/clear
+│   │   ├── variables_test.go   # Variable tests
 │   │   ├── steps.go            # Step / EvalDetail types + GetSteps
 │   │   ├── graph.go            # Point / GraphResult + EvaluateGraph
-│   │   └── benchmark_test.go   # Benchmark tests for naturalize, EvaluateLine, NewEngine
+│   │   ├── benchmark_test.go   # Benchmark tests
+│   │   ├── fuzz_test.go        # Fuzz testing
+│   │   └── docs_examples_test.go  # Docs example tests
+│   ├── plugin/
+│   │   ├── types.go            # Manifest, Plugin, FunctionDef, ThemeDef, VariableDef types
+│   │   ├── loader.go           # Plugin scanning and loading
+│   │   ├── loader_test.go      # Loader tests
+│   │   ├── builtins.go         # 20+ builtin plugin functions
+│   │   ├── builtins_test.go    # Builtin function tests
+│   │   ├── expr.go             # Expression evaluator for plugins
+│   │   └── expr_test.go        # Expression evaluator tests
 │   ├── service/
-│   │   └── app.go              # Wails-bound service methods (19 methods)
+│   │   ├── app.go              # Wails-bound service methods
+│   │   └── app_test.go         # Service tests
 │   └── storage/
-│       ├── db.go               # SQLite notes CRUD (composite index idx_notes_sort)
+│       ├── db.go               # SQLite notes CRUD + currency cache
+│       ├── db_test.go          # Database tests
 │       ├── config.go           # config.toml parse/save
+│       ├── config_test.go      # Config tests
 │       ├── exporter.go         # Export/import: .lv, .txt, .md, .json, .toml, .pdf
-│       └── fancyname.go        # Random name generator
+│       ├── exporter_test.go    # Exporter tests
+│       ├── fancyname.go        # Random name generator
+│       └── fancyname_test.go   # Fancy name tests
 ├── frontend/
 │   ├── src/
-│   │   ├── App.ts           # Orchestrator (~360 lines)
-│   │   ├── main.ts          # Entry point
-│   │   ├── types.ts         # Shared interfaces
-│   │   ├── style.css        # Tailwind + CSS custom properties
+│   │   ├── App.ts              # Main orchestrator
+│   │   ├── main.ts             # Entry point
+│   │   ├── types.ts            # Shared interfaces
+│   │   ├── style.css           # Tailwind + CSS custom properties + themes
 │   │   ├── stores/
-│   │   │   ├── calculator.ts  # Reactive state store
-│   │   │   └── notes.ts       # Note manager
+│   │   │   ├── calculator.ts   # Reactive calculator state store
+│   │   │   ├── calculator.test.ts
+│   │   │   ├── notes.ts        # Note manager
+│   │   │   └── notes.test.ts
 │   │   ├── utils/
-│   │   │   ├── html.ts       # escapeHtml()
-│   │   │   ├── shortcuts.ts  # Keyboard shortcut handler
-│   │   │   └── format.ts     # Result formatting helpers
+│   │   │   ├── html.ts         # escapeHtml()
+│   │   │   ├── html.test.ts
+│   │   │   ├── shortcuts.ts    # Keyboard shortcut handler
+│   │   │   ├── shortcutDefs.ts # Shortcut definitions
+│   │   │   ├── format.ts       # Result formatting helpers
+│   │   │   ├── format.test.ts
+│   │   │   └── toast.ts        # Toast notification utility
 │   │   └── components/
 │   │       ├── TitleBar.ts
 │   │       ├── CalculatorInput.ts
 │   │       ├── ResultDisplay.ts
-│   │       ├── NotesPanel.ts     # Drag-and-drop reorder
+│   │       ├── result-display.test.ts
+│   │       ├── NotesPanel.ts
 │   │       ├── VariableExplorer.ts
-│   │       ├── HistoryPanel.ts   # Search/filter
-│   │       ├── StepsPanel.ts     # Step-by-step evaluation
-│   │       ├── GraphPanel.ts     # Chart.js function plotting
-│   │       ├── ContextMenu.ts
-│   │       ├── ConfirmDialog.ts
-│   │       ├── ShortcutModal.ts
+│   │       ├── variable-explorer.test.ts
+│   │       ├── HistoryPanel.ts
+│   │       ├── history-panel.test.ts
+│   │       ├── StepsPanel.ts
+│   │       ├── steps-panel.test.ts
+│   │       ├── GraphPanel.ts
+│   │       ├── DocsViewer.ts
+│   │       ├── PluginPanel.ts
 │   │       ├── SettingsModal.ts
-│   │       └── DocsViewer.ts
-│   ├── wailsjs/             # Auto-generated bindings (do not edit)
+│   │       ├── ShortcutModal.ts
+│   │       ├── ConfirmDialog.ts
+│   │       ├── confirm-dialog.test.ts
+│   │       └── ContextMenu.ts
+│   ├── wailsjs/                # Auto-generated bindings (do not edit)
 │   └── index.html
 ├── docs/
-│   ├── architecture.md       # Architecture overview
-│   ├── api-reference.md      # Wails-bound method reference
-│   ├── calculator-engine.md  # How the calculation engine works
-│   ├── frontend.md           # Frontend architecture guide
-│   ├── development.md        # Development setup and workflow
-│   ├── faq.md                # FAQ and troubleshooting
-│   ├── from-words-to-numbers.md  # End-to-end walkthrough (query → result)
-│   └── user-guide.md         # User-facing documentation
-├── main.go                  # Entry point
-├── wails.json               # Wails configuration
+│   ├── architecture.md
+│   ├── api-reference.md
+│   ├── calculator-engine.md
+│   ├── configuration.md
+│   ├── development.md
+│   ├── faq.md
+│   ├── from-words-to-numbers.md
+│   ├── frontend.md
+│   ├── getting-started.md
+│   ├── plugins.md
+│   ├── themes.md
+│   └── user-guide.md
+├── main.go
+├── wails.json
 ├── go.mod
 └── package.json
 ```
@@ -118,6 +153,7 @@ LineSolv/
 - Follow `gofmt` formatting
 - No unused exports
 - Inject dependencies via constructor (`NewEngine`, `NewAppService`)
+- Error paths must handle or propagate errors — no silent swallowing
 
 ### TypeScript
 
@@ -133,11 +169,48 @@ LineSolv/
 
 ## Testing
 
+### Backend
+
 ```bash
-go test ./...
+go test ./app/... -v
 ```
 
-### Benchmarks
+### Plugin Tests
+
+```bash
+go test ./app/plugin/... -v
+```
+
+### Frontend
+
+```bash
+npx vitest run
+```
+
+95 tests across 9 suites covering stores, components, and utilities.
+
+### Type Checking
+
+```bash
+npx tsc --noEmit
+```
+
+### Build
+
+```bash
+npx vite build
+```
+
+### Full Verification
+
+Run all checks in sequence:
+
+```bash
+go test ./app/... -v && \
+cd frontend && npx vitest run && npx tsc --noEmit && npx vite build
+```
+
+## Benchmarks
 
 Benchmark tests in `app/calculator/benchmark_test.go` cover the engine's core operations:
 
@@ -152,14 +225,6 @@ go test ./app/calculator/ -bench=. -benchmem
 | BenchmarkNaturalizeLong | 856 | ~657,000 ns/op |
 | BenchmarkEvaluateLineLong | 606 | ~957,000 ns/op |
 | BenchmarkEngineNew | 31,468,534 | ~20 ns/op |
-
-### Frontend
-
-```bash
-npx vitest run              # unit tests
-npx tsc --noEmit            # type checking
-npx vite build              # production build
-```
 
 ## Build Configuration
 

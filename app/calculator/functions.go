@@ -356,6 +356,9 @@ func (p *parser) callBuiltinOrPlugin(name string, args []float64) (float64, erro
 	case "rydberg", "rydberg_constant":
 		return 10973731.568160, nil
 	default:
+		if fn, ok := p.engine.pluginFunctions[name]; ok {
+			return fn(args)
+		}
 		return 0, fmt.Errorf("unknown function: %s", name)
 	}
 }

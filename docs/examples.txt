@@ -529,3 +529,171 @@ double a dozen
 3 tens from 5 hundreds
 2h30m in minutes
 10 inches in cm
+
+# Real-world shopping
+I need to buy 3 shirts at $25 each and 2 pairs of pants at $40 each
+what is the total cost of 3 shirts at $25 each with a 20% discount
+I bought groceries for $45.67, $23.89, and $12.50. What's the total?
+45.67 + 23.89 + 12.50
+
+# Tip calculations
+what is a 20% tip on $85.50
+85.50 plus 20% tip
+split $120 between 4 people with 18% tip
+120 / 4 plus 18% tip
+
+# Compound interest
+1000 * (1 + 0.05)^10
+what is 5000 compounded at 4% for 3 years
+5000 * (1.04)^3
+
+# Body mass index
+what is bmi for weight 70 kg and height 1.75 m
+70 / (1.75^2)
+
+# Distance and speed
+if I drive at 65 mph for 3.5 hours how far do I go
+65 * 3.5
+what is 100 km in miles
+100 km in miles
+
+# Cooking conversions
+how many cups in 2 liters
+2 liters in cups
+what is 350 fahrenheit in celsius
+350 f to c
+
+# Age and date
+what is my age if I was born on jan 15 1990
+today + 30 days
+how many days until christmas
+Dec 25 - today
+
+# Shopping with tax
+I bought a laptop for $1299 with 9% sales tax. What's the total?
+1299 plus 9% tax
+what is 1299 with 9% sales tax added on top
+
+# Salary calculations
+if I make $75000 per year what is my monthly salary
+75000 / 12
+what is my hourly rate if I make $60000 per year working 40 hours per week
+60000 / (52 * 40)
+
+# Geometry
+area of circle with radius 5
+volume of sphere radius 3
+what is the circumference of a circle with diameter 10
+pi * 10
+
+# Statistics
+avg(85, 92, 78, 95, 88)
+what is the median of 12, 34, 56, 78, 90
+stdev(10, 20, 30, 40, 50)
+
+# Combinatorics
+how many ways to choose 3 from 10
+10 choose 3
+what is 52 choose 5
+52 choose 5
+
+# Probability
+1 / 52
+what are the odds of rolling a 6 on a dice
+1/6
+
+# Unit price comparison
+which is cheaper: 12 oz for $3.99 or 16 oz for $4.99
+3.99 / 12 vs 4.99 / 16
+
+# Time zone conversions
+if it's 3pm here what time is it in tokyo
+what is 14:00 in 12-hour format
+
+# Scientific notation
+1.5e8 * 2.3e6
+what is 6.022e23 divided by 1000
+
+# Loan calculations
+what is the monthly payment on a $250000 mortgage at 6.5% for 30 years
+250000 * (0.065/12) / (1 - (1 + 0.065/12)^(-360))
+
+# Percentage change
+what is the percent increase from 50 to 75
+((75 - 50) / 50) * 100
+what is the percent decrease from 200 to 150
+((200 - 150) / 200) * 100
+
+# Chained calculations
+x = 100
+y = x * 1.08
+z = y - 50
+z * 2
+
+# Currency shopping
+I have $500 how much is that in euros
+500 USD in EUR
+what is 1000 Japanese yen in US dollars
+1000 JPY in USD
+
+# Weight loss
+if I lose 2 pounds per week how long to lose 30 pounds
+30 / 2
+what is my target calorie intake to lose 1 pound per week
+3500 / 7
+
+# Fuel efficiency
+what is my fuel cost if I drive 15000 miles at 28 mpg and gas is $3.50 per gallon
+(15000 / 28) * 3.50
+
+# Pythagorean theorem
+what is the hypotenuse of a triangle with sides 5 and 12
+sqrt(5^2 + 12^2)
+what is the diagonal of a 16 by 12 rectangle
+sqrt(16^2 + 12^2)
+
+# Work hours
+how many work hours in a year
+8 * 260
+if I work 37.5 hours per week how many hours in a year
+37.5 * 52
+
+# Sales commission
+if I sell $50000 at 8% commission how much do I earn
+50000 * 0.08
+what is my commission on a $120000 sale at 3%
+120000 * 0.03
+
+# Discount stacking
+what is 20% off plus additional 10% off on $100
+100 * 0.8 * 0.9
+I have a $200 item with 25% off then additional 15% off what do I pay
+200 * 0.75 * 0.85
+
+# Unit price
+is 16 oz for $4.99 or 24 oz for $6.99 a better deal
+4.99 / 16 vs 6.99 / 24
+
+# Square footage
+how many square feet in a 12 by 15 room
+12 * 15
+what is the area of a 2000 sq ft house in square meters
+2000 * 0.0929
+
+# Depreciation
+what is the value of a $30000 car after 5 years at 15% depreciation per year
+30000 * (1 - 0.15)^5
+
+# Rule of 72
+how long to double my investment at 8% interest
+72 / 8
+
+# Electrical
+what is 120 volts times 15 amps
+120 * 15
+how many watts in a 15 amp 120 volt circuit
+120 * 15
+
+# Compound growth
+if population grows at 2% per year what will 100000 become in 10 years
+100000 * (1.02)^10

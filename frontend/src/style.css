@@ -271,6 +271,16 @@ textarea:focus-visible, [tabindex]:focus-visible, a:focus-visible {
 #docs-viewer a:hover { text-decoration:underline; }
 #docs-viewer blockquote { border-left:3px solid var(--accent);margin:8px 0;padding:4px 12px;color:var(--text-muted);background:var(--surface-secondary);border-radius:0 4px 4px 0; }
 
+/* Allow text selection on docs and plugin detail screens */
+#docs-viewer div[style*="overflow-y:auto"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+#plugin-viewer .detail-content {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* History panel */
 .history-item:hover {
   background: var(--surface-hover);

@@ -4,6 +4,7 @@ import (
 	"embed"
 	"log"
 	"os"
+	"path/filepath"
 
 	"LineSolv/app/service"
 	"LineSolv/app/storage"
@@ -49,6 +50,14 @@ func main() {
 
 	svc := service.NewAppService(db)
 	svc.SetDocs(docs)
+
+	// Initialize plugin system
+	dataDir, err := os.UserConfigDir()
+	if err != nil {
+		dataDir = filepath.Join(os.Getenv("HOME"), ".config")
+	}
+	pluginsDir := filepath.Join(dataDir, "neostore", "linesolv", "plugins")
+	svc.InitPlugins(pluginsDir)
 
 	err = wails.Run(&options.App{
 		Title:     "LineSolv",

@@ -56,7 +56,7 @@ main.go → Wails App (frameless window)
 ## Research Findings
 
 ### Web Research
-- **Wails v2.12** is the current stable release. Frameless window pattern uses `--wails-draggable:drag` on parent elements and `--wails-draggable:no-drag` on interactive children. Wails v3 is in alpha with breaking API changes.
+- **Wails v2.12** is the current stable release. Frameless window pattern uses `--wails-draggable:drag` on parent elements and `--wails-draggable:no-drag` on interactive children.
 - **Wails benefits** vs Electron: 60-80% less memory, 3-5× faster startup, 10-50× smaller binaries (20-50MB vs 100-200MB).
 - **Wails community**: Active Discord, 34.6k GitHub stars, regular releases. Good documentation for v2.
 
@@ -151,7 +151,6 @@ main.go → Wails App (frameless window)
 - [x] **Shared shortcut definitions**: Created `utils/shortcutDefs.ts`, deduplicated across ShortcutModal and SettingsModal
 - [ ] **Go linting**: Add `golangci-lint` config
 - [ ] **Pre-commit hooks**: Add husky/lint-staged
-- [ ] **Migration to Wails v3**: Evaluate when stable
 
 ### Security
 - [x] **Path traversal fix**: Added `..` → `_` sanitization in export filenames
@@ -415,7 +414,6 @@ main.go → Wails App (frameless window)
 | Voice input | P3 | Medium | High | Wails API | High |
 | Frontend test framework | P1 | High | Medium | None | Low |
 | Accessibility audit | P2 | Medium | Medium | None | Low |
-| Wails v3 migration | P4 | Low | High | Wails v3 stable | High |
 
 ---
 
@@ -434,7 +432,6 @@ main.go → Wails App (frameless window)
 - **No framework migration**: Vanilla TypeScript keeps the app lightweight and avoids framework churn. Re-evaluate if component complexity grows significantly.
 - **Tests before features**: Phase 1 establishes testing foundations before adding new capabilities.
 - **Offline first**: All features must work without internet. Online features (currency, updates) are additive.
-- **Wails v2 stay**: v3 is alpha — not stable enough for production. Re-evaluate in 2027.
 
 ### Key Contacts
 - Repository: `github.com/rkriad585/LineSolv`

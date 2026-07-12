@@ -10,12 +10,17 @@ import (
 	"unicode"
 )
 
+// PluginFunction is a function provided by a plugin.
+type PluginFunction func(args []float64) (float64, error)
+
 // Engine evaluates natural-language arithmetic expressions.
 // It maintains a variable store, computation history, and last-result context.
 type Engine struct {
-	variables  map[string]float64
-	lastResult float64
-	history    []HistoryEntry
+	variables       map[string]float64
+	lastResult      float64
+	history         []HistoryEntry
+	pluginFunctions map[string]PluginFunction
+	pluginVars      map[string]float64
 }
 
 // HistoryEntry records a single evaluated input and its output.
@@ -27,8 +32,26 @@ type HistoryEntry struct {
 // NewEngine creates a new Engine with an empty variable store.
 func NewEngine() *Engine {
 	return &Engine{
-		variables: make(map[string]float64),
+		variables:       make(map[string]float64),
+		pluginFunctions: make(map[string]PluginFunction),
+		pluginVars:      make(map[string]float64),
 	}
+}
+
+// RegisterPluginFunction registers a function from a plugin.
+func (e *Engine) RegisterPluginFunction(name string, fn PluginFunction) {
+	e.pluginFunctions[strings.ToLower(name)] = fn
+}
+
+// RegisterPluginVariable registers a variable from a plugin.
+func (e *Engine) RegisterPluginVariable(name string, value float64) {
+	e.pluginVars[strings.ToLower(name)] = value
+}
+
+// ClearPluginFunctions removes all registered plugin functions.
+func (e *Engine) ClearPluginFunctions() {
+	e.pluginFunctions = make(map[string]PluginFunction)
+	e.pluginVars = make(map[string]float64)
 }
 
 // GetHistory returns a copy of the computation history.
@@ -1930,6 +1953,10 @@ func (p *parser) parseAtom() (float64, error) {
 		default:
 			if v, ok := p.vars[name]; ok {
 				p.recordStep("variable", name, fmtVal(v))
+				return v, nil
+			}
+			if v, ok := p.engine.pluginVars[name]; ok {
+				p.recordStep("constant", name, fmtVal(v))
 				return v, nil
 			}
 			return 0, fmt.Errorf("unknown identifier: %s", name)

@@ -129,6 +129,8 @@ function inlineMd(s: string): string {
   return r;
 }
 
+const LINE_SOLV_LOGO = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
+
 export class DocsViewer {
   readonly el: HTMLDivElement;
   private tabsEl: HTMLDivElement;
@@ -151,22 +153,30 @@ export class DocsViewer {
     header.style.cssText =
       'display:flex;align-items:center;justify-content:space-between;' +
       'padding:8px 12px;border-bottom:1px solid var(--border);' +
-      'background:var(--surface-secondary);';
+      'background:var(--surface-secondary);--wails-draggable:drag;';
+    header.addEventListener('dblclick', (e) => {
+      if ((e.target as HTMLElement).closest('button')) return;
+      try {
+        const rt = (window as any).runtime;
+        if (rt) rt.WindowToggleMaximise();
+      } catch {}
+    });
 
-    const title = document.createElement('span');
-    title.style.cssText = 'font-size:13px;font-weight:600;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;';
-    title.textContent = 'Documentation';
+    const titleRow = document.createElement('div');
+    titleRow.style.cssText = 'display:flex;align-items:center;gap:8px;--wails-draggable:drag;';
+    titleRow.innerHTML = `${LINE_SOLV_LOGO}<span style="font-size:13px;font-weight:600;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;">Documentation</span>`;
 
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     closeBtn.title = 'Close (Escape)';
     closeBtn.style.cssText =
       'display:flex;align-items:center;justify-content:center;width:26px;height:26px;' +
-      'border:none;border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;';
+      'border:none;border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;' +
+      '--wails-draggable:no-drag;';
     closeBtn.addEventListener('mouseenter', () => closeBtn.style.background = 'var(--border)');
     closeBtn.addEventListener('mouseleave', () => closeBtn.style.background = 'transparent');
     closeBtn.addEventListener('click', () => this.close());
-    header.append(title, closeBtn);
+    header.append(titleRow, closeBtn);
 
     const body = document.createElement('div');
     body.style.cssText = 'display:flex;flex:1;min-height:0;';

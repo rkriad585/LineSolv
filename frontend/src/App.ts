@@ -14,16 +14,45 @@ import {DocsViewer} from './components/DocsViewer';
 import {HistoryPanel} from './components/HistoryPanel';
 import {StepsPanel} from './components/StepsPanel';
 import {GraphPanel} from './components/GraphPanel';
+import {PluginPanel} from './components/PluginPanel';
 import {buildLineResults} from './utils/format';
 import {installGlobalShortcuts, toggleFullscreen} from './utils/shortcuts';
 import {escapeHtml} from './utils/html';
 import {toast} from './utils/toast';
 import * as serviceBindings from '../wailsjs/go/service/AppService';
 
+const BUILTIN_THEMES = ['dark', 'light', 'neon', 'red', 'obsidian', 'plasma', 'blood'];
+let pluginThemeStyle: HTMLStyleElement | null = null;
+let pluginThemeIds: string[] = [];
+
 function applyTheme(theme: string): void {
-  const valid = ['dark', 'light', 'neon', 'red', 'obsidian', 'plasma', 'blood'];
-  const cls = valid.includes(theme) ? theme : 'dark';
-  document.documentElement.className = 'theme-' + cls;
+  if (BUILTIN_THEMES.includes(theme)) {
+    document.documentElement.className = 'theme-' + theme;
+  } else if (pluginThemeIds.includes(theme)) {
+    document.documentElement.className = 'theme-' + theme;
+  } else {
+    document.documentElement.className = 'theme-dark';
+  }
+}
+
+function injectPluginThemes(themes: Array<{id: string; label: string; colors: Record<string, string>}>): void {
+  if (pluginThemeStyle) {
+    pluginThemeStyle.remove();
+  }
+  pluginThemeStyle = document.createElement('style');
+  pluginThemeStyle.id = 'plugin-themes';
+  let css = '';
+  pluginThemeIds = [];
+  for (const theme of themes) {
+    pluginThemeIds.push(theme.id);
+    css += `:root.theme-${theme.id} {\n`;
+    for (const [key, value] of Object.entries(theme.colors)) {
+      css += `  ${key}: ${value};\n`;
+    }
+    css += '}\n';
+  }
+  pluginThemeStyle.textContent = css;
+  document.head.appendChild(pluginThemeStyle);
 }
 
 function applyFontSettings(settings: SettingsData): void {
@@ -140,6 +169,7 @@ export function renderApp(root: HTMLElement): void {
       if (loadingTimeout) { clearTimeout(loadingTimeout); loadingTimeout = null; }
       store.setEvalState('error');
       store.setError('Connection error');
+      toast.show('Connection error — backend may be restarting', 'error');
     }
 
     updateVars();
@@ -237,7 +267,9 @@ export function renderApp(root: HTMLElement): void {
       clearAndEval();
       input.textarea.focus();
       toast.show('Note created', 'success');
-    } catch { /* ignore */ }
+    } catch {
+      toast.show('Failed to create note', 'error');
+    }
   }
 
   async function handleRenameNote(id: string, name: string): Promise<void> {
@@ -246,7 +278,9 @@ export function renderApp(root: HTMLElement): void {
       notesMgr.renameNote(id, name);
       refreshNotesUI();
       toast.show('Note renamed', 'success');
-    } catch { /* ignore */ }
+    } catch {
+      toast.show('Failed to rename note', 'error');
+    }
   }
 
   const confirmDialog = new ConfirmDialog();
@@ -267,7 +301,7 @@ export function renderApp(root: HTMLElement): void {
       async (result) => {
         if (result.confirmed) {
           if (result.remember) {
-            try { await serviceBindings.SetDeleteWithoutConfirm(true); } catch { /* ignore */ }
+            try { await serviceBindings.SetDeleteWithoutConfirm(true); } catch { toast.show('Failed to save preference', 'error'); }
           }
           doDelete(id);
         }
@@ -291,14 +325,18 @@ export function renderApp(root: HTMLElement): void {
         clearAndEval();
       }
       toast.show('Note deleted', 'info');
-    } catch { /* ignore */ }
+    } catch {
+      toast.show('Failed to delete note', 'error');
+    }
   }
 
   async function handleExportNote(id: string, format: string): Promise<void> {
     try {
       await serviceBindings.ExportNoteToFile(id, format);
       toast.show('Note exported', 'success');
-    } catch { /* ignore */ }
+    } catch {
+      toast.show('Failed to export note', 'error');
+    }
   }
 
   async function handleImportNote(): Promise<void> {
@@ -311,7 +349,9 @@ export function renderApp(root: HTMLElement): void {
       refreshNotesUI();
       clearAndEval();
       toast.show('Note imported', 'success');
-    } catch { /* ignore */ }
+    } catch {
+      toast.show('Failed to import note', 'error');
+    }
   }
 
   function handleShareNote(id: string): void {
@@ -375,6 +415,8 @@ export function renderApp(root: HTMLElement): void {
         stepsPanel.close();
       } else if (varsPanel.isOpen()) {
         varsPanel.close();
+      } else if (pluginPanel.isOpen()) {
+        pluginPanel.close();
       }
     },
     onForceEval: forceEval,
@@ -408,6 +450,13 @@ export function renderApp(root: HTMLElement): void {
         stepsPanel.render([], '');
         stepsPanel.open();
         forceEval();
+      }
+    },
+    onTogglePlugins: () => {
+      if (pluginPanel.isOpen()) {
+        pluginPanel.close();
+      } else {
+        pluginPanel.open();
       }
     },
     onToggleSettings: () => {
@@ -538,6 +587,7 @@ export function renderApp(root: HTMLElement): void {
     onToggleVars: shortcuts.onToggleVars,
     onToggleHistory: shortcuts.onToggleHistory,
     onToggleSteps: shortcuts.onToggleSteps,
+    onTogglePlugins: shortcuts.onTogglePlugins,
     onSwitchNote: switchNote,
     onClearAll: shortcuts.onClearAll,
     onToggleFullscreen: toggleFullscreen,
@@ -584,6 +634,7 @@ export function renderApp(root: HTMLElement): void {
 
   const stepsPanel = new StepsPanel();
   const graphPanel = new GraphPanel();
+  const pluginPanel = new PluginPanel();
 
   const docsViewer = new DocsViewer();
 
@@ -606,6 +657,7 @@ export function renderApp(root: HTMLElement): void {
   ui.appendChild(titleBar.el);
   ui.appendChild(content);
   ui.appendChild(docsViewer.el);
+  ui.appendChild(pluginPanel.el);
 
   root.appendChild(ui);
 
@@ -650,6 +702,12 @@ export function renderApp(root: HTMLElement): void {
     }
     // If notes didn't load from backend, create a local fallback
     initFallbackNote();
+    try {
+      const pluginThemes = await serviceBindings.GetPluginThemes();
+      if (pluginThemes && pluginThemes.length > 0) {
+        injectPluginThemes(pluginThemes as Array<{id: string; label: string; colors: Record<string, string>}>);
+      }
+    } catch { /* ignore */ }
     try {
       const settings = await serviceBindings.GetSettings();
       applyTheme(settings.theme || 'dark');

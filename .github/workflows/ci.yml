@@ -19,11 +19,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
       - run: npm install
+        working-directory: ./frontend
+      - run: npm run typecheck
+        working-directory: ./frontend
+      - run: npm run lint
         working-directory: ./frontend
       - run: npm run build
         working-directory: ./frontend
-      - run: go vet ./...
+      - run: golangci-lint run ./...
 
   test:
     runs-on: ubuntu-latest

@@ -116,6 +116,120 @@ export namespace calculator {
 
 }
 
+export namespace plugin {
+	
+	export class FunctionDef {
+	    name: string;
+	    description: string;
+	    args: number;
+	    min_args: number;
+	    max_args: number;
+	    expression?: string;
+	    builtin?: string;
+	    examples?: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new FunctionDef(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.args = source["args"];
+	        this.min_args = source["min_args"];
+	        this.max_args = source["max_args"];
+	        this.expression = source["expression"];
+	        this.builtin = source["builtin"];
+	        this.examples = source["examples"];
+	    }
+	}
+	export class VariableDef {
+	    name: string;
+	    description: string;
+	    value: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new VariableDef(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.value = source["value"];
+	    }
+	}
+	export class ThemeDef {
+	    id: string;
+	    label: string;
+	    colors: Record<string, string>;
+	
+	    static createFrom(source: any = {}) {
+	        return new ThemeDef(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.label = source["label"];
+	        this.colors = source["colors"];
+	    }
+	}
+	export class PluginInfo {
+	    name: string;
+	    version: string;
+	    description: string;
+	    author: string;
+	    homepage?: string;
+	    dir: string;
+	    enabled: boolean;
+	    error?: string;
+	    functions?: FunctionDef[];
+	    themes?: ThemeDef[];
+	    variables?: VariableDef[];
+	
+	    static createFrom(source: any = {}) {
+	        return new PluginInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.version = source["version"];
+	        this.description = source["description"];
+	        this.author = source["author"];
+	        this.homepage = source["homepage"];
+	        this.dir = source["dir"];
+	        this.enabled = source["enabled"];
+	        this.error = source["error"];
+	        this.functions = this.convertValues(source["functions"], FunctionDef);
+	        this.themes = this.convertValues(source["themes"], ThemeDef);
+	        this.variables = this.convertValues(source["variables"], VariableDef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+
+}
+
 export namespace service {
 	
 	export class CurrencyCacheInfo {

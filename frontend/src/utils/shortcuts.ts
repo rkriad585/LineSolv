@@ -3,6 +3,7 @@ export interface ShortcutMap {
   onToggleVars: () => void;
   onToggleHistory: () => void;
   onToggleSteps: () => void;
+  onTogglePlugins: () => void;
   onClearAll: () => void;
   onNewNote: () => void;
   onHistoryUp: () => string | null;
@@ -166,6 +167,7 @@ export function installGlobalShortcuts(
     if (mod && e.key === 'i') { e.preventDefault(); cmds.onToggleVars(); }
     if (mod && e.key === 'h') { e.preventDefault(); cmds.onToggleHistory(); }
     if (mod && e.key === 's') { e.preventDefault(); cmds.onToggleSteps(); }
+    if (mod && e.key === 'u') { e.preventDefault(); cmds.onTogglePlugins(); }
     if (mod && e.key === 'k') { e.preventDefault(); cmds.onClearAll(); }
     if (mod && e.key === 'n') { e.preventDefault(); cmds.onNewNote(); }
 

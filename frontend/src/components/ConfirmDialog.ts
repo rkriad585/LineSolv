@@ -45,20 +45,24 @@ export class ConfirmDialog {
     `;
     this.el.style.display = 'flex';
 
-    const ok = this.el.querySelector('#confirm-ok') as HTMLButtonElement;
-    const cancel = this.el.querySelector('#confirm-cancel') as HTMLButtonElement;
-    const remember = this.el.querySelector('#confirm-remember') as HTMLInputElement;
+    const ok = this.el.querySelector('#confirm-ok') as HTMLButtonElement | null;
+    const cancel = this.el.querySelector('#confirm-cancel') as HTMLButtonElement | null;
+    const remember = this.el.querySelector('#confirm-remember') as HTMLInputElement | null;
 
-    ok.addEventListener('click', () => {
-      this.emit({confirmed: true, remember: remember.checked});
+    ok?.addEventListener('click', () => {
+      this.emit({confirmed: true, remember: remember?.checked ?? false});
     });
-    cancel.addEventListener('click', () => {
+    cancel?.addEventListener('click', () => {
       this.emit({confirmed: false, remember: false});
     });
-    ok.addEventListener('mouseenter', () => { ok.style.background = '#dc2626'; });
-    ok.addEventListener('mouseleave', () => { ok.style.background = '#ef4444'; });
-    cancel.addEventListener('mouseenter', () => { cancel.style.background = 'var(--surface-hover)'; });
-    cancel.addEventListener('mouseleave', () => { cancel.style.background = 'transparent'; });
+    if (ok) {
+      ok.addEventListener('mouseenter', () => { ok.style.background = '#dc2626'; });
+      ok.addEventListener('mouseleave', () => { ok.style.background = '#ef4444'; });
+    }
+    if (cancel) {
+      cancel.addEventListener('mouseenter', () => { cancel.style.background = 'var(--surface-hover)'; });
+      cancel.addEventListener('mouseleave', () => { cancel.style.background = 'transparent'; });
+    }
   }
 
   private emit(result: ConfirmResult): void {

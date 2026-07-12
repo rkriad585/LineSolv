@@ -277,14 +277,33 @@ The postfix factorial operator `!` (tokBang) binds tighter than all binary opera
 | `max(a, b, ...)` | Maximum |
 | `sum(a, b, ...)` | Sum |
 | `avg(a, b, ...)` | Average |
+| `median(a, b, ...)` | Median value |
+| `mode(a, b, ...)` | Mode (most frequent) |
+| `stdev(a, b, ...)` | Standard deviation |
+| `variance(a, b, ...)` | Population variance |
+| `range(a, b, ...)` | Range (max - min) |
 | `sign(x)` / `sgn(x)` | Sign (-1, 0, 1) |
 | `deg(x)` | Radians to degrees |
 | `rad(x)` | Degrees to radians |
+| `isprime(n)` | Primality test (returns 1 or 0) |
 
 ### Constants
 
 - `pi` / `π` — π (3.14159...)
 - `e` — Euler's number (2.71828...)
+- `speed_of_light` / `lightspeed` / `c_light` — 299,792,458 m/s
+- `gravity` / `g_force` — 9.80665 m/s²
+- `planck` / `planck_constant` — 6.62607015×10⁻³⁴ J·s
+- `boltzmann` / `boltzmann_constant` — 1.380649×10⁻²³ J/K
+- `gas_constant` / `gasconstant` — 8.314462618 J/(mol·K)
+- `avogadro` / `avogadro_constant` — 6.02214076×10²³ mol⁻¹
+- `stefan_boltzmann` / `stefanboltzmann` — 5.670367×10⁻⁸ W/(m²·K⁴)
+- `electron_mass` / `me` — 9.10938356×10⁻³¹ kg
+- `proton_mass` / `mp` — 1.67262192369×10⁻²⁷ kg
+- `neutron_mass` / `mn` — 1.67492749804×10⁻²⁷ kg
+- `electron_charge` / `e_charge` — 1.602176634×10⁻¹⁹ C
+- `bohr_radius` / `bohrradius` — 5.29177210903×10⁻¹¹ m
+- `rydberg` / `rydberg_constant` — 10,973,731.568160 m⁻¹
 
 ### Variables
 
@@ -346,3 +365,41 @@ The implementation:
 ## Error Handling
 
 All evaluation errors return an empty string — no error messages are shown to the user. Division and modulo by zero are silently dropped.
+
+## Plugin System
+
+The calculator engine integrates a plugin system that extends the function table at runtime.
+
+### Plugin Manager (`app/plugin/`)
+
+| File | Responsibility |
+|---|---|
+| `types.go` | `Manifest`, `Plugin`, `FunctionDef`, `ThemeDef`, `VariableDef` types |
+| `loader.go` | `Manager` struct — scans plugin directory, loads manifests, registers functions |
+| `builtins.go` | 20+ pre-defined builtin functions available to plugin expressions |
+| `expr.go` | Safe expression evaluator for plugin function definitions |
+| `state.go` | Plugin enabled/disabled state persistence |
+
+### How Plugins Extend the Engine
+
+1. On startup, `main.go` creates a `plugin.Manager` and calls `Scan()` to discover plugins in `~/.config/neostore/linesolv/plugins/`
+2. Each plugin's `plugin.json` manifest declares functions, themes, and variables
+3. Expression functions are compiled by the `expr.go` evaluator into callable `PluginFunction` closures
+4. Builtin functions map to pre-defined operations in `builtins.go`
+5. The engine's `callBuiltinOrPlugin()` function checks plugin functions after builtins
+6. Plugin variables are merged into the engine's variable map
+7. Plugin themes are injected into the frontend theme picker
+
+### Expression Evaluator (`expr.go`)
+
+Plugin expressions use a safe subset of math:
+- **Operators**: `+`, `-`, `*`, `/`, `^`, `%`
+- **Functions**: `min`, `max`, `abs`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sqrt`, `cbrt`, `log`, `ln`, `log2`, `exp`, `pow`, `floor`, `ceil`, `round`, `sign`, `mod`, `atan2`
+- **Constants**: `pi()`, `e()`, `tau()`, `phi()`
+- **Variables**: `a`, `b`, `c`... mapped to function arguments
+
+No arbitrary code execution — expressions are parsed and evaluated in a sandboxed environment.
+
+### Plugin State Persistence
+
+Plugin enabled/disabled state is persisted in a `plugin_state.json` file in the data directory. State survives app restarts.

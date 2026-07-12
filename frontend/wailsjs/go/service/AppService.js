@@ -78,6 +78,18 @@ export function GetNote(arg1) {
   return window['go']['service']['AppService']['GetNote'](arg1);
 }
 
+export function GetPluginThemes() {
+  return window['go']['service']['AppService']['GetPluginThemes']();
+}
+
+export function GetPlugins() {
+  return window['go']['service']['AppService']['GetPlugins']();
+}
+
+export function GetPluginsDir() {
+  return window['go']['service']['AppService']['GetPluginsDir']();
+}
+
 export function GetSettings() {
   return window['go']['service']['AppService']['GetSettings']();
 }
@@ -92,6 +104,22 @@ export function GetVariables() {
 
 export function ImportNoteFromFile() {
   return window['go']['service']['AppService']['ImportNoteFromFile']();
+}
+
+export function InitPlugins(arg1) {
+  return window['go']['service']['AppService']['InitPlugins'](arg1);
+}
+
+export function InstallPlugin(arg1, arg2, arg3) {
+  return window['go']['service']['AppService']['InstallPlugin'](arg1, arg2, arg3);
+}
+
+export function ReloadPlugins() {
+  return window['go']['service']['AppService']['ReloadPlugins']();
+}
+
+export function RemovePlugin(arg1, arg2) {
+  return window['go']['service']['AppService']['RemovePlugin'](arg1, arg2);
 }
 
 export function RenameNote(arg1, arg2) {
@@ -116,6 +144,10 @@ export function SetDeleteWithoutConfirm(arg1) {
 
 export function SetDocs(arg1) {
   return window['go']['service']['AppService']['SetDocs'](arg1);
+}
+
+export function SetPluginEnabled(arg1, arg2) {
+  return window['go']['service']['AppService']['SetPluginEnabled'](arg1, arg2);
 }
 
 export function UpdateCurrencyRates() {

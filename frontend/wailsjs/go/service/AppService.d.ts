@@ -3,6 +3,7 @@
 import {service} from '../models';
 import {storage} from '../models';
 import {calculator} from '../models';
+import {plugin} from '../models';
 
 export function CheckForUpdate():Promise<service.UpdateInfo>;
 
@@ -42,6 +43,12 @@ export function GetHistory():Promise<Array<calculator.HistoryEntry>>;
 
 export function GetNote(arg1:string):Promise<storage.Note>;
 
+export function GetPluginThemes():Promise<Array<plugin.ThemeDef>>;
+
+export function GetPlugins():Promise<Array<plugin.PluginInfo>>;
+
+export function GetPluginsDir():Promise<string>;
+
 export function GetSettings():Promise<service.SettingsData>;
 
 export function GetSteps(arg1:string):Promise<calculator.EvalDetail>;
@@ -49,6 +56,14 @@ export function GetSteps(arg1:string):Promise<calculator.EvalDetail>;
 export function GetVariables():Promise<Record<string, number>>;
 
 export function ImportNoteFromFile():Promise<storage.Note>;
+
+export function InitPlugins(arg1:string):Promise<void>;
+
+export function InstallPlugin(arg1:string,arg2:string,arg3:string):Promise<void>;
+
+export function ReloadPlugins():Promise<void>;
+
+export function RemovePlugin(arg1:string,arg2:string):Promise<void>;
 
 export function RenameNote(arg1:string,arg2:string):Promise<void>;
 
@@ -61,5 +76,7 @@ export function SaveSettings(arg1:service.SettingsData):Promise<void>;
 export function SetDeleteWithoutConfirm(arg1:boolean):Promise<void>;
 
 export function SetDocs(arg1:Record<string, string>):Promise<void>;
+
+export function SetPluginEnabled(arg1:string,arg2:boolean):Promise<void>;
 
 export function UpdateCurrencyRates():Promise<service.CurrencyCacheInfo>;

@@ -4,7 +4,7 @@
 
 ### Added
 - **Comprehensive doc examples test** — `TestDocExamples_UserReportedPatterns` covers 13 real-world query patterns (comparisons, purchase math, geometry, freelance, discount)
-- **`examples.txt`** — exhaustive list of all supported query examples organized by category
+- **`docs/examples.txt`** — exhaustive list of all supported query examples organized by category
 
 ### Fixed
 - **Undo/Redo redo stack corruption** — `pushSnapshot()` was clearing the redo stack during programmatic `input` events triggered by `undo()`/`redo()`, making Ctrl+Y silently fail. Added `programmaticChange` flag to preserve the redo stack.

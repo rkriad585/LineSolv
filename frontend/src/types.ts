@@ -22,6 +22,7 @@ export interface AppCallbacks {
   onToggleVars: () => void;
   onToggleHistory: () => void;
   onToggleSteps: () => void;
+  onTogglePlugins: () => void;
   onSwitchNote: (id: string) => void;
   onClearAll: () => void;
   onToggleFullscreen: () => void;
