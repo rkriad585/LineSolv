@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.12.13] — 2026-07-12
+
+### Fixed
+- **Self-update v-prefix** — `SetVersion()` now strips the `v` prefix from ldflags input, fixing "Invalid character(s) found in major number" error.
+- **Submenu positioning** — Switch Note and Export submenus now measure layout after a `requestAnimationFrame`, preventing off-screen rendering.
+- **Export cancel toast** — cancelling save dialog no longer shows false "Note exported" success toast.
+
+### Changed
+- **Context menu Panels submenu** — Open Docs, Open Plugins, Open Settings collapsed into a single "Panels" submenu.
+
 ## [0.11.17] — 2026-07-11
 
 ### Added
@@ -233,6 +243,7 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
+[0.12.13]: https://github.com/rkriad585/LineSolv/releases/tag/v0.12.13
 [0.11.17]: https://github.com/rkriad585/LineSolv/releases/tag/v0.11.17
 [0.10.16]: https://github.com/rkriad585/LineSolv/releases/tag/v0.10.16
 [0.9.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.9.0
