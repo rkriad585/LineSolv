@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.23"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "20"
       - name: Install system deps
@@ -101,7 +101,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.23"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "20"
       - name: Install Wails CLI
@@ -179,7 +179,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.23"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "20"
       - name: Install NSIS
