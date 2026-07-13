@@ -320,7 +320,7 @@ Saves application settings to `config.toml`.
 function GetAppVersion(): Promise<string>
 ```
 
-Returns the current application version string (e.g. `"0.12.13"`).
+Returns the current application version string (e.g. `"0.12.95"`).
 
 ---
 

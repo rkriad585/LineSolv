@@ -189,7 +189,7 @@ export class NotesPanel {
     const notes = this.lastNotes;
     const activeId = this.lastActiveId;
     const filtered = this.filteredNotes(notes);
-    this.searchInput.style.display = notes.length > 1 ? '' : 'none';
+    this.searchInput.style.display = notes.length >= 1 ? '' : 'none';
     if (filtered.length === 0 && this.filterText) {
       this.listEl.innerHTML = `<div class="px-3 py-2 text-xs" style="color:var(--text-muted)">No matching notes</div>`;
       return;
@@ -321,7 +321,7 @@ export class NotesPanel {
     if (this.needsRender) this.renderNow();
     this.el.style.width = '200px';
     this.el.style.borderRightWidth = '1px';
-    if (this.lastNotes.length > 1) this.searchInput.style.display = '';
+    if (this.lastNotes.length >= 1) this.searchInput.style.display = '';
     this.listEl.focus();
     setTimeout(() => this.listEl.focus(), 0);
   }

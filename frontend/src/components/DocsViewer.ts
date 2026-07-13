@@ -52,7 +52,7 @@ function renderMarkdown(md: string): string {
       const pipeCount = (line.match(/\|/g) || []).length;
       if (pipeCount >= 3) {
         const nextLine = lines[i + 1];
-        if (nextLine && nextLine.trim().startsWith('|') && /^[\s|:\-]+$/.test(nextLine.trim())) {
+        if (nextLine && nextLine.trim().startsWith('|') && /^[\s|:-]+$/.test(nextLine.trim())) {
           inTable = true;
           tableBuf.push(line);
           i++;
@@ -158,9 +158,9 @@ export class DocsViewer {
     header.addEventListener('dblclick', (e) => {
       if ((e.target as HTMLElement).closest('button')) return;
       try {
-        const rt = (window as any).runtime;
+        const rt = window.runtime;
         if (rt) rt.WindowToggleMaximise();
-      } catch {}
+      } catch { /* ignored */ }
     });
 
     const titleRow = document.createElement('div');

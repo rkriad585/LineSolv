@@ -74,7 +74,7 @@ function md(text: string, codeBlocks?: string[]): string {
     .replace(/`([^`\n]+)`/g, '<code style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent);font-family:monospace;">$1</code>')
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:6px;margin:8px 0;" />')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:border-color 0.15s;">$1</a>')
-    .replace(/^\> (.+)$/gm, '<blockquote style="margin:8px 0;padding:8px 16px;border-left:3px solid var(--accent);background:var(--surface-secondary);border-radius:0 6px 6px 0;font-size:13px;color:var(--text-muted);">$1</blockquote>')
+    .replace(/^> (.+)$/gm, '<blockquote style="margin:8px 0;padding:8px 16px;border-left:3px solid var(--accent);background:var(--surface-secondary);border-radius:0 6px 6px 0;font-size:13px;color:var(--text-muted);">$1</blockquote>')
     .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">')
     .replace(/^\|(.+)\|$/gm, (match) => {
       const cells = match.split('|').filter(Boolean).map(c => c.trim());
@@ -82,7 +82,7 @@ function md(text: string, codeBlocks?: string[]): string {
       return '<tr>' + cells.map(c => `<td style="padding:6px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-muted);">${c.trim()}</td>`).join('') + '</tr>';
     })
     .replace(/(<tr>.*<\/tr>\n?)+/gs, (match) => `<table style="width:100%;border-collapse:collapse;margin:8px 0;">${match}</table>`)
-    .replace(/^[\-\*] (.+)$/gm, '<li style="margin:3px 0;color:var(--text-muted);font-size:13px;">$1</li>')
+    .replace(/^[-*] (.+)$/gm, '<li style="margin:3px 0;color:var(--text-muted);font-size:13px;">$1</li>')
     .replace(/^(\d+)\. (.+)$/gm, '<li style="margin:3px 0;color:var(--text-muted);font-size:13px;list-style-type:decimal;">$2</li>')
     .replace(/(<li[^>]*>.*<\/li>\n?)+/gs, (match) => {
       const isOrdered = /list-style-type:decimal/.test(match);
@@ -154,9 +154,9 @@ export class PluginPanel {
     header.addEventListener('dblclick', (e) => {
       if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input')) return;
       try {
-        const rt = (window as any).runtime;
+        const rt = window.runtime;
         if (rt) rt.WindowToggleMaximise();
-      } catch {}
+      } catch { /* ignored */ }
     });
 
     this.headerTitleEl = document.createElement('div');

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.95] — 2026-07-13
+
+### Fixed
+- **Notes panel search input** — search input now shows when panel opens with 1+ notes (was requiring >1).
+- **ESLint config** — created flat config for ESLint v9, fixed all lint warnings.
+
 ## [0.12.13] — 2026-07-12
 
 ### Fixed
@@ -243,6 +249,7 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
+[0.12.95]: https://github.com/rkriad585/LineSolv/releases/tag/v0.12.95
 [0.12.13]: https://github.com/rkriad585/LineSolv/releases/tag/v0.12.13
 [0.11.17]: https://github.com/rkriad585/LineSolv/releases/tag/v0.11.17
 [0.10.16]: https://github.com/rkriad585/LineSolv/releases/tag/v0.10.16

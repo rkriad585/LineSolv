@@ -27,7 +27,7 @@ export class CalculatorInput {
     this.textarea.style.cssText = 'color:var(--text);background:transparent;';
     this.textarea.spellcheck = false;
     this.textarea.autocomplete = 'off';
-    (this.textarea as any).autocorrect = 'off';
+    this.textarea.setAttribute('autocorrect', 'off');
     this.textarea.autocapitalize = 'off';
     this.textarea.maxLength = 10000;
 

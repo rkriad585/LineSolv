@@ -50,11 +50,11 @@ export class TitleBar {
     const minIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
     const maxIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
 
-  const closeBtn = winBtn(closeIcon, 'Close', () => { try { (window as any).runtime.Quit(); } catch {}; }, true);
+  const closeBtn = winBtn(closeIcon, 'Close', () => { try { window.runtime?.Quit(); } catch { /* ignored */ } }, true);
   closeBtn.setAttribute('aria-label', 'Close window');
-  const minBtn = winBtn(minIcon, 'Minimize', () => { try { (window as any).runtime.WindowMinimise(); } catch {}; });
+  const minBtn = winBtn(minIcon, 'Minimize', () => { try { window.runtime?.WindowMinimise(); } catch { /* ignored */ } });
   minBtn.setAttribute('aria-label', 'Minimize window');
-  const maxBtn = winBtn(maxIcon, 'Maximize', () => { try { (window as any).runtime.WindowToggleMaximise(); } catch {}; });
+  const maxBtn = winBtn(maxIcon, 'Maximize', () => { try { window.runtime?.WindowToggleMaximise(); } catch { /* ignored */ } });
   maxBtn.setAttribute('aria-label', 'Maximize window');
 
     const controls = document.createElement('div');

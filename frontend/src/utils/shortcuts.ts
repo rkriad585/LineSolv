@@ -325,9 +325,9 @@ export function toggleFullscreen(): void {
   fullscreen = !fullscreen;
   try {
     if (fullscreen) {
-      (window as any).runtime.WindowFullscreen();
+      window.runtime?.WindowFullscreen();
     } else {
-      (window as any).runtime.WindowUnfullscreen();
+      window.runtime?.WindowUnfullscreen();
     }
-  } catch {}
+  } catch { /* ignored */ }
 }

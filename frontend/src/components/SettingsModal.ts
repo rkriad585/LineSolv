@@ -421,7 +421,7 @@ export class SettingsModal {
     const addThemeCard = (t: {id: string; label: string; bg: string; accent: string; text: string}, isPlugin = false) => {
       const card = document.createElement('div');
       card.tabIndex = 0;
-      (card as any).themeId = t.id;
+      (card as ThemeCardElement).themeId = t.id;
       card.style.cssText =
         'border:2px solid var(--border);border-radius:8px;cursor:pointer;' +
         'overflow:hidden;transition:border-color .15s;outline:none;';
@@ -638,7 +638,7 @@ export class SettingsModal {
     authorLink.style.cssText = 'color:var(--accent);text-decoration:none;';
     authorLink.addEventListener('click', (e) => {
       e.preventDefault();
-      try { (window as any).runtime.BrowserOpenURL('https://www.google.com/search?q=rkriad585'); } catch {}
+      try { window.runtime?.BrowserOpenURL('https://www.google.com/search?q=rkriad585'); } catch { /* ignored */ }
     });
     authorEl.append('Author: ', authorLink);
 
@@ -654,7 +654,7 @@ export class SettingsModal {
     repoLink.style.cssText = 'color:var(--accent);text-decoration:none;';
     repoLink.addEventListener('click', (e) => {
       e.preventDefault();
-      try { (window as any).runtime.BrowserOpenURL(APP_REPO); } catch {}
+      try { window.runtime?.BrowserOpenURL(APP_REPO); } catch { /* ignored */ }
     });
     repoEl.appendChild(repoLink);
 
@@ -666,7 +666,7 @@ export class SettingsModal {
     privacyLink.style.cssText = 'color:var(--accent);text-decoration:none;';
     privacyLink.addEventListener('click', (e) => {
       e.preventDefault();
-      try { (window as any).runtime.BrowserOpenURL('https://github.com/rkriad585/LineSolv/blob/main/docs/privacy-policy.md'); } catch {}
+      try { window.runtime?.BrowserOpenURL('https://github.com/rkriad585/LineSolv/blob/main/docs/privacy-policy.md'); } catch { /* ignored */ }
     });
     privacyEl.appendChild(privacyLink);
 
@@ -818,7 +818,7 @@ export class SettingsModal {
       if (thumbGrid) {
         const cards = thumbGrid.children;
         for (let i = 0; i < cards.length; i++) {
-          const card = cards[i] as any;
+          const card = cards[i] as ThemeCardElement;
           const themeId = card.themeId || null;
           const isActive = themeId === this.selectedTheme;
           card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
