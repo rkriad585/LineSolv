@@ -1,13 +1,15 @@
 name: Release
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
-    branches: [main]
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
   version:
@@ -18,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Get version
         id: get-version
-        run: echo "version=v$(cat .version)" >> $GITHUB_OUTPUT
+        run: echo "version=$(cat .version)" >> $GITHUB_OUTPUT
 
   linux:
     needs: version
@@ -43,7 +45,7 @@ jobs:
         run: test -f build/bin/LineSolv || { echo "Binary not found"; exit 1; }
       - name: Package .deb
         run: |
-          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
+          VERSION="${{ needs.version.outputs.version }}"
           PKG="linesolv_${VERSION}_amd64"
           mkdir -p "${PKG}/DEBIAN" "${PKG}/usr/bin" "${PKG}/usr/share/applications" "${PKG}/usr/share/icons/hicolor/256x256/apps"
           cp build/bin/LineSolv "${PKG}/usr/bin/linesolv"
@@ -74,12 +76,12 @@ jobs:
           mv "${PKG}.deb" "linesolv-${VERSION}-linux-amd64.deb"
       - name: Prepare binary for self-update
         run: |
-          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
+          VERSION="${{ needs.version.outputs.version }}"
           cp build/bin/LineSolv "LineSolv-${VERSION}-linux-amd64"
           chmod +x "LineSolv-${VERSION}-linux-amd64"
       - name: Generate checksums
         run: |
-          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
+          VERSION="${{ needs.version.outputs.version }}"
           sha256sum "linesolv-${VERSION}-linux-amd64.deb" "LineSolv-${VERSION}-linux-amd64" > "SHA256SUMS-linux-${VERSION}"
       - name: Upload
         uses: softprops/action-gh-release@v2
@@ -92,9 +94,6 @@ jobs:
 
   macos:
     needs: version
-    strategy:
-      matrix:
-        arch: [amd64, arm64]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -106,19 +105,19 @@ jobs:
           node-version: "20"
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-      - name: Build
-        run: GOARCH=${{ matrix.arch }} wails build -ldflags "-X main.version=${{ needs.version.outputs.version }}"
-      - name: Verify binary
+      - name: Build arm64
+        run: GOARCH=arm64 wails build -ldflags "-X main.version=${{ needs.version.outputs.version }}"
+      - name: Verify arm64 binary
         run: |
           if [ -d build/bin/LineSolv.app ]; then
             test -f build/bin/LineSolv.app/Contents/MacOS/LineSolv
           else
             test -f build/bin/LineSolv
           fi
-      - name: Package .app
+      - name: Package arm64 .app
         run: |
-          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
-          APP="LineSolv.app"; rm -rf "${APP}"
+          VERSION="${{ needs.version.outputs.version }}"
+          APP="LineSolv-arm64.app"; rm -rf "${APP}"
           if [ -d build/bin/LineSolv.app ]; then
             cp -R build/bin/LineSolv.app "${APP}"
           else
@@ -145,23 +144,60 @@ jobs:
           ENDPLIST
           mkdir -p "${APP}/Contents/Resources"
           cp build/appicon.png "${APP}/Contents/Resources/iconfile.png"
-      - name: Create DMG
+      - name: Create arm64 DMG
         run: |
-          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
-          hdiutil create -volname "LineSolv" -srcfolder LineSolv.app -ov -format UDZO "LineSolv-${VERSION}-darwin-${{ matrix.arch }}.dmg"
-      - name: Prepare binary for self-update
+          VERSION="${{ needs.version.outputs.version }}"
+          hdiutil create -volname "LineSolv" -srcfolder LineSolv-arm64.app -ov -format UDZO "LineSolv-${VERSION}-darwin-arm64.dmg"
+      - name: Prepare arm64 binary for self-update
         run: |
-          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
-          if [ -d build/bin/LineSolv.app ]; then
-            cp build/bin/LineSolv.app/Contents/MacOS/LineSolv "LineSolv-${VERSION}-darwin-${{ matrix.arch }}"
+          VERSION="${{ needs.version.outputs.version }}"
+          if [ -d LineSolv-arm64.app ]; then
+            cp LineSolv-arm64.app/Contents/MacOS/LineSolv "LineSolv-${VERSION}-darwin-arm64"
           else
-            cp build/bin/LineSolv "LineSolv-${VERSION}-darwin-${{ matrix.arch }}"
+            cp build/bin/LineSolv "LineSolv-${VERSION}-darwin-arm64"
           fi
-          chmod +x "LineSolv-${VERSION}-darwin-${{ matrix.arch }}"
+          chmod +x "LineSolv-${VERSION}-darwin-arm64"
+      - name: Build amd64 (cross-compile)
+        run: GOARCH=amd64 wails build -ldflags "-X main.version=${{ needs.version.outputs.version }}"
+      - name: Package amd64 .app
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          APP="LineSolv-amd64.app"; rm -rf "${APP}"
+          mkdir -p "${APP}/Contents/MacOS"
+          cp build/bin/LineSolv "${APP}/Contents/MacOS/LineSolv"
+          cat > "${APP}/Contents/Info.plist" <<ENDPLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleName</key><string>LineSolv</string>
+            <key>CFBundleExecutable</key><string>LineSolv</string>
+            <key>CFBundleIdentifier</key><string>com.linesolv.app</string>
+            <key>CFBundleVersion</key><string>${VERSION}</string>
+            <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+            <key>CFBundleIconFile</key><string>iconfile</string>
+            <key>LSMinimumSystemVersion</key><string>10.13.0</string>
+            <key>NSHighResolutionCapable</key><true/>
+            <key>NSHumanReadableCopyright</key><string>LineSolv (c) 2026 rkriad585</string>
+          </dict>
+          </plist>
+          ENDPLIST
+          mkdir -p "${APP}/Contents/Resources"
+          cp build/appicon.png "${APP}/Contents/Resources/iconfile.png"
+      - name: Create amd64 DMG
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          hdiutil create -volname "LineSolv" -srcfolder LineSolv-amd64.app -ov -format UDZO "LineSolv-${VERSION}-darwin-amd64.dmg"
+      - name: Prepare amd64 binary for self-update
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          cp LineSolv-amd64.app/Contents/MacOS/LineSolv "LineSolv-${VERSION}-darwin-amd64"
+          chmod +x "LineSolv-${VERSION}-darwin-amd64"
       - name: Generate checksums
         run: |
-          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
-          shasum -a 256 "LineSolv-${VERSION}-darwin-${{ matrix.arch }}.dmg" "LineSolv-${VERSION}-darwin-${{ matrix.arch }}" > "SHA256SUMS-darwin-${{ matrix.arch }}-${VERSION}"
+          VERSION="${{ needs.version.outputs.version }}"
+          shasum -a 256 "LineSolv-${VERSION}-darwin-arm64.dmg" "LineSolv-${VERSION}-darwin-arm64" "LineSolv-${VERSION}-darwin-amd64.dmg" "LineSolv-${VERSION}-darwin-amd64" > "SHA256SUMS-darwin-${VERSION}"
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:
@@ -198,13 +234,13 @@ jobs:
       - name: Rename artifacts
         shell: bash
         run: |
-          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
+          VERSION="${{ needs.version.outputs.version }}"
           mv "build/bin/LineSolv.exe" "LineSolv-${VERSION}-windows-amd64.exe"
           mv "build/bin/LineSolv-amd64-installer.exe" "LineSolv-${VERSION}-windows-amd64-installer.exe" 2>/dev/null || true
       - name: Generate checksums
         shell: bash
         run: |
-          VERSION="${{ needs.version.outputs.version }}"; VERSION="${VERSION#v}"
+          VERSION="${{ needs.version.outputs.version }}"
           if [ -f "LineSolv-${VERSION}-windows-amd64-installer.exe" ]; then
             sha256sum "LineSolv-${VERSION}-windows-amd64.exe" "LineSolv-${VERSION}-windows-amd64-installer.exe" > "SHA256SUMS-windows-${VERSION}"
           else
