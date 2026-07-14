@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -523,18 +525,25 @@ func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get executable path: %w", err)
 	}
+	exePath, err = filepath.EvalSymlinks(exePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve executable path: %w", err)
+	}
 
-	if err := selfupdate.UpdateTo(latest.AssetURL, exePath); err != nil {
-		return nil, fmt.Errorf("failed to apply update: %w", err)
+	tmpFile := filepath.Join(os.TempDir(), "linesolv_update"+filepath.Ext(exePath))
+	if err := selfupdate.UpdateTo(latest.AssetURL, tmpFile); err != nil {
+		os.Remove(tmpFile)
+		return nil, fmt.Errorf("failed to download update: %w", err)
 	}
 
 	wailsruntime.EventsEmit(ctx, "update-progress", map[string]interface{}{
 		"status":  "restarting",
-		"message": "Update applied. Restarting...",
+		"message": "Update downloaded. Restarting...",
 	})
 
 	go func() {
 		time.Sleep(500 * time.Millisecond)
+		s.replaceAndRestart(exePath, tmpFile)
 		wailsruntime.Quit(ctx)
 	}()
 
@@ -543,6 +552,55 @@ func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 		CurrentVersion:  appVersion,
 		LatestVersion:   latest.Version.String(),
 	}, nil
+}
+
+func (s *AppService) replaceAndRestart(exePath, tmpFile string) {
+	switch runtime.GOOS {
+	case "windows":
+		bat := filepath.Join(os.TempDir(), "linesolv_update.bat")
+		exeDir := filepath.Dir(exePath)
+		exeName := filepath.Base(exePath)
+		_ = os.WriteFile(bat, []byte(fmt.Sprintf(
+			"@echo off\r\n"+
+				"timeout /t 2 /nobreak >nul\r\n"+
+				"cd /d \"%s\"\r\n"+
+				"del \"%s\"\r\n"+
+				"move \"%s\" \"%s\"\r\n"+
+				"start \"\" \"%s\"\r\n"+
+				"del \"%s\"\r\n",
+			exeDir, exeName, tmpFile, exeName, exePath, bat,
+		)), 0644)
+		_ = exec.Command("cmd.exe", "/c", bat).Start()
+	case "darwin":
+		script := fmt.Sprintf(
+			`#!/bin/bash
+sleep 2
+osascript -e 'do shell script "mv \"%s\" \"%s\" && \"%s\" &" with administrator privileges' 2>/dev/null
+rm -f "%s"`,
+			tmpFile, exePath, exePath, tmpFile,
+		)
+		f := filepath.Join(os.TempDir(), "linesolv_update.sh")
+		_ = os.WriteFile(f, []byte(script), 0755)
+		_ = exec.Command("/bin/bash", f).Start()
+	default: // linux
+		// Try direct move first (works if in user-writable directory)
+		if err := os.Rename(tmpFile, exePath); err == nil {
+			_ = exec.Command(exePath).Start()
+			return
+		}
+		// Escalate via pkexec (shows graphical password dialog)
+		script := fmt.Sprintf(
+			`#!/bin/bash
+sleep 2
+mv "%s" "%s"
+"%s" &
+rm -f "$0"`,
+			tmpFile, exePath, exePath,
+		)
+		f := filepath.Join(os.TempDir(), "linesolv_update.sh")
+		_ = os.WriteFile(f, []byte(script), 0755)
+		_ = exec.Command("pkexec", "/bin/bash", f).Start()
+	}
 }
 
 // --- Plugin Management ---
