@@ -163,8 +163,12 @@ jobs:
         run: |
           VERSION="${{ needs.version.outputs.version }}"
           APP="LineSolv-amd64.app"; rm -rf "${APP}"
-          mkdir -p "${APP}/Contents/MacOS"
-          cp build/bin/LineSolv "${APP}/Contents/MacOS/LineSolv"
+          if [ -d build/bin/LineSolv.app ]; then
+            cp -R build/bin/LineSolv.app "${APP}"
+          else
+            mkdir -p "${APP}/Contents/MacOS"
+            cp build/bin/LineSolv "${APP}/Contents/MacOS/LineSolv"
+          fi
           cat > "${APP}/Contents/Info.plist" <<ENDPLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -192,7 +196,14 @@ jobs:
       - name: Prepare amd64 binary for self-update
         run: |
           VERSION="${{ needs.version.outputs.version }}"
-          cp LineSolv-amd64.app/Contents/MacOS/LineSolv "LineSolv-${VERSION}-darwin-amd64"
+          if [ -d LineSolv-amd64.app ]; then
+            cp LineSolv-amd64.app/Contents/MacOS/LineSolv "LineSolv-${VERSION}-darwin-amd64"
+          elif [ -f build/bin/LineSolv ]; then
+            cp build/bin/LineSolv "LineSolv-${VERSION}-darwin-amd64"
+          else
+            echo "Error: LineSolv binary not found in expected locations"
+            exit 1
+          fi
           chmod +x "LineSolv-${VERSION}-darwin-amd64"
       - name: Generate checksums
         run: |
