@@ -30,22 +30,3 @@ func fmtVal(v float64) string {
 	}
 	return formatNumber(v)
 }
-
-func operatorSym(kind tokenKind) string {
-	switch kind {
-	case tokPlus:
-		return "+"
-	case tokMinus:
-		return "-"
-	case tokMul:
-		return "×"
-	case tokDiv:
-		return "÷"
-	case tokMod:
-		return "mod"
-	case tokPow:
-		return "^"
-	default:
-		return "?"
-	}
-}

@@ -72,9 +72,9 @@ func TestConvertUnit_Currency(t *testing.T) {
 		to       string
 		expected string
 	}{
-	{100, "USD", "EUR", "87.72 EUR"},
-	{100, "EUR", "USD", "114.00 USD"},
-	{100, "GBP", "USD", "133.00 USD"},
+		{100, "USD", "EUR", "87.72 EUR"},
+		{100, "EUR", "USD", "114.00 USD"},
+		{100, "GBP", "USD", "133.00 USD"},
 	}
 	for _, tt := range tests {
 		got := convertUnit(tt.val, tt.from, tt.to)

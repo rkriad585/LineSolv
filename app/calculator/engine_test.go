@@ -890,9 +890,9 @@ func TestEvaluateLine_AdditionalPrefixes(t *testing.T) {
 func TestEvaluateLine_RelativeDates(t *testing.T) {
 	e := NewEngine()
 	tests := []struct {
-		input    string
-		desc     string
-		checkFn  func(string) bool
+		input   string
+		desc    string
+		checkFn func(string) bool
 	}{
 		{"next week", "next week returns a date 7 days from now", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},
 		{"last month", "last month returns a date string", func(s string) bool { return len(s) == 10 && s[4] == '-' && s[7] == '-' }},

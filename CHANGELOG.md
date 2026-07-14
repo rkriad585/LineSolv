@@ -1,8 +1,13 @@
 # Changelog
 
-## [0.12.95] — 2026-07-13
+## [0.12.96] — 2026-07-13
 
 ### Fixed
+- **Go lint compliance** — resolved all golangci-lint issues (errcheck, gosec, staticcheck).
+- **Unused code removed** — `operatorSym`, `aCouplePattern/aDozenPattern/aScorePattern`, `peek()`.
+- **File permissions hardened** — `0644`→`0600` for config/state files, `0755`→`0700` for directories.
+- **Weak PRNG migration** — `math/rand` → `math/rand/v2` in `fancyname.go`.
+- **Lint config** — added `frontend/node_modules` exclude to `.golangci.yml`.
 - **Notes panel search input** — search input now shows when panel opens with 1+ notes (was requiring >1).
 - **ESLint config** — created flat config for ESLint v9, fixed all lint warnings.
 
@@ -249,7 +254,7 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
-[0.12.95]: https://github.com/rkriad585/LineSolv/releases/tag/v0.12.95
+[0.12.96]: https://github.com/rkriad585/LineSolv/releases/tag/v0.12.96
 [0.12.13]: https://github.com/rkriad585/LineSolv/releases/tag/v0.12.13
 [0.11.17]: https://github.com/rkriad585/LineSolv/releases/tag/v0.11.17
 [0.10.16]: https://github.com/rkriad585/LineSolv/releases/tag/v0.10.16

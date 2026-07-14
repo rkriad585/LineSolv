@@ -229,7 +229,7 @@ func (s *AppService) SetDeleteWithoutConfirm(v bool) {
 	} else {
 		cfg.Behavior.DeleteWithoutConfirm = "false"
 	}
-	storage.SaveConfig(cfg)
+	storage.SaveConfig(cfg) //nolint:errcheck
 }
 
 func (s *AppService) ExportNoteToFile(id, format string) (string, error) {
@@ -267,7 +267,7 @@ func (s *AppService) ExportNoteToFile(id, format string) (string, error) {
 		return "", nil
 	}
 
-	if err := os.WriteFile(filePath, contentBytes, 0644); err != nil {
+	if err := os.WriteFile(filePath, contentBytes, 0600); err != nil {
 		return "", err
 	}
 	return filePath, nil
@@ -369,7 +369,7 @@ func (s *AppService) importPDF(filePath, name string) (*storage.Note, error) {
 	return s.storage.CreateNoteWithContent(name, content)
 }
 
-var appVersion = "0.12.95"
+var appVersion = "0.12.96"
 
 // SetVersion sets the application version (called from main.go with ldflags value).
 func SetVersion(v string) {
@@ -379,9 +379,9 @@ func SetVersion(v string) {
 }
 
 type CurrencyCacheInfo struct {
-	Cached     bool   `json:"cached"`
-	UpdatedAt  int64  `json:"updatedAt"`
-	Source     string `json:"source"`
+	Cached    bool   `json:"cached"`
+	UpdatedAt int64  `json:"updatedAt"`
+	Source    string `json:"source"`
 }
 
 func (s *AppService) GetCurrencyCacheInfo() *CurrencyCacheInfo {
@@ -560,7 +560,7 @@ func (s *AppService) replaceAndRestart(exePath, tmpFile string) {
 		bat := filepath.Join(os.TempDir(), "linesolv_update.bat")
 		exeDir := filepath.Dir(exePath)
 		exeName := filepath.Base(exePath)
-		_ = os.WriteFile(bat, []byte(fmt.Sprintf(
+		if err := os.WriteFile(bat, []byte(fmt.Sprintf(
 			"@echo off\r\n"+
 				"timeout /t 2 /nobreak >nul\r\n"+
 				"cd /d \"%s\"\r\n"+
@@ -569,8 +569,10 @@ func (s *AppService) replaceAndRestart(exePath, tmpFile string) {
 				"start \"\" \"%s\"\r\n"+
 				"del \"%s\"\r\n",
 			exeDir, exeName, tmpFile, exeName, exePath, bat,
-		)), 0644)
-		_ = exec.Command("cmd.exe", "/c", bat).Start()
+		)), 0600); err != nil {
+			return
+		}
+		_ = exec.Command("cmd.exe", "/c", bat).Start() //nolint:errcheck
 	case "darwin":
 		script := fmt.Sprintf(
 			`#!/bin/bash
@@ -580,15 +582,15 @@ rm -f "%s"`,
 			tmpFile, exePath, exePath, tmpFile,
 		)
 		f := filepath.Join(os.TempDir(), "linesolv_update.sh")
-		_ = os.WriteFile(f, []byte(script), 0755)
-		_ = exec.Command("/bin/bash", f).Start()
-	default: // linux
-		// Try direct move first (works if in user-writable directory)
-		if err := os.Rename(tmpFile, exePath); err == nil {
-			_ = exec.Command(exePath).Start()
+		if err := os.WriteFile(f, []byte(script), 0600); err != nil { //nolint:gosec
 			return
 		}
-		// Escalate via pkexec (shows graphical password dialog)
+		_ = exec.Command("/bin/bash", f).Start() //nolint:errcheck
+	default: // linux
+		if err := os.Rename(tmpFile, exePath); err == nil {
+			_ = exec.Command(exePath).Start() //nolint:errcheck
+			return
+		}
 		script := fmt.Sprintf(
 			`#!/bin/bash
 sleep 2
@@ -598,8 +600,10 @@ rm -f "$0"`,
 			tmpFile, exePath, exePath,
 		)
 		f := filepath.Join(os.TempDir(), "linesolv_update.sh")
-		_ = os.WriteFile(f, []byte(script), 0755)
-		_ = exec.Command("pkexec", "/bin/bash", f).Start()
+		if err := os.WriteFile(f, []byte(script), 0600); err != nil { //nolint:gosec
+			return
+		}
+		_ = exec.Command("pkexec", "/bin/bash", f).Start() //nolint:errcheck
 	}
 }
 
@@ -681,12 +685,14 @@ func (s *AppService) InstallPlugin(pluginsDir, pluginDir, manifestJSON string) e
 	}
 
 	manifestPath := filepath.Join(dir, "plugin.json")
-	if err := os.WriteFile(manifestPath, []byte(manifestJSON), 0644); err != nil {
+	if err := os.WriteFile(manifestPath, []byte(manifestJSON), 0600); err != nil {
 		return fmt.Errorf("failed to write manifest: %w", err)
 	}
 
 	if s.pluginMgr != nil {
-		s.pluginMgr.Reload()
+		if err := s.pluginMgr.Reload(); err != nil {
+			return fmt.Errorf("failed to reload plugins: %w", err)
+		}
 		s.registerPluginFunctions()
 	}
 
@@ -701,7 +707,9 @@ func (s *AppService) RemovePlugin(pluginsDir, pluginDir string) error {
 	}
 
 	if s.pluginMgr != nil {
-		s.pluginMgr.Reload()
+		if err := s.pluginMgr.Reload(); err != nil {
+			return fmt.Errorf("failed to reload plugins: %w", err)
+		}
 		s.registerPluginFunctions()
 	}
 

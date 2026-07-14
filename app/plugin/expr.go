@@ -12,11 +12,11 @@ import (
 // Variables are mapped by single letters: a->args[0], b->args[1], etc.
 func EvalExpr(expr string, args []float64) (float64, error) {
 	p := &exprParser{
-		expr:  strings.TrimSpace(expr),
-		args:  args,
-		vars:  make(map[string]float64),
-		pos:   0,
-	funcs: map[string]func([]float64) float64{
+		expr: strings.TrimSpace(expr),
+		args: args,
+		vars: make(map[string]float64),
+		pos:  0,
+		funcs: map[string]func([]float64) float64{
 			"abs":   func(a []float64) float64 { return math.Abs(a[0]) },
 			"sin":   func(a []float64) float64 { return math.Sin(a[0]) },
 			"cos":   func(a []float64) float64 { return math.Cos(a[0]) },
@@ -76,14 +76,6 @@ func (p *exprParser) skipSpaces() {
 	for p.pos < len(p.expr) && p.expr[p.pos] == ' ' {
 		p.pos++
 	}
-}
-
-func (p *exprParser) peek() byte {
-	p.skipSpaces()
-	if p.pos >= len(p.expr) {
-		return 0
-	}
-	return p.expr[p.pos]
 }
 
 func (p *exprParser) parseExpr() (float64, error) {

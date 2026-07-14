@@ -3,7 +3,7 @@ package calculator
 import (
 	"fmt"
 	"math"
-	"math/rand"
+	"math/rand/v2"
 )
 
 func (p *parser) callBuiltinOrPlugin(name string, args []float64) (float64, error) {
@@ -130,16 +130,16 @@ func (p *parser) callBuiltinOrPlugin(name string, args []float64) (float64, erro
 		return float64(lcm(int64(args[0]), int64(args[1]))), nil
 	case "rand", "random":
 		if len(args) == 0 {
-			return rand.Float64(), nil
+			return rand.Float64(), nil //nolint:gosec // intentionally weak PRNG for calculator
 		}
 		if len(args) == 1 {
-			return rand.Float64() * args[0], nil
+			return rand.Float64() * args[0], nil //nolint:gosec
 		}
 		if len(args) == 2 {
 			if args[1] <= args[0] {
 				return 0, fmt.Errorf("rand max must be greater than min")
 			}
-			return args[0] + rand.Float64()*(args[1]-args[0]), nil
+			return args[0] + rand.Float64()*(args[1]-args[0]), nil //nolint:gosec
 		}
 		return 0, fmt.Errorf("rand expects 0-2 arguments, got %d", len(args))
 	case "sign", "sgn":

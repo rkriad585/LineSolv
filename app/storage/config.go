@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	App     struct {
+	App struct {
 		Theme   string `toml:"theme"`
 		Version string `toml:"version"`
 	} `toml:"app"`
@@ -57,7 +57,7 @@ func LoadConfig() (*Config, error) {
 
 func SaveConfig(cfg *Config) error {
 	dir := configPath()
-	if err := os.MkdirAll(filepath.Dir(dir), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dir), 0700); err != nil {
 		return err
 	}
 	var buf strings.Builder
@@ -74,7 +74,7 @@ func SaveConfig(cfg *Config) error {
 	buf.WriteString(fmt.Sprintf("font_size = %q\n", cfg.Settings.FontSize))
 	buf.WriteString(fmt.Sprintf("font_family = %q\n", cfg.Settings.FontFamily))
 	buf.WriteString(fmt.Sprintf("shortcut_overrides = %q\n", cfg.Settings.ShortcutOverrides))
-	return os.WriteFile(dir, []byte(buf.String()), 0644)
+	return os.WriteFile(dir, []byte(buf.String()), 0600)
 }
 
 func parseConfigTOML(data string, cfg *Config) {

@@ -2,8 +2,7 @@ package storage
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
+	"math/rand/v2"
 )
 
 var fancyEmoji = []string{
@@ -31,13 +30,9 @@ var fancyNouns = []string{
 	"Experiments", "Formulas", "Theorems", "Hypotheses",
 }
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 func GenerateFancyName() string {
-	emoji := fancyEmoji[rand.Intn(len(fancyEmoji))]
-	adj := fancyAdjectives[rand.Intn(len(fancyAdjectives))]
-	noun := fancyNouns[rand.Intn(len(fancyNouns))]
+	emoji := fancyEmoji[rand.IntN(len(fancyEmoji))]         //nolint:gosec // intentionally weak PRNG for name generation
+	adj := fancyAdjectives[rand.IntN(len(fancyAdjectives))] //nolint:gosec
+	noun := fancyNouns[rand.IntN(len(fancyNouns))]          //nolint:gosec
 	return fmt.Sprintf("%s %s %s", emoji, adj, noun)
 }

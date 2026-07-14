@@ -105,7 +105,7 @@ func (e *Engine) EvaluateLine(input string) (string, error) {
 	if err != nil {
 		return "", nil
 	}
-	n, _ := strconv.ParseFloat(r, 64)
+	n, _ := strconv.ParseFloat(r, 64) //nolint:errcheck
 	e.lastResult = n
 	e.history = append(e.history, HistoryEntry{Input: s, Output: r})
 	return r, nil
@@ -118,7 +118,7 @@ func (e *Engine) EvaluateAll(input string) []string {
 	results := make([]string, len(lines))
 	e.lastResult = 0
 	for i, line := range lines {
-		res, _ := e.EvaluateLine(line)
+		res, _ := e.EvaluateLine(line) //nolint:errcheck
 		results[i] = res
 	}
 	return results
@@ -648,7 +648,7 @@ func (e *Engine) substituteContext(s string) string {
 
 	// Entire line is a context reference → lastResult
 	trimmed := strings.TrimSpace(s)
-	if matched, _ := regexp.MatchString(`(?i)^(?:of\s+)?(?:that|it|my\s+(?:current\s+)?age|previous|last|prior|prev)$`, trimmed); matched {
+	if matched, _ := regexp.MatchString(`(?i)^(?:of\s+)?(?:that|it|my\s+(?:current\s+)?age|previous|last|prior|prev)$`, trimmed); matched { //nolint:errcheck
 		return lastStr
 	}
 
@@ -753,7 +753,7 @@ func expandSINotation(s string) string {
 		default:
 			return m
 		}
-		val, _ := strconv.ParseFloat(num, 64)
+		val, _ := strconv.ParseFloat(num, 64) //nolint:errcheck
 		return strconv.FormatFloat(val*mult, 'f', -1, 64)
 	})
 }
@@ -898,6 +898,7 @@ var myAgeIsPattern = regexp.MustCompile(`(?i)^my\s+age\s+is\s+`)
 var boughtPattern = regexp.MustCompile(`(?i)^bought\s+`)
 var gotMadePattern = regexp.MustCompile(`(?i)^(?:got|made|earned|just)\s+`)
 var iveBeenPattern = regexp.MustCompile(`(?i)^(?:i[\x60\xb4\x27]?ve|i\s+have)\s+been\s+`)
+
 // Common action verbs that may precede the math expression
 var actionVerbPattern = regexp.MustCompile(`(?i)^(?:need|wants?|likes?|have|has|had|get|gets|takes?|took|use|uses?|used|buy|pay|pays|paid|sells?|costs?|gives?|spend|spends?|spent|earn|earns?)\s+`)
 
@@ -905,6 +906,7 @@ var trailingFluffPattern = regexp.MustCompile(`(?i)\s+(?:please|thanks|thank you
 var trailingMyAgePattern = regexp.MustCompile(`(?i)\s+(?:my\s+(?:current\s+)?age|show\s+me\s+my\s+(?:current\s+)?age)$`)
 var trailingYearsOldPattern = regexp.MustCompile(`(?i)\s+yrs?\s+old$`)
 var trailingYearsOfAgePattern = regexp.MustCompile(`(?i)\s+yrs?\s+of\s+age$`)
+
 // Trailing question phrases for purchase/discount/freelance queries
 var trailingWhatFinalPattern = regexp.MustCompile(`(?i)\s+what[\x60\xb4\x27]s\s+the\s+final\s+(?:price|cost|amount|value|total)\b.*$`)
 var trailingWhatSalePattern = regexp.MustCompile(`(?i)\s+what[\x60\xb4\x27]s\s+the\s+sale\s+price\b.*$`)
@@ -1113,11 +1115,6 @@ var ordinalPattern = regexp.MustCompile(`(?i)(\d+)(?:st|nd|rd|th)\b`)
 // Case-sensitive: lowercase k is kilo, uppercase M/B/T only (m is not mega)
 var siPattern = regexp.MustCompile(`(\d+(?:\.\d+)?)\s*([kK]|[MBT])\b`)
 
-// Collective nouns: "a couple", "a dozen", "a score" → numbers
-var aCouplePattern = regexp.MustCompile(`(?i)\bcouple\b`)
-var aDozenPattern = regexp.MustCompile(`(?i)\bdozen\b`)
-var aScorePattern = regexp.MustCompile(`(?i)\bscore\b`)
-
 // Possessive plural: "3 tens", "2 hundreds", "5 thousands" → "3 * 10", "2 * 100", "5 * 1000"
 var possessivePluralPattern = regexp.MustCompile(`(?i)(\d+)\s+(tens|hundreds|thousands|millions|billions|dozens|scores)\b`)
 
@@ -1219,7 +1216,7 @@ func parseDate(s string) (time.Time, bool) {
 }
 
 func computeRelativeDate(nStr, unit string) string {
-	n, _ := strconv.Atoi(nStr)
+	n, _ := strconv.Atoi(nStr) //nolint:errcheck
 	now := time.Now()
 	base := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	var result time.Time
@@ -1440,7 +1437,7 @@ func extractDateMath(s string) string {
 }
 
 func computeDateOffset(base time.Time, sign, nStr, unit string) string {
-	n, _ := strconv.Atoi(nStr)
+	n, _ := strconv.Atoi(nStr) //nolint:errcheck
 	if sign == "-" {
 		n = -n
 	}
@@ -1540,6 +1537,7 @@ var halfNumericPattern = regexp.MustCompile(`(?i)\bhalf\s+(\d+(?:\.\d+)?)\b`)
 
 // "per cent" → "%"
 var perCentPattern = regexp.MustCompile(`(?i)(\d+)\s+per\s+cent\b`)
+
 // "pct" abbreviation
 var pctAbbrevPattern = regexp.MustCompile(`(?i)(\d+)\s+p\s*\.?\s*c\s*\.?\s*t?\b`)
 
@@ -1628,6 +1626,7 @@ var unicodeBracketPattern = strings.NewReplacer(
 	"\u300c", "(", "\u300d", ")", "\u300e", "(", "\u300f", ")",
 	"\u3010", "(", "\u3011", ")", "\uff08", "(", "\uff09", ")",
 )
+
 // unicodeSpaceReplacer strips non-standard whitespace runes.
 // strings.Fields in normalize() handles the rest.
 var unicodeSpaceReplacer = strings.NewReplacer(

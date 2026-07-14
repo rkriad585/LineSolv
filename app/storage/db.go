@@ -67,7 +67,7 @@ func NewDB() (*DB, error) {
 		return nil, fmt.Errorf("create currency_cache table: %w", err)
 	}
 	if _, err := conn.Exec(`ALTER TABLE notes ADD COLUMN position INTEGER NOT NULL DEFAULT 0`); err == nil {
-		conn.Exec(`UPDATE notes SET position = rowid`)
+		_, _ = conn.Exec(`UPDATE notes SET position = rowid`) //nolint:errcheck
 	}
 	if _, err := conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_sort ON notes(position, updated_at)`); err != nil {
 		return nil, fmt.Errorf("create sort index: %w", err)
@@ -81,19 +81,9 @@ func NewTestDB() *DB {
 	if err != nil {
 		panic(err)
 	}
-	conn.Exec(`CREATE TABLE IF NOT EXISTS notes (
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		content TEXT NOT NULL DEFAULT '',
-		created_at INTEGER NOT NULL,
-		updated_at INTEGER NOT NULL,
-		position INTEGER NOT NULL DEFAULT 0
-	)`)
-	conn.Exec(`CREATE TABLE IF NOT EXISTS currency_cache (
-		rates TEXT NOT NULL,
-		updated_at INTEGER NOT NULL
-	)`)
-	conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_sort ON notes(position, updated_at)`)
+	_, _ = conn.Exec(`CREATE TABLE IF NOT EXISTS notes (id TEXT PRIMARY KEY, name TEXT NOT NULL, content TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, position INTEGER NOT NULL DEFAULT 0)`) //nolint:errcheck
+	_, _ = conn.Exec(`CREATE TABLE IF NOT EXISTS currency_cache (rates TEXT NOT NULL, updated_at INTEGER NOT NULL)`)                                                                                                                //nolint:errcheck
+	_, _ = conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_sort ON notes(position, updated_at)`)                                                                                                                                    //nolint:errcheck
 	return &DB{conn: conn}
 }
 
@@ -132,7 +122,7 @@ func (d *DB) CreateNote(name string) (*Note, error) {
 	now := time.Now().UnixMilli()
 	id := uuid.NewString()
 	var pos int
-	d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM notes`).Scan(&pos)
+	_ = d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM notes`).Scan(&pos) //nolint:errcheck
 	_, err := d.conn.Exec(`INSERT INTO notes (id, name, content, created_at, updated_at, position) VALUES (?, ?, '', ?, ?, ?)`,
 		id, name, now, now, pos)
 	if err != nil {
@@ -145,7 +135,7 @@ func (d *DB) CreateNoteWithContent(name, content string) (*Note, error) {
 	now := time.Now().UnixMilli()
 	id := uuid.NewString()
 	var pos int
-	d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM notes`).Scan(&pos)
+	_ = d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM notes`).Scan(&pos) //nolint:errcheck
 	_, err := d.conn.Exec(`INSERT INTO notes (id, name, content, created_at, updated_at, position) VALUES (?, ?, ?, ?, ?, ?)`,
 		id, name, content, now, now, pos)
 	if err != nil {
@@ -160,7 +150,7 @@ func (d *DB) CreateNoteWithContentAndDates(name, content string, createdAt, upda
 	now := time.Now().UnixMilli()
 	id := uuid.NewString()
 	var pos int
-	d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM notes`).Scan(&pos)
+	_ = d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM notes`).Scan(&pos) //nolint:errcheck
 	if createdAt == 0 {
 		createdAt = now
 	}
@@ -180,7 +170,7 @@ func (d *DB) ReorderNotes(noteIDs []string) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 	for i, id := range noteIDs {
 		if _, err := tx.Exec(`UPDATE notes SET position = ? WHERE id = ?`, i, id); err != nil {
 			return err

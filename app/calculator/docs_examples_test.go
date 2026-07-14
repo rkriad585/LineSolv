@@ -532,7 +532,7 @@ func TestDocExamples_UnitConversion(t *testing.T) {
 		expected string
 		desc     string
 	}{
-		{"10 inches in cm", "25.4 cm", "10 inches in cm"},		
+		{"10 inches in cm", "25.4 cm", "10 inches in cm"},
 		{"10 inches to cm", "25.4 cm", "10 inches to cm via unit converter"},
 	}
 	for _, tt := range tests {

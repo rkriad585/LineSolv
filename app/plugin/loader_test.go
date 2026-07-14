@@ -8,9 +8,9 @@ import (
 
 func TestValidateManifest(t *testing.T) {
 	tests := []struct {
-		name    string
+		name     string
 		manifest Manifest
-		wantErr bool
+		wantErr  bool
 	}{
 		{
 			name: "valid with function",

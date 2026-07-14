@@ -37,8 +37,8 @@ func parseGraphInput(input string) (expr string, from, to float64, ok bool) {
 		if m := pat.FindStringSubmatch(s); m != nil {
 			expr = m[1]
 			if rm := rangePattern.FindStringSubmatch(expr); rm != nil {
-				from, _ = strconv.ParseFloat(rm[1], 64)
-				to, _ = strconv.ParseFloat(rm[2], 64)
+				from, _ = strconv.ParseFloat(rm[1], 64) //nolint:errcheck
+				to, _ = strconv.ParseFloat(rm[2], 64)   //nolint:errcheck
 				if from >= to {
 					from, to = -10, 10
 				}

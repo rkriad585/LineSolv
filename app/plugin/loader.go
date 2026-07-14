@@ -84,12 +84,12 @@ func (m *Manager) loadPlugin(dir string) (*Plugin, error) {
 	}
 
 	plugin := &Plugin{
-		Manifest:     &manifest,
-		Dir:          dir,
-		Enabled:      true,
-		functionMap:  make(map[string]calculator.PluginFunction),
-		themeMap:     make(map[string]ThemeDef),
-		varMap:       make(map[string]float64),
+		Manifest:    &manifest,
+		Dir:         dir,
+		Enabled:     true,
+		functionMap: make(map[string]calculator.PluginFunction),
+		themeMap:    make(map[string]ThemeDef),
+		varMap:      make(map[string]float64),
 	}
 
 	for _, fn := range manifest.Functions {
@@ -256,21 +256,21 @@ func (m *Manager) saveState() {
 	if err != nil {
 		return
 	}
-	os.WriteFile(m.stateFile(), data, 0644)
+	_ = os.WriteFile(m.stateFile(), data, 0600) //nolint:errcheck
 }
 
 // PluginInfo is a JSON-serializable representation of a plugin for the frontend.
 type PluginInfo struct {
-	Name        string       `json:"name"`
-	Version     string       `json:"version"`
-	Description string       `json:"description"`
-	Author      string       `json:"author"`
-	Homepage    string       `json:"homepage,omitempty"`
-	Dir         string       `json:"dir"`
-	Enabled     bool         `json:"enabled"`
-	Error       string       `json:"error,omitempty"`
+	Name        string        `json:"name"`
+	Version     string        `json:"version"`
+	Description string        `json:"description"`
+	Author      string        `json:"author"`
+	Homepage    string        `json:"homepage,omitempty"`
+	Dir         string        `json:"dir"`
+	Enabled     bool          `json:"enabled"`
+	Error       string        `json:"error,omitempty"`
 	Functions   []FunctionDef `json:"functions,omitempty"`
-	Themes      []ThemeDef   `json:"themes,omitempty"`
+	Themes      []ThemeDef    `json:"themes,omitempty"`
 	Variables   []VariableDef `json:"variables,omitempty"`
 }
 

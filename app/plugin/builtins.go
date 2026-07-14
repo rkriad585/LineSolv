@@ -255,7 +255,7 @@ func builtinVariance(args []float64) (float64, error) {
 	if len(args) < 2 {
 		return 0, fmt.Errorf("variance requires at least 2 arguments")
 	}
-	mean, _ := builtinAverage(args)
+	mean, _ := builtinAverage(args) //nolint:errcheck
 	sum := 0.0
 	for _, v := range args {
 		diff := v - mean

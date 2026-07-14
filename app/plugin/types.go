@@ -7,33 +7,33 @@ import (
 
 // Manifest represents a plugin's JSON manifest file.
 type Manifest struct {
-	Name        string            `json:"name"`
-	Version     string            `json:"version"`
-	Description string            `json:"description"`
-	Author      string            `json:"author"`
-	Homepage    string            `json:"homepage,omitempty"`
-	Functions   []FunctionDef    `json:"functions,omitempty"`
-	Themes      []ThemeDef       `json:"themes,omitempty"`
-	Variables   []VariableDef    `json:"variables,omitempty"`
+	Name        string        `json:"name"`
+	Version     string        `json:"version"`
+	Description string        `json:"description"`
+	Author      string        `json:"author"`
+	Homepage    string        `json:"homepage,omitempty"`
+	Functions   []FunctionDef `json:"functions,omitempty"`
+	Themes      []ThemeDef    `json:"themes,omitempty"`
+	Variables   []VariableDef `json:"variables,omitempty"`
 }
 
 // FunctionDef defines a custom function provided by a plugin.
 type FunctionDef struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
-	Args        int      `json:"args"`        // -1 = variadic
+	Args        int      `json:"args"` // -1 = variadic
 	MinArgs     int      `json:"min_args"`
-	MaxArgs     int      `json:"max_args"`    // -1 = unlimited
-	Expression  string   `json:"expression,omitempty"`  // math expression using a,b,c... as args
-	Builtin     string   `json:"builtin,omitempty"`     // pre-defined operation name
+	MaxArgs     int      `json:"max_args"`             // -1 = unlimited
+	Expression  string   `json:"expression,omitempty"` // math expression using a,b,c... as args
+	Builtin     string   `json:"builtin,omitempty"`    // pre-defined operation name
 	Examples    []string `json:"examples,omitempty"`
 }
 
 // ThemeDef defines a custom theme provided by a plugin.
 type ThemeDef struct {
-	ID      string            `json:"id"`
-	Label   string            `json:"label"`
-	Colors  map[string]string `json:"colors"`
+	ID     string            `json:"id"`
+	Label  string            `json:"label"`
+	Colors map[string]string `json:"colors"`
 }
 
 // VariableDef defines a custom constant provided by a plugin.

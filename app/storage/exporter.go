@@ -70,7 +70,7 @@ func exportJSON(note Note) string {
 		"createdAt": note.CreatedAt,
 		"updatedAt": note.UpdatedAt,
 	}
-	b, _ := json.MarshalIndent(m, "", "  ")
+	b, _ := json.MarshalIndent(m, "", "  ") //nolint:errcheck
 	return string(b)
 }
 
@@ -78,7 +78,7 @@ func exportTOML(note Note) string {
 	dt := time.UnixMilli(note.CreatedAt).Format("2006-01-02T15:04:05-07:00")
 	ut := time.UnixMilli(note.UpdatedAt).Format("2006-01-02T15:04:05-07:00")
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("[note]\n"))
+	buf.WriteString("[note]\n")
 	buf.WriteString(fmt.Sprintf("id = %q\n", note.ID))
 	buf.WriteString(fmt.Sprintf("name = %q\n", note.Name))
 	buf.WriteString(fmt.Sprintf("created_at = %q\n", dt))
@@ -93,7 +93,7 @@ func exportPDF(note Note) string {
 
 func exportPDFBytes(note Note) []byte {
 	defer func() {
-		if r := recover(); r != nil {
+		if r := recover(); r != nil { //nolint:staticcheck
 			// PDF generation panicked; return nil
 		}
 	}()

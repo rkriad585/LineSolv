@@ -25,3 +25,7 @@ issues:
       linters:
         - errcheck
         - gosec
+    - path: frontend/node_modules/
+      linters:
+        - errcheck
+        - gosec
