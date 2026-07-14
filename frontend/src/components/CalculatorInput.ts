@@ -23,7 +23,7 @@ export class CalculatorInput {
 
     this.textarea = document.createElement('textarea');
     this.textarea.id = 'input-area';
-    this.textarea.className = 'flex-1 resize-none bg-transparent text-sm outline-none border-none pt-[20px] pb-4 pl-2 leading-[24px] font-mono';
+    this.textarea.className = 'flex-1 resize-none bg-transparent text-sm !outline-none border-none pt-[20px] pb-4 pl-2 leading-[24px] font-mono';
     this.textarea.style.cssText = 'color:var(--text);background:transparent;';
     this.textarea.spellcheck = false;
     this.textarea.autocomplete = 'off';
