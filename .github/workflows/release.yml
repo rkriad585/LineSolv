@@ -84,7 +84,7 @@ jobs:
           VERSION="${{ needs.version.outputs.version }}"
           sha256sum "linesolv-${VERSION}-linux-amd64.deb" "LineSolv-${VERSION}-linux-amd64" > "SHA256SUMS-linux-${VERSION}"
       - name: Upload
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.version.outputs.version }}
           files: |
@@ -210,7 +210,7 @@ jobs:
           VERSION="${{ needs.version.outputs.version }}"
           shasum -a 256 "LineSolv-${VERSION}-darwin-arm64.dmg" "LineSolv-${VERSION}-darwin-arm64" "LineSolv-${VERSION}-darwin-amd64.dmg" "LineSolv-${VERSION}-darwin-amd64" > "SHA256SUMS-darwin-${VERSION}"
       - name: Upload
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.version.outputs.version }}
           files: |
@@ -258,7 +258,7 @@ jobs:
             sha256sum "LineSolv-${VERSION}-windows-amd64.exe" > "SHA256SUMS-windows-${VERSION}"
           fi
       - name: Upload
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.version.outputs.version }}
           files: |
