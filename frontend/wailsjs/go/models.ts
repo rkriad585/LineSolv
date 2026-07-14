@@ -232,6 +232,22 @@ export namespace plugin {
 
 export namespace service {
 	
+	export class AutocompleteItem {
+	    name: string;
+	    category: string;
+	    description: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AutocompleteItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.category = source["category"];
+	        this.description = source["description"];
+	    }
+	}
 	export class CurrencyCacheInfo {
 	    cached: boolean;
 	    updatedAt: number;

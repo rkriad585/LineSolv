@@ -286,3 +286,18 @@ textarea:focus-visible, [tabindex]:focus-visible, a:focus-visible {
   outline: 1px solid var(--accent);
   outline-offset: -1px;
 }
+
+/* Autocomplete popup */
+.autocomplete-popup {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.autocomplete-popup::-webkit-scrollbar {
+  width: 4px;
+}
+.autocomplete-popup::-webkit-scrollbar-track {
+  background: transparent;
+}
+.autocomplete-popup::-webkit-scrollbar-thumb {
+  background: var(--text-subtle);
+  border-radius: 2px;
+}

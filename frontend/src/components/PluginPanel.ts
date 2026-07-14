@@ -136,6 +136,7 @@ export class PluginPanel {
   private searchQuery = '';
   private activeActions: Set<string> = new Set();
   private lastCodeBlocks: string[] = [];
+  onPluginsChanged: (() => void) | null = null;
 
   constructor() {
     this.el = document.createElement('div');
@@ -921,6 +922,7 @@ export class PluginPanel {
       if (this.currentDetail === pluginName) {
         this.showDetail(pluginName);
       }
+      this.onPluginsChanged?.();
     } catch (e) {
       toast.show(`Failed to toggle plugin: ${e instanceof Error ? e.message : 'Unknown error'}`, 'error');
     }
@@ -977,6 +979,7 @@ export class PluginPanel {
     await serviceBindings.InstallPlugin(pluginsDir, plugin.directory, JSON.stringify(manifest));
 
     toast.show(`${plugin.name} installed successfully`, 'success');
+    this.onPluginsChanged?.();
   }
 
   private async removePlugin(plugin: RemotePlugin): Promise<void> {
@@ -984,5 +987,6 @@ export class PluginPanel {
     const pluginsDir = await serviceBindings.GetPluginsDir();
     await serviceBindings.RemovePlugin(pluginsDir, plugin.directory);
     toast.show(`${plugin.name} removed`, 'success');
+    this.onPluginsChanged?.();
   }
 }

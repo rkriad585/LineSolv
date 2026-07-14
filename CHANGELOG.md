@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.13.0] — 2026-07-14
+
+### Added
+- **Keyword autocompletion** — autocomplete popup appears as you type in the calculator input, showing all 236+ builtin functions, constants, and units with prefix matching, category badges, and descriptions.
+- **Keyboard navigation** — Arrow Up/Down to navigate, Enter/Tab to select, Escape to dismiss.
+- **Dynamic keyword sync** — user-defined variables and plugin functions are included in autocomplete results and refresh automatically after evaluation or plugin changes.
+- **Backend keyword endpoint** — `GetAutocompleteKeywords()` Wails binding returns all autocomplete candidates from the engine.
+
+### Changed
+- **CalculatorInput** — added `getCursorWord()`, `getCursorPixelPos()`, `replaceWord()` methods for autocomplete integration.
+- **AutocompletePopup component** — new overlay popup positioned at cursor with themed styling, category badges, and match highlighting.
+- **PluginPanel** — added `onPluginsChanged` callback to trigger keyword refresh after plugin operations.
+
 ## [0.12.96] — 2026-07-13
 
 ### Fixed

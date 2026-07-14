@@ -16,6 +16,7 @@ import {StepsPanel} from './components/StepsPanel';
 import {GraphPanel} from './components/GraphPanel';
 import {PluginPanel} from './components/PluginPanel';
 import {ContextMenu} from './components/ContextMenu';
+import {AutocompletePopup} from './components/AutocompletePopup';
 import type {ContextMenuItem} from './types';
 import {buildLineResults} from './utils/format';
 import {installGlobalShortcuts, toggleFullscreen} from './utils/shortcuts';
@@ -99,6 +100,7 @@ export function renderApp(root: HTMLElement): void {
       const v = await serviceBindings.GetVariables();
       store.setVariables(v);
       varsPanel.render(v);
+      scheduleKeywordRefresh();
     } catch { /* runtime not ready */ }
   }
 
@@ -401,6 +403,10 @@ export function renderApp(root: HTMLElement): void {
       return store.navigateHistory('down');
     },
     onEscape: () => {
+      if (autocomplete.isVisible()) {
+        autocomplete.hide();
+        return;
+      }
       if (docsViewer.isOpen()) {
         docsViewer.close();
       } else if (settingsModal.isOpen()) {
@@ -427,6 +433,7 @@ export function renderApp(root: HTMLElement): void {
     onTab: () => scheduleEval(),
     onInput: () => {
       scheduleEval();
+      updateAutocomplete();
       if (notesMgr.activeNote()) {
         notesMgr.activeNote().content = input.text;
         scheduleSaveContent(notesMgr.activeNote().id, input.text);
@@ -615,6 +622,45 @@ export function renderApp(root: HTMLElement): void {
   notepad.appendChild(input.el);
   notepad.appendChild(results.el);
 
+  // --- Autocomplete ---
+  const autocomplete = new AutocompletePopup();
+  document.body.appendChild(autocomplete.el);
+  let allKeywords: Array<{ name: string; category: string; description: string }> = [];
+
+  autocomplete.onSelect = (item) => {
+    const { start, end } = input.getCursorWord();
+    const suffix = item.category === 'function' ? '()' : '';
+    const replacement = item.name + suffix;
+    input.replaceWord(start, end, replacement);
+    if (item.category === 'function') {
+      const ta = input.textarea;
+      ta.selectionStart = ta.selectionEnd - 1;
+      ta.selectionEnd = ta.selectionEnd - 1;
+    }
+  };
+
+  function updateAutocomplete(): void {
+    const { word } = input.getCursorWord();
+    if (word.length < 1) {
+      autocomplete.hide();
+      return;
+    }
+    const pos = input.getCursorPixelPos();
+    autocomplete.updateFilter(word, pos.x, pos.y);
+  }
+
+  let keywordRefreshTimer: number | null = null;
+  function scheduleKeywordRefresh(): void {
+    if (keywordRefreshTimer) return;
+    keywordRefreshTimer = window.setTimeout(async () => {
+      keywordRefreshTimer = null;
+      try {
+        allKeywords = await serviceBindings.GetAutocompleteKeywords();
+        autocomplete.setItems(allKeywords as import('./types').AutocompleteItem[]);
+      } catch { /* ignore */ }
+    }, 500);
+  }
+
   const loadingSpinner = document.createElement('div');
   loadingSpinner.id = 'loading-spinner';
   loadingSpinner.style.cssText = 'display:none;position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:50;';
@@ -639,6 +685,7 @@ export function renderApp(root: HTMLElement): void {
   const stepsPanel = new StepsPanel();
   const graphPanel = new GraphPanel();
   const pluginPanel = new PluginPanel();
+  pluginPanel.onPluginsChanged = () => scheduleKeywordRefresh();
 
   const docsViewer = new DocsViewer();
 
@@ -680,6 +727,27 @@ export function renderApp(root: HTMLElement): void {
   });
 
   installGlobalShortcuts(input.textarea, shortcuts);
+
+  // --- Autocomplete keyboard handling ---
+  input.textarea.addEventListener('keydown', (e) => {
+    if (!autocomplete.isVisible()) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      autocomplete.moveSelection(1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      autocomplete.moveSelection(-1);
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      autocomplete.selectCurrent();
+    }
+  }, true);
+
+  // Dismiss autocomplete on blur (with small delay for click handling)
+  input.textarea.addEventListener('blur', () => {
+    setTimeout(() => autocomplete.hide(), 150);
+  });
 
   // --- Context Menu ---
 
@@ -784,6 +852,10 @@ export function renderApp(root: HTMLElement): void {
       const settings = await serviceBindings.GetSettings();
       applyTheme(settings.theme || 'dark');
       applyFontSettings(settings);
+    } catch { /* ignore */ }
+    try {
+      allKeywords = await serviceBindings.GetAutocompleteKeywords();
+      autocomplete.setItems(allKeywords as import('./types').AutocompleteItem[]);
     } catch { /* ignore */ }
     evaluateAll();
   })();

@@ -1,3 +1,5 @@
+import type { AutocompleteItem } from '../types';
+
 export interface HistoryEntry {
   input: string;
   output: string;
@@ -13,6 +15,10 @@ export interface StoreState {
   error: string | null;
   history: HistoryEntry[];
   historyIndex: number;
+  autocompleteItems: AutocompleteItem[];
+  autocompleteVisible: boolean;
+  autocompleteIndex: number;
+  autocompleteFilter: string;
 }
 
 type Listener = (state: StoreState) => void;
@@ -27,6 +33,10 @@ export class CalculatorStore {
     error: null,
     history: [],
     historyIndex: -1,
+    autocompleteItems: [],
+    autocompleteVisible: false,
+    autocompleteIndex: 0,
+    autocompleteFilter: '',
   };
 
   private listeners = new Set<Listener>();
@@ -102,5 +112,23 @@ export class CalculatorStore {
   clearHistory(): void {
     this.state = { ...this.state, history: [], historyIndex: -1 };
     this.notify();
+  }
+
+  setAutocompleteItems(items: AutocompleteItem[]): void {
+    this.state = { ...this.state, autocompleteItems: items };
+  }
+
+  setAutocompleteVisible(visible: boolean): void {
+    this.state = { ...this.state, autocompleteVisible: visible };
+    this.notify();
+  }
+
+  setAutocompleteIndex(index: number): void {
+    this.state = { ...this.state, autocompleteIndex: index };
+    this.notify();
+  }
+
+  setAutocompleteFilter(filter: string): void {
+    this.state = { ...this.state, autocompleteFilter: filter };
   }
 }

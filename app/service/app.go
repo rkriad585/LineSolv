@@ -42,6 +42,13 @@ func getCtx() context.Context {
 	return globalCtx
 }
 
+// AutocompleteItem represents a single autocomplete candidate.
+type AutocompleteItem struct {
+	Name        string `json:"name"`
+	Category    string `json:"category"`
+	Description string `json:"description"`
+}
+
 type AppService struct {
 	engine       *calculator.Engine
 	storage      *storage.DB
@@ -369,7 +376,7 @@ func (s *AppService) importPDF(filePath, name string) (*storage.Note, error) {
 	return s.storage.CreateNoteWithContent(name, content)
 }
 
-var appVersion = "0.12.96"
+var appVersion = "0.13.0"
 
 // SetVersion sets the application version (called from main.go with ldflags value).
 func SetVersion(v string) {
@@ -714,4 +721,359 @@ func (s *AppService) RemovePlugin(pluginsDir, pluginDir string) error {
 	}
 
 	return nil
+}
+
+// GetAutocompleteKeywords returns all available autocomplete candidates
+// (functions, constants, units, user variables, plugin functions).
+func (s *AppService) GetAutocompleteKeywords() []AutocompleteItem {
+	seen := make(map[string]bool)
+	var items []AutocompleteItem
+
+	add := func(name, category, desc string) {
+		if seen[name] {
+			return
+		}
+		seen[name] = true
+		items = append(items, AutocompleteItem{Name: name, Category: category, Description: desc})
+	}
+
+	// Builtin functions (primary names only, no aliases — aliases added separately)
+	functions := []struct {
+		name string
+		desc string
+	}{
+		{"sin", "Sine of angle (radians)"},
+		{"cos", "Cosine of angle (radians)"},
+		{"tan", "Tangent of angle (radians)"},
+		{"asin", "Inverse sine (returns radians)"},
+		{"acos", "Inverse cosine (returns radians)"},
+		{"atan", "Inverse tangent (returns radians)"},
+		{"atan2", "Inverse tangent of y/x (2 args)"},
+		{"sinh", "Hyperbolic sine"},
+		{"cosh", "Hyperbolic cosine"},
+		{"tanh", "Hyperbolic tangent"},
+		{"sqrt", "Square root"},
+		{"cbrt", "Cube root"},
+		{"abs", "Absolute value"},
+		{"round", "Round to nearest integer"},
+		{"floor", "Round down to integer"},
+		{"ceil", "Round up to integer"},
+		{"log", "Natural logarithm (alias: ln)"},
+		{"ln", "Natural logarithm (alias: log)"},
+		{"log2", "Base-2 logarithm"},
+		{"log10", "Base-10 logarithm"},
+		{"exp", "Exponential (e^x)"},
+		{"pow", "Power (base, exponent)"},
+		{"fact", "Factorial (alias: factorial)"},
+		{"factorial", "Factorial (alias: fact)"},
+		{"gcd", "Greatest common divisor (2 args)"},
+		{"lcm", "Least common multiple (2 args)"},
+		{"rand", "Random number 0-1 (alias: random)"},
+		{"random", "Random number 0-1 (alias: rand)"},
+		{"sign", "Sign of number: -1, 0, or 1 (alias: sgn)"},
+		{"sgn", "Sign of number: -1, 0, or 1 (alias: sign)"},
+		{"ncr", "Binomial coefficient (2 args, alias: choose)"},
+		{"choose", "Binomial coefficient (2 args, alias: ncr)"},
+		{"trunc", "Truncate decimal part"},
+		{"fract", "Fractional part"},
+		{"deg", "Radians to degrees"},
+		{"rad", "Degrees to radians"},
+		{"min", "Minimum of arguments"},
+		{"max", "Maximum of arguments"},
+		{"sum", "Sum of arguments"},
+		{"avg", "Average of arguments"},
+		{"hypot", "Hypotenuse (2 args, alias: pythag)"},
+		{"pythag", "Hypotenuse (2 args, alias: hypot)"},
+		{"median", "Median of arguments"},
+		{"mode", "Mode of arguments"},
+		{"stdev", "Standard deviation (alias: stddev)"},
+		{"stddev", "Standard deviation (alias: stdev)"},
+		{"variance", "Population variance (alias: var)"},
+		{"var", "Population variance (alias: variance)"},
+		{"range", "Max minus min of arguments"},
+		{"isprime", "Check if prime (alias: is_prime)"},
+		{"is_prime", "Check if prime (alias: isprime)"},
+	}
+	for _, f := range functions {
+		add(f.name, "function", f.desc)
+	}
+
+	// Constants
+	constants := []struct {
+		name string
+		desc string
+	}{
+		{"pi", "Pi (3.14159...)"},
+		{"π", "Pi (3.14159...)"},
+		{"e", "Euler's number (2.71828...)"},
+		{"speed_of_light", "Speed of light (alias: lightspeed, c_light)"},
+		{"lightspeed", "Speed of light (alias: speed_of_light)"},
+		{"c_light", "Speed of light (alias: speed_of_light)"},
+		{"gravity", "Standard gravity (alias: g_force)"},
+		{"g_force", "Standard gravity (alias: gravity)"},
+		{"planck", "Planck constant (alias: planck_constant)"},
+		{"planck_constant", "Planck constant (alias: planck)"},
+		{"boltzmann", "Boltzmann constant (alias: boltzmann_constant)"},
+		{"boltzmann_constant", "Boltzmann constant (alias: boltzmann)"},
+		{"gas_constant", "Ideal gas constant (alias: gasconstant)"},
+		{"gasconstant", "Ideal gas constant (alias: gas_constant)"},
+		{"avogadro", "Avogadro's number (alias: avogadro_constant)"},
+		{"avogadro_constant", "Avogadro's number (alias: avogadro)"},
+		{"stefan_boltzmann", "Stefan-Boltzmann constant (alias: stefanboltzmann)"},
+		{"stefanboltzmann", "Stefan-Boltzmann constant (alias: stefan_boltzmann)"},
+		{"electron_mass", "Electron mass (alias: me)"},
+		{"me", "Electron mass (alias: electron_mass)"},
+		{"proton_mass", "Proton mass (alias: mp)"},
+		{"mp", "Proton mass (alias: proton_mass)"},
+		{"neutron_mass", "Neutron mass (alias: mn)"},
+		{"mn", "Neutron mass (alias: neutron_mass)"},
+		{"electron_charge", "Electron charge (alias: e_charge)"},
+		{"e_charge", "Electron charge (alias: electron_charge)"},
+		{"bohr_radius", "Bohr radius (alias: bohrradius)"},
+		{"bohrradius", "Bohr radius (alias: bohr_radius)"},
+		{"rydberg", "Rydberg constant (alias: rydberg_constant)"},
+		{"rydberg_constant", "Rydberg constant (alias: rydberg)"},
+	}
+	for _, c := range constants {
+		add(c.name, "constant", c.desc)
+	}
+
+	// Units — group by canonical name, show short description
+	unitGroups := map[string]struct {
+		desc string
+		keys []string
+	}{
+		"meter":      {"Length — meter", []string{"m", "meter", "meters"}},
+		"kilometer":  {"Length — kilometer", []string{"km", "kilometer", "kilometers"}},
+		"centimeter": {"Length — centimeter", []string{"cm", "centimeter", "centimeters"}},
+		"millimeter": {"Length — millimeter", []string{"mm", "millimeter", "millimeters"}},
+		"inch":       {"Length — inch", []string{"inch", "inches", "in"}},
+		"foot":       {"Length — foot", []string{"ft", "foot", "feet"}},
+		"yard":       {"Length — yard", []string{"yard", "yards", "yd"}},
+		"mile":       {"Length — mile", []string{"mile", "miles"}},
+		"gram":       {"Mass — gram", []string{"g", "gram", "grams"}},
+		"kilogram":   {"Mass — kilogram", []string{"kg", "kilogram", "kilograms"}},
+		"pound":      {"Mass — pound", []string{"lb", "lbs", "pound", "pounds"}},
+		"ounce":      {"Mass — ounce", []string{"oz", "ounce", "ounces"}},
+		"liter":      {"Volume — liter", []string{"l", "liter", "liters"}},
+		"milliliter": {"Volume — milliliter", []string{"ml", "milliliter", "milliliters"}},
+		"gallon":     {"Volume — gallon", []string{"gal", "gallon", "gallons"}},
+		"quart":      {"Volume — quart", []string{"qt", "quart", "quarts"}},
+		"cup":        {"Volume — cup", []string{"cup", "cups"}},
+		"celsius":    {"Temperature — celsius", []string{"c", "celsius"}},
+		"fahrenheit": {"Temperature — fahrenheit", []string{"f", "fahrenheit"}},
+		"second":     {"Time — second", []string{"second", "seconds"}},
+		"minute":     {"Time — minute", []string{"minute", "minutes"}},
+		"hour":       {"Time — hour", []string{"hour", "hours"}},
+		"day":        {"Time — day", []string{"day", "days"}},
+		"USD":        {"Currency — US dollar", []string{"usd"}},
+		"EUR":        {"Currency — euro", []string{"eur", "euro", "euros"}},
+		"GBP":        {"Currency — pound sterling", []string{"gbp", "sterling"}},
+		"JPY":        {"Currency — yen", []string{"jpy", "yen"}},
+		"CNY":        {"Currency — yuan", []string{"cny", "yuan"}},
+		"INR":        {"Currency — rupee", []string{"inr", "rupee", "rupees"}},
+		"CAD":        {"Currency — Canadian dollar", []string{"cad"}},
+		"AUD":        {"Currency — Australian dollar", []string{"aud"}},
+		"CHF":        {"Currency — Swiss franc", []string{"chf"}},
+		"KRW":        {"Currency — won", []string{"krw", "won"}},
+		"RUB":        {"Currency — ruble", []string{"rub", "ruble", "rubles"}},
+		"ILS":        {"Currency — shekel", []string{"ils", "shekel", "shekels"}},
+		"VND":        {"Currency — dong", []string{"vnd", "dong"}},
+		"PHP":        {"Currency — peso", []string{"php", "peso", "pesos"}},
+		"UAH":        {"Currency — hryvnia", []string{"uah", "hryvnia"}},
+		"KZT":        {"Currency — tenge", []string{"kzt", "tenge"}},
+		"PYG":        {"Currency — guarani", []string{"pyg", "guarani"}},
+		"GHS":        {"Currency — cedi", []string{"ghs", "cedi"}},
+		"TRY":        {"Currency — lira", []string{"try", "lira"}},
+		"AZN":        {"Currency — manat", []string{"azn", "manat"}},
+		"GEL":        {"Currency — lari", []string{"gel", "lari"}},
+		"BTC":        {"Currency — bitcoin", []string{"btc", "bitcoin"}},
+		"THB":        {"Currency — baht", []string{"thb", "baht"}},
+		"HKD":        {"Currency — Hong Kong dollar", []string{"hkd"}},
+		"SGD":        {"Currency — Singapore dollar", []string{"sgd"}},
+		"MXN":        {"Currency — Mexican peso", []string{"mxn"}},
+		"ZAR":        {"Currency — rand", []string{"zar", "rand"}},
+		"NZD":        {"Currency — New Zealand dollar", []string{"nzd"}},
+		"SEK":        {"Currency — krona", []string{"sek", "krona"}},
+		"NOK":        {"Currency — Norwegian krone", []string{"nok"}},
+		"PLN":        {"Currency — zloty", []string{"pln", "zloty"}},
+		"BRL":        {"Currency — Brazilian real", []string{"brl"}},
+		"BDT":        {"Currency — taka", []string{"bdt", "taka"}},
+		"PKR":        {"Currency — Pakistani rupee", []string{"pkr", "pakistani"}},
+		"LKR":        {"Currency — Sri Lankan rupee", []string{"lkr", "sri-lankan"}},
+		"NPR":        {"Currency — Nepalese rupee", []string{"npr", "nepalese"}},
+		"MYR":        {"Currency — ringgit", []string{"myr", "ringgit"}},
+		"IDR":        {"Currency — rupiah", []string{"idr", "rupiah"}},
+		"TWD":        {"Currency — New Taiwan dollar", []string{"twd", "ntd"}},
+		"SAR":        {"Currency — riyal", []string{"sar", "riyal"}},
+		"AED":        {"Currency — dirham", []string{"aed", "dirham"}},
+		"KWD":        {"Currency — dinar", []string{"kwd", "dinar"}},
+		"EGP":        {"Currency — Egyptian pound", []string{"egp"}},
+		"NGN":        {"Currency — naira", []string{"ngn", "naira"}},
+		"COP":        {"Currency — Colombian peso", []string{"cop"}},
+		"CLP":        {"Currency — Chilean peso", []string{"clp"}},
+		"ARS":        {"Currency — Argentine peso", []string{"ars"}},
+		"PEN":        {"Currency — sol", []string{"pen", "sol"}},
+		"MAD":        {"Currency — Moroccan dirham", []string{"mad"}},
+		"XAU":        {"Precious metal — gold (troy oz)", []string{"xau", "gold"}},
+		"XAG":        {"Precious metal — silver (troy oz)", []string{"xag", "silver"}},
+	}
+	for _, ug := range unitGroups {
+		for _, key := range ug.keys {
+			add(key, "unit", ug.desc)
+		}
+	}
+
+	// Natural language keywords from examples
+	nlKeywords := []struct {
+		name string
+		desc string
+	}{
+		// Graph commands
+		{"plot", "Graph command — plot expression"},
+		{"graph", "Graph command — graph expression"},
+		// Scale words
+		{"double", "Multiply by 2"},
+		{"twice", "Multiply by 2"},
+		{"triple", "Multiply by 3"},
+		{"half", "Divide by 2"},
+		{"quarter", "Divide by 4"},
+		// Power words
+		{"squared", "Raise to power 2"},
+		{"cubed", "Raise to power 3"},
+		// English math verbs
+		{"calculate", "Evaluate expression"},
+		{"compute", "Evaluate expression"},
+		{"determine", "Evaluate expression"},
+		{"solve", "Evaluate expression"},
+		{"find", "Evaluate expression"},
+		// Comparison
+		{"bigger", "Compare — which is bigger"},
+		{"smaller", "Compare — which is smaller"},
+		{"larger", "Compare — which is larger"},
+		// Trig English
+		{"sine", "Sine of angle (English form)"},
+		{"cosine", "Cosine of angle (English form)"},
+		{"tangent", "Tangent of angle (English form)"},
+		// Log English
+		{"natural log", "Natural logarithm (English form)"},
+		// Geometry
+		{"area", "Geometry — area of shape"},
+		{"volume", "Geometry — volume of shape"},
+		{"circumference", "Geometry — circumference of circle"},
+		{"perimeter", "Geometry — perimeter of shape"},
+		{"triangle", "Geometry — triangle calculations"},
+		{"circle", "Geometry — circle calculations"},
+		{"sphere", "Geometry — sphere calculations"},
+		{"cone", "Geometry — cone calculations"},
+		{"rectangle", "Geometry — rectangle calculations"},
+		// Context references
+		{"last", "Reference last result"},
+		{"previous", "Reference previous result"},
+		{"prior", "Reference prior result"},
+		{"result", "Reference last result"},
+		{"answer", "Reference last answer"},
+		// Date/time
+		{"today", "Current date"},
+		{"yesterday", "Yesterday's date"},
+		{"tomorrow", "Tomorrow's date"},
+		// Number words
+		{"one", "Number word — 1"},
+		{"two", "Number word — 2"},
+		{"three", "Number word — 3"},
+		{"four", "Number word — 4"},
+		{"five", "Number word — 5"},
+		{"six", "Number word — 6"},
+		{"seven", "Number word — 7"},
+		{"eight", "Number word — 8"},
+		{"nine", "Number word — 9"},
+		{"ten", "Number word — 10"},
+		{"hundred", "Number word — 100"},
+		{"thousand", "Number word — 1000"},
+		{"million", "Number word — 1,000,000"},
+		{"billion", "Number word — 1,000,000,000"},
+		// Collective nouns
+		{"couple", "Collective — 2"},
+		{"dozen", "Collective — 12"},
+		{"score", "Collective — 20"},
+		// English operators
+		{"plus", "Addition operator"},
+		{"minus", "Subtraction operator"},
+		{"times", "Multiplication operator"},
+		{"divided", "Division — 'divided by'"},
+		{"over", "Division — '10 over 2'"},
+		{"percent", "Percentage operator"},
+		{"of", "Percentage — '10% of 200'"},
+		// Unit words
+		{"inch", "Length — inch"},
+		{"feet", "Length — feet"},
+		{"mile", "Length — mile"},
+		{"kilometer", "Length — kilometer"},
+		{"meter", "Length — meter"},
+		{"centimeter", "Length — centimeter"},
+		{"gram", "Mass — gram"},
+		{"kilogram", "Mass — kilogram"},
+		{"pound", "Mass — pound"},
+		{"ounce", "Mass — ounce"},
+		{"liter", "Volume — liter"},
+		{"gallon", "Volume — gallon"},
+		{"cup", "Volume — cup"},
+		{"celsius", "Temperature — celsius"},
+		{"fahrenheit", "Temperature — fahrenheit"},
+		{"second", "Time — second"},
+		{"minute", "Time — minute"},
+		{"hour", "Time — hour"},
+		{"day", "Time — day"},
+		{"week", "Time — week"},
+		{"month", "Time — month"},
+		{"year", "Time — year"},
+		// Currency words
+		{"dollar", "Currency — dollar"},
+		{"euro", "Currency — euro"},
+		{"pound sterling", "Currency — pound sterling"},
+		{"yen", "Currency — yen"},
+		{"yuan", "Currency — yuan"},
+		{"rupee", "Currency — rupee"},
+		{"bitcoin", "Currency — bitcoin"},
+		// Abbreviations
+		{"mph", "Speed — miles per hour"},
+		{"kph", "Speed — kilometers per hour"},
+		{"kg", "Mass — kilogram"},
+		{"lbs", "Mass — pounds"},
+		{"oz", "Mass — ounces"},
+		{"km", "Length — kilometers"},
+		{"cm", "Length — centimeters"},
+		{"mm", "Length — millimeters"},
+		{"ft", "Length — feet"},
+		{"in", "Length — inches"},
+		{"m", "Length — meters"},
+		{"l", "Volume — liters"},
+		{"ml", "Volume — milliliters"},
+		{"gal", "Volume — gallons"},
+		{"hrs", "Time — hours"},
+		{"mins", "Time — minutes"},
+		{"secs", "Time — seconds"},
+	}
+	for _, kw := range nlKeywords {
+		add(kw.name, "keyword", kw.desc)
+	}
+
+	// User-defined variables
+	for name := range s.engine.GetVariables() {
+		add(name, "variable", "User-defined variable")
+	}
+
+	// Plugin-provided functions
+	if s.pluginMgr != nil {
+		for _, p := range s.pluginMgr.Enabled() {
+			for name := range p.GetFunctionMap() {
+				add(name, "plugin", "Plugin function")
+			}
+			for name := range p.GetVarMap() {
+				add(name, "plugin", "Plugin variable")
+			}
+		}
+	}
+
+	return items
 }

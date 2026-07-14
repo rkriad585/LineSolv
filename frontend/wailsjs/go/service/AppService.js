@@ -50,6 +50,10 @@ export function GetAppVersion() {
   return window['go']['service']['AppService']['GetAppVersion']();
 }
 
+export function GetAutocompleteKeywords() {
+  return window['go']['service']['AppService']['GetAutocompleteKeywords']();
+}
+
 export function GetCurrencyCacheInfo() {
   return window['go']['service']['AppService']['GetCurrencyCacheInfo']();
 }

@@ -53,3 +53,9 @@ export interface ShortcutDef {
   keys: string;
   desc: string;
 }
+
+export interface AutocompleteItem {
+  name: string;
+  category: 'function' | 'constant' | 'unit' | 'variable' | 'plugin';
+  description: string;
+}

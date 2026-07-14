@@ -196,4 +196,67 @@ export class CalculatorInput {
     this.lastText = val;
     this.invalidateLineInfo();
   }
+
+  /** Get the word being typed at cursor position and its start/end indices. */
+  getCursorWord(): { word: string; start: number; end: number } {
+    const ta = this.textarea;
+    const pos = ta.selectionStart;
+    const text = ta.value;
+    if (pos === 0) return { word: '', start: 0, end: 0 };
+
+    let start = pos;
+    while (start > 0 && isWordChar(text[start - 1])) {
+      start--;
+    }
+    return { word: text.slice(start, pos), start, end: pos };
+  }
+
+  /** Get pixel position of the cursor for popup placement. */
+  getCursorPixelPos(): { x: number; y: number } {
+    const ta = this.textarea;
+    const pos = ta.selectionStart;
+    const text = ta.value;
+    const lines = text.substring(0, pos).split('\n');
+    const lineIdx = lines.length - 1;
+    const colIdx = lines[lineIdx].length;
+
+    const cs = getComputedStyle(ta);
+    const paddingTop = parseInt(cs.paddingTop) || 0;
+    const paddingLeft = parseInt(cs.paddingLeft) || 0;
+    const lineHeight = this.lineHeight;
+
+    const charWidth = this.measureCharWidth();
+    const x = ta.offsetLeft + paddingLeft + colIdx * charWidth + 2;
+    const y = ta.offsetTop + paddingTop + (lineIdx * lineHeight) - ta.scrollTop + lineHeight + 2;
+
+    return { x, y };
+  }
+
+  /** Replace the word at [start, end] with replacement and reposition cursor. */
+  replaceWord(start: number, end: number, replacement: string): void {
+    const ta = this.textarea;
+    ta.focus();
+    ta.setRangeText(replacement, start, end, 'end');
+    ta.dispatchEvent(new Event('input', {bubbles: true}));
+  }
+
+  private measureCharWidth(): number {
+    if (!this.measureEl) {
+      this.measureEl = document.createElement('div');
+      document.body.appendChild(this.measureEl);
+    }
+    const cs = getComputedStyle(this.textarea);
+    this.measureEl.style.cssText = `
+      position:absolute;visibility:hidden;font-size:${cs.fontSize};
+      font-family:${cs.fontFamily};font-weight:${cs.fontWeight};
+      letter-spacing:${cs.letterSpacing};white-space:pre;
+      left:-9999px;top:-9999px;
+    `;
+    this.measureEl.textContent = 'M';
+    return this.measureEl.getBoundingClientRect().width;
+  }
+}
+
+function isWordChar(ch: string): boolean {
+  return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch === '_';
 }

@@ -6,14 +6,14 @@
     <a href="https://github.com/rkriad585/LineSolv/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
     </a>
-    <img src="https://img.shields.io/badge/version-0.12.96-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/version-0.13.0-green.svg" alt="Version">
     <img src="https://img.shields.io/badge/platform-linux%20|%20macOS%20|%20windows-lightgrey" alt="Platform">
     <img src="https://img.shields.io/badge/go-1.23+-00ADD8?logo=go&logoColor=white" alt="Go">
     <img src="https://img.shields.io/badge/wails-v2-5c2d91?logo=wails&logoColor=white" alt="Wails">
   </p>
 </p>
 
-LineSolv is a natural-language calculator that understands phrases like `$20 in euro - 5% discount` or `what is the just plus five`. It combines a powerful Go-based arithmetic engine with a clean, distraction-free desktop UI.
+LineSolv is a natural-language calculator that understands phrases like `$20 in euro - 5% discount` or `what is the 5 plus pi times five`. It combines a powerful Go-based arithmetic engine with a clean, distraction-free desktop UI.
 
 Built with **Wails v2** (Go + WebView), **Vite**, **TypeScript**, and **CSS custom properties** for theming.
 
@@ -456,7 +456,7 @@ LineSolv/
 ├── main.go                 # Entrypoint
 ├── wails.json              # Wails configuration
 ├── go.mod                  # Go module definition
-├── .version                # Current version (0.12.96)
+├── .version                # Current version (0.13.0)
 ├── logo.svg                # Project logo
 ├── docs/examples.txt       # Input examples
 ├── CHANGELOG.md            # Version history

@@ -29,6 +29,8 @@ export function GetAllNotes():Promise<Array<storage.Note>>;
 
 export function GetAppVersion():Promise<string>;
 
+export function GetAutocompleteKeywords():Promise<Array<service.AutocompleteItem>>;
+
 export function GetCurrencyCacheInfo():Promise<service.CurrencyCacheInfo>;
 
 export function GetDataDir():Promise<string>;
