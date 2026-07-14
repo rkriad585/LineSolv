@@ -269,6 +269,11 @@ export namespace service {
 	    font_size: string;
 	    font_family: string;
 	    shortcut_overrides: string;
+	    autocomplete_enabled: string;
+	    animations_enabled: string;
+	    toast_enabled: string;
+	    opacity: string;
+	    line_numbers_enabled: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SettingsData(source);
@@ -280,6 +285,11 @@ export namespace service {
 	        this.font_size = source["font_size"];
 	        this.font_family = source["font_family"];
 	        this.shortcut_overrides = source["shortcut_overrides"];
+	        this.autocomplete_enabled = source["autocomplete_enabled"];
+	        this.animations_enabled = source["animations_enabled"];
+	        this.toast_enabled = source["toast_enabled"];
+	        this.opacity = source["opacity"];
+	        this.line_numbers_enabled = source["line_numbers_enabled"];
 	    }
 	}
 	export class UpdateInfo {

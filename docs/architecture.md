@@ -139,7 +139,7 @@ Persistent storage layer with four modules:
 4. Manages note operations (create, rename, delete, export, import, share, reorder)
 5. Handles debounced evaluation, loading spinner visibility, and history navigation
 6. Manages plugin themes (injected as `<style>` elements with CSS custom properties)
-7. Applies theme and font settings on startup from persisted config
+7. Loads and applies all settings on startup: theme, font, opacity, line numbers, autocomplete, animations, toast
 
 **Debounced evaluation**: Input changes trigger `scheduleEval()` which debounces at 150ms. A deferred loading state shows `…` only if evaluation takes >60ms (prevents flicker for fast evals).
 
@@ -168,6 +168,8 @@ interface StoreState {
 ```
 
 Subscribers receive the full state on every change. Components subscribe via `store.subscribe(fn)` and receive an unsubscribe function. State updates use immutable spread (`{ ...state, field: newVal }`).
+
+`SettingsStore` (`stores/settings.ts`) is a separate reactive store for application settings. It manages theme, font, opacity, line numbers, autocomplete, animations, and toast preferences. Changes are debounced (300ms) and auto-saved to the backend. Subscribers are notified on every state change.
 
 `NotesManager` (`stores/notes.ts`) manages note CRUD, active-note tracking, and sort state (by name, created, or updated — ascending or descending).
 
@@ -234,7 +236,7 @@ All 15 components are class-based, using imperative DOM manipulation (no framewo
 
 - **ShortcutModal** — Keyboard shortcut reference overlay. Shows table of all shortcuts with key bindings and descriptions. Triggered by `Ctrl/Cmd+/`. Closes on Escape or backdrop click.
 
-- **SettingsModal** — 4-tab settings panel: General (font family, font size with live preview), Theme (7 built-in + plugin themes with color swatch thumbnails), Keyboard Shortcuts (view and rebind all shortcuts), About (version info, author, repo links, check for updates). Settings saved to backend and persisted in `config.toml`.
+- **SettingsModal** — 4-tab settings panel: General (font family, font size, opacity slider, line numbers toggle, autocomplete toggle, animations toggle, toast toggle with live preview), Theme (7 built-in + plugin themes with color swatch thumbnails), Keyboard Shortcuts (view and rebind all shortcuts), About (version info, author, repo links, check for updates). Settings auto-save on every change and apply immediately (real-time).
 
 - **DocsViewer** — Full-screen documentation viewer with sidebar tab navigation. Left sidebar lists all embedded docs. Content area renders markdown via a built-in inline renderer (headers, tables, code blocks, links, lists, blockquotes, horizontal rules). Async loading from Go backend. In-memory cache for instant re-opening. All docs embedded in the Go binary (offline). User Guide opens by default. Logo header with LineSolv SVG.
 

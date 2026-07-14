@@ -289,6 +289,11 @@ interface SettingsData {
   font_size: string;
   font_family: string;
   shortcut_overrides: string;  // JSON string
+  opacity: string;             // "0.30" to "1.00"
+  line_numbers_enabled: string; // "true" or "false"
+  autocomplete_enabled: string; // "true" or "false"
+  animations_enabled: string;   // "true" or "false"
+  toast_enabled: string;        // "true" or "false"
 }
 
 function GetSettings(): Promise<SettingsData>
@@ -297,7 +302,7 @@ function GetSettings(): Promise<SettingsData>
 Returns the current application settings loaded from `config.toml`.
 
 **Returns:**
-- `SettingsData` with theme name, font size, font family, and shortcut overrides as a JSON string.
+- `SettingsData` with theme name, font size, font family, shortcut overrides as a JSON string, opacity, line numbers toggle, autocomplete toggle, animations toggle, and toast toggle.
 
 ---
 
@@ -307,7 +312,7 @@ Returns the current application settings loaded from `config.toml`.
 function SaveSettings(settings: SettingsData): Promise<void>
 ```
 
-Saves application settings to `config.toml`.
+Saves application settings to `config.toml`. In the frontend, settings auto-save on every change (real-time pattern).
 
 **Parameters:**
 - `settings` — `SettingsData` object with the values to persist

@@ -11,8 +11,9 @@ export class ConfirmDialog {
 
   constructor() {
     this.el = document.createElement('div');
+    this.el.className = 'lsv-modal-overlay';
     this.el.style.cssText =
-      'position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+      'position:fixed;inset:0;z-index:10000;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
     this.el.addEventListener('mousedown', (e) => {
       if (e.target === this.el) this.close();
     });
@@ -43,7 +44,7 @@ export class ConfirmDialog {
         </div>
       </div>
     `;
-    this.el.style.display = 'flex';
+    this.el.classList.add('lsv-modal-open');
 
     const ok = this.el.querySelector('#confirm-ok') as HTMLButtonElement | null;
     const cancel = this.el.querySelector('#confirm-cancel') as HTMLButtonElement | null;
@@ -71,7 +72,7 @@ export class ConfirmDialog {
   }
 
   hide(): void {
-    this.el.style.display = 'none';
+    this.el.classList.remove('lsv-modal-open');
     this.el.innerHTML = '';
   }
 

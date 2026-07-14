@@ -1,31 +1,42 @@
+version: "2"
 linters:
   enable:
-    - errcheck
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
-    - gofmt
+    - gosec
     - misspell
     - unconvert
-    - gosec
-
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-  gosec:
-    excludes:
-      - G304
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - gosec
-    - path: frontend/node_modules/
-      linters:
-        - errcheck
-        - gosec
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    gosec:
+      excludes:
+        - G304
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+          - gosec
+        path: _test\.go
+      - linters:
+          - errcheck
+          - gosec
+        path: frontend/node_modules/
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

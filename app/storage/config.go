@@ -20,9 +20,14 @@ type Config struct {
 		DeleteWithoutConfirm string `toml:"delete_without_confirm"`
 	} `toml:"behavior"`
 	Settings struct {
-		FontSize          string `toml:"font_size"`
-		FontFamily        string `toml:"font_family"`
-		ShortcutOverrides string `toml:"shortcut_overrides"`
+		FontSize            string `toml:"font_size"`
+		FontFamily          string `toml:"font_family"`
+		ShortcutOverrides   string `toml:"shortcut_overrides"`
+		AutocompleteEnabled string `toml:"autocomplete_enabled"`
+		AnimationsEnabled   string `toml:"animations_enabled"`
+		ToastEnabled        string `toml:"toast_enabled"`
+		Opacity             string `toml:"opacity"`
+		LineNumbersEnabled  string `toml:"line_numbers_enabled"`
 	} `toml:"settings"`
 }
 
@@ -35,6 +40,11 @@ func DefaultConfig() *Config {
 	c.Settings.FontSize = "16"
 	c.Settings.FontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
 	c.Settings.ShortcutOverrides = "{}"
+	c.Settings.AutocompleteEnabled = "true"
+	c.Settings.AnimationsEnabled = "true"
+	c.Settings.ToastEnabled = "true"
+	c.Settings.Opacity = "0.95"
+	c.Settings.LineNumbersEnabled = "true"
 	return c
 }
 
@@ -74,6 +84,11 @@ func SaveConfig(cfg *Config) error {
 	buf.WriteString(fmt.Sprintf("font_size = %q\n", cfg.Settings.FontSize))
 	buf.WriteString(fmt.Sprintf("font_family = %q\n", cfg.Settings.FontFamily))
 	buf.WriteString(fmt.Sprintf("shortcut_overrides = %q\n", cfg.Settings.ShortcutOverrides))
+	buf.WriteString(fmt.Sprintf("autocomplete_enabled = %q\n", cfg.Settings.AutocompleteEnabled))
+	buf.WriteString(fmt.Sprintf("animations_enabled = %q\n", cfg.Settings.AnimationsEnabled))
+	buf.WriteString(fmt.Sprintf("toast_enabled = %q\n", cfg.Settings.ToastEnabled))
+	buf.WriteString(fmt.Sprintf("opacity = %q\n", cfg.Settings.Opacity))
+	buf.WriteString(fmt.Sprintf("line_numbers_enabled = %q\n", cfg.Settings.LineNumbersEnabled))
 	return os.WriteFile(dir, []byte(buf.String()), 0600)
 }
 
@@ -125,6 +140,16 @@ func parseConfigTOML(data string, cfg *Config) {
 				cfg.Settings.FontFamily = val
 			case "shortcut_overrides":
 				cfg.Settings.ShortcutOverrides = val
+			case "autocomplete_enabled":
+				cfg.Settings.AutocompleteEnabled = val
+			case "animations_enabled":
+				cfg.Settings.AnimationsEnabled = val
+			case "toast_enabled":
+				cfg.Settings.ToastEnabled = val
+		case "opacity":
+			cfg.Settings.Opacity = val
+		case "line_numbers_enabled":
+			cfg.Settings.LineNumbersEnabled = val
 			}
 		default:
 			switch key {

@@ -16,7 +16,7 @@ The frontend is a vanilla TypeScript application served in a Wails WebView. It u
 4. Handles keyboard shortcuts (global and textarea-specific)
 5. Runs a retry loop on startup (20 attempts, 100ms apart) waiting for the Wails runtime
 6. Detects stale results via an `evalVersion` counter — if a new evaluation starts before the previous completes, the old result is discarded
-7. Loads settings (theme, font, plugin themes) on startup and applies them
+7. Loads settings (theme, font, opacity, line numbers, autocomplete, animations, toast, plugin themes) on startup and applies them
 8. Manages note CRUD, auto-save (500ms debounce), dirty-state tracking, and import/export
 9. Manages plugin themes by injecting CSS custom properties at runtime
 
@@ -75,6 +75,8 @@ interface StoreState {
 ```
 
 State updates use immutable spread (`{ ...state, field: newVal }`). All subscribers receive the full state on every change. `pushHistory` appends an entry and resets `historyIndex`. `navigateHistory` walks the history array in reverse order (most recent first).
+
+`SettingsStore` (`stores/settings.ts`) is a separate reactive store for application settings. It manages theme, font, opacity, line numbers, autocomplete, animations, and toast preferences. Changes are debounced (300ms) and auto-saved to the backend. Subscribers are notified on every state change.
 
 `NotesManager` (`stores/notes.ts`) manages multiple notes in memory with active-note tracking, sort state (field: name/created/updated, direction: asc/desc), and CRUD operations.
 
@@ -250,12 +252,12 @@ Full-screen documentation viewer with sidebar tab navigation:
 ### SettingsModal
 
 4-tab settings panel:
-- **General** — font family (dropdown) and font size (slider/input) with live preview
+- **General** — font family (dropdown), font size (slider/input), opacity (slider 30%-100%), line numbers toggle, autocomplete toggle, animations toggle, toast notifications toggle, with live preview
 - **Theme** — 7 built-in color themes + plugin themes with color swatch thumbnails (surface, accent, text colors)
 - **Keyboard Shortcuts** — view and rebind all shortcuts; reset to defaults button
 - **About** — version info, author, repo links, check for updates
 
-Opened via `Ctrl/Cmd+,` or the gear icon in the title bar. Settings are saved to the backend and persisted in `config.toml`.
+Opened via `Ctrl/Cmd+,` or the gear icon in the title bar. Settings auto-save on every change and apply immediately (real-time).
 
 ## Printing
 

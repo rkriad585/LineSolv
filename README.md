@@ -6,7 +6,7 @@
     <a href="https://github.com/rkriad585/LineSolv/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
     </a>
-    <img src="https://img.shields.io/badge/version-0.13.0-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/version-0.14.0-green.svg" alt="Version">
     <img src="https://img.shields.io/badge/platform-linux%20|%20macOS%20|%20windows-lightgrey" alt="Platform">
     <img src="https://img.shields.io/badge/go-1.23+-00ADD8?logo=go&logoColor=white" alt="Go">
     <img src="https://img.shields.io/badge/wails-v2-5c2d91?logo=wails&logoColor=white" alt="Wails">
@@ -16,6 +16,21 @@
 LineSolv is a natural-language calculator that understands phrases like `$20 in euro - 5% discount` or `what is the 5 plus pi times five`. It combines a powerful Go-based arithmetic engine with a clean, distraction-free desktop UI.
 
 Built with **Wails v2** (Go + WebView), **Vite**, **TypeScript**, and **CSS custom properties** for theming.
+
+## Key Features
+
+- **Natural Language Math** — Type phrases like `what is 20 plus 5%` or `$20 in euro - 10% discount` and get instant results
+- **Full-Window Transparency** — Adjustable opacity (30%–100%, default 95%) with true window translucency on all platforms
+- **Real-Time Settings** — Every setting (theme, font, opacity, line numbers, autocomplete) applies instantly with no Save button
+- **Line Number Toggle** — Show or hide line numbers in the calculator editor
+- **Autocomplete Popup** — Type-aware keyword suggestions that can be toggled on/off
+- **7 Color Themes** — Dark, Light, Neon, Red, Obsidian, Plasma, Blood with instant switching
+- **17 Font Options** — Sans-Serif, Serif, and Monospace fonts including JetBrains Mono, Fira Code, and more
+- **40+ Unit Conversions** — Length, mass, volume, temperature, time, and 30+ live currencies
+- **Function Graphing** — Auto-detect plot expressions and render live charts
+- **Plugin System** — 12 built-in plugins with expression-based custom functions, themes, and variables
+- **Notes & History** — Multi-note notebooks with searchable history, PDF export, and undo/redo
+- **Cross-Platform** — Native builds for Linux, macOS (Intel & Apple Silicon), and Windows
 
 ## Screenshots
 
@@ -193,13 +208,15 @@ Auto-detect plot/graph expressions and render live charts:
 | **Steps Panel** | Step-by-step evaluation with intermediate results |
 | **Documentation Viewer** | Built-in docs with offline caching |
 | **Plugin Marketplace** | Browse, install, enable/disable plugins |
-| **Settings** | General, Theme, Keyboard Shortcuts, About tabs |
-| **Configurable Font** | Font family and size adjustable in Settings |
+| **Settings** | General, Theme, Keyboard Shortcuts, About tabs — all real-time, no Save button |
+| **Configurable Font** | 17 font options (Sans-Serif, Serif, Monospace) with live preview |
+| **Window Opacity** | Adjustable opacity slider (30%–100%, default 95%) for full-window transparency |
+| **Line Numbers Toggle** | Show or hide line number gutter in the calculator editor |
 | **Customizable Shortcuts** | Rebind any keyboard shortcut |
 | **PDF Export** | Export notes as formatted A4 PDFs |
 | **Print** | Print with A4 formatting, watermark, and date |
 | **Undo/Redo** | 200-entry custom stack |
-| **Toast Notifications** | Non-modal feedback for actions |
+| **Toast Notifications** | Non-modal feedback for actions (toggleable) |
 | **Dirty-State Indicator** | Accent dot shows unsaved changes |
 | **Delete Confirmation** | Optional "Don't ask again" preference |
 | **Window Dragging** | Drag title bar to move window |

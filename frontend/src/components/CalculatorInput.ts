@@ -197,6 +197,10 @@ export class CalculatorInput {
     this.invalidateLineInfo();
   }
 
+  setLineNumbersVisible(visible: boolean): void {
+    this.gutter.style.display = visible ? '' : 'none';
+  }
+
   /** Get the word being typed at cursor position and its start/end indices. */
   getCursorWord(): { word: string; start: number; end: number } {
     const ta = this.textarea;

@@ -1,279 +1,251 @@
-# PLAN.md — Keyword Autocompletion for LineSolv
+# LineSolv Settings Overhaul & Live Reload — PLAN.md
 
 ## Project Summary
-LineSolv is a cross-platform desktop natural-language calculator built with Go 1.24.1, Wails v2.12.0, and vanilla TypeScript. It has 52 builtin functions, 30 constants, 154 unit names, dynamic plugin-loaded functions, and user-defined variables — all of which users must type from memory. Adding an autocomplete popup as the user types will significantly improve discoverability and UX.
+
+LineSolv is a cross-platform desktop natural-language calculator built with Go 1.24.1 + Wails v2.12.0 + vanilla TypeScript. This plan covers expanding the settings system with new General tab options, adding font variety, implementing proper CSS animations, and fixing the live-reload problem so settings/plugin changes take effect without app restart.
 
 ---
 
 ## Research Findings
 
-### External (industry patterns)
-- Most code editors and scientific calculators show autocomplete after 1–2 characters
-- Prefix matching is standard; fuzzy matching adds complexity with marginal benefit for a ~250-item list
-- Category labels (function/unit/constant) help users disambiguate similar names
-- Keyboard-first navigation (↑/↓ Enter Esc) is expected in developer-oriented tools
+### Current Settings State
+- **Storage**: TOML config at `~/.config/neostore/linesolv/config.toml`, custom hand-rolled parser
+- **Current fields**: `theme`, `font_size`, `font_family`, `shortcut_overrides` (4 fields in `SettingsData`)
+- **Config struct** (`app/storage/config.go:10-27`): has `[app]`, `[notes]`, `[behavior]`, `[settings]` sections
+- **Frontend type** (`frontend/src/types.ts:37-42`): `SettingsData` with 4 fields
+- **Modal** (`SettingsModal.ts`): 4 tabs — General, Theme, Keyboard Shortcuts, About; General has only font family + font size + preview
+- **Apply mechanism**: `save()` calls `SaveSettings()` (persists to disk) then `onApply()` callback (applies in-memory). Theme and font apply live; everything else needs restart.
+- **Startup init** (`App.ts:833-861`): loads settings from backend, calls `applyTheme()` + `applyFontSettings()`
 
-### Internal (codebase analysis)
-- **82 function/constant identifiers** in `app/calculator/functions.go` (switch `callBuiltinOrPlugin`)
-- **154 unit keys** in `app/calculator/units.go` (map `unitDB`)
-- **User-defined variables** stored in `Engine.variables` (dynamic, per-session)
-- **Plugin-provided functions** loaded at runtime from `plugin.json` manifests
-- `CalculatorInput.ts` — textarea-based input, no existing autocomplete UI
-- `CalculatorStore` — reactive state store, no autocomplete state yet
-- `App.ts` — main app, handles keyboard shortcuts and input submission
-- Wails bindings expose Go methods to frontend via `window.runtime`
+### Current Animations State
+- **Only 1 keyframe**: `@keyframes spin` for loading spinners
+- **Global transition**: `button, .panel-toggle, .note-item, aside, ... { transition: background 0.15s ease, border-color 0.15s ease; }` — only 2 properties
+- **Panel open/close**: Width-based slide via `transition-all duration-150 ease-out` (Tailwind class) — panels slide from width 0 to target width
+- **Modal open/close**: Instant `display: none` <-> `display: flex` — **no animation at all**
+- **Theme switching**: Instant class swap — subtle background crossfade from global transition only
+- **Toast**: Slide-in from right + fade (0.25s) — already has proper animation
 
-### Autocomplete Candidate Inventory
-| Category | Count | Source |
-|----------|-------|--------|
-| Builtin functions (including aliases) | 52 | `functions.go` |
-| Constants (including aliases) | 30 | `functions.go` |
-| Unit names | 154 | `units.go` |
-| User-defined variables | dynamic | `Engine.variables` |
-| Plugin-loaded functions | dynamic | `PluginManager` |
-| **Total (static)** | **236** | |
-| **Total (with dynamic)** | **236 + V + P** | |
+### Current Font State
+- 5 font family options (monospace, serif, sans-serif, Georgia, Courier New)
+- System UI font for chrome, `--calc-font-family` CSS var for calculator area
+- No web font loading — all system fonts
 
----
+### Current Autocomplete State
+- Always active — no toggle exists
+- `AutocompletePopup` class manages everything; `CalculatorStore` has unused autocomplete fields
+- Triggered by `updateAutocomplete()` on every keystroke in `App.ts`
+- Keywords fetched from backend `GetAutocompleteKeywords()`
 
-## Architecture Decision
+### Current Plugin Live Reload State
+- No filesystem hot-reload (no fsnotify/inotify)
+- Plugins re-scanned only on: startup, explicit toggle, install/remove
+- `onPluginsChanged` callback triggers `scheduleKeywordRefresh()` (500ms debounce)
+- `registerPluginFunctions()` does full clear + re-register — safe to call anytime
+- Frontend refresh button only re-fetches remote index, does NOT trigger backend rescan
 
-**Option chosen: Backend-served dynamic keyword list via Wails binding**
-
-A single Go method `GetAutocompleteKeywords()` on the `App` struct returns all available keywords. This is the right choice because:
-- Plugin-loaded functions are included dynamically (no stale hardcoded list)
-- User-defined variables are included per-session
-- Single source of truth — no Go/TS duplication
-- Wails binding overhead is negligible for a ~250-item list fetched once per session
-
-**Frontend caches** the list on init and re-fetches only when plugins are loaded/unloaded or variables change (via existing store subscription).
-
----
-
-## UI Design
-
-### Behavior
-1. **Trigger**: Show popup when user types 1+ characters and cursor is at a word boundary (start of line, after space, after `(`, after operator, after `,`)
-2. **Filter**: Case-insensitive prefix match against keyword names
-3. **Position**: Overlay `<div>` positioned below the textarea at the cursor's pixel location (using the existing `measureEl` technique from `CalculatorInput.ts`)
-4. **Keyboard**: ↑/↓ navigate, Enter/Tab selects, Escape dismisses, any other key updates filter
-5. **Selection**: 
-   - Functions: replace typed prefix with `name()` and place cursor inside parens
-   - Constants/units/variables: replace typed prefix with `name` and place cursor after
-6. **Dismiss**: On blur, Escape, or after selection
-
-### Visual
-- Dark popup matching app theme (`var(--surface)` background, `var(--text)` text)
-- Max 8 visible items, scrollable
-- Each item shows: name (bold match portion highlighted), category badge, optional description
-- Subtle border + shadow, rounded corners
-- Currently highlighted item has `var(--accent)` background
+### Wails Window API
+- `WindowSetBackgroundColour(ctx, R, G, B, A)` — changes window background RGBA (JS: `WindowSetBackgroundColour(R, G, B, A)`)
+- Window already has `BackgroundColour: RGBA{0,0,0,0}` and `WindowIsTranslucent: true`
+- No direct `SetOpacity` API — opacity control via CSS `opacity` on body element is the correct approach for webview content transparency
 
 ---
 
-## Phased Implementation
+## Improvement Opportunities
 
-### Phase 1: Backend — Autocomplete Keyword Endpoint
-**Objective**: Go method that returns all autocomplete candidates
+### New Features
+1. Autocomplete on/off toggle (settings + keyboard shortcut)
+2. App opacity/transparency slider (General settings)
+3. Animations on/off toggle (General settings)
+4. Toast notifications on/off toggle (General settings)
+5. Expanded font library (15+ fonts including developer-focused mono fonts)
+6. Live reload for all settings changes (no restart needed)
+7. Live reload for plugin changes (backend rescan from frontend)
 
-**Files to modify:**
-- `app/service/app.go` — add `AutocompleteItem` struct + `GetAutocompleteKeywords()` method
+### Feature Enhancements
+8. Proper CSS animations for modals (fade + scale)
+9. Proper CSS animations for settings save (checkmark animation)
+10. Theme transition animation (smooth color crossfade)
 
-**Tasks:**
-- [ ] Define `AutocompleteItem` struct: `{ Name string, Category string, Description string }`
-- [ ] Implement `GetAutocompleteKeywords()` that:
-  - Collects all 82 function/constant names from the engine's known list (hardcoded in Go, mirrors `functions.go` switch)
-  - Collects all 154 unit names from `unitDB`
-  - Collects user-defined variables from `Engine.variables`
-  - Collects plugin-provided function names from `PluginManager`
-  - Returns deduplicated `[]AutocompleteItem`
-- [ ] Add descriptions for each function (e.g. `sin` → "Sine of angle (radians)", `km` → "Kilometer (length)")
-- [ ] Run `go build -tags webkit2_41 ./...` to verify
-
-**Dependencies:** None
-
----
-
-### Phase 2: Frontend Types & Store
-**Objective**: TypeScript types and store state for autocomplete
-
-**Files to modify:**
-- `frontend/src/types.ts` — add `AutocompleteItem` interface
-- `frontend/src/stores/calculator.ts` — add autocomplete state
-- `frontend/src/wails.d.ts` — add `GetAutocompleteKeywords` to WailsRuntime
-
-**Tasks:**
-- [ ] Add `AutocompleteItem` interface to `types.ts`
-- [ ] Add to `CalculatorStore`:
-  - `autocompleteItems: AutocompleteItem[]`
-  - `autocompleteVisible: boolean`
-  - `autocompleteIndex: number`
-  - `autocompleteFilter: string`
-  - `setAutocompleteItems(items)`, `setAutocompleteVisible(visible)`, `setAutocompleteIndex(index)`, `setAutocompleteFilter(filter)`
-- [ ] Add `GetAutocompleteKeywords(): Promise<AutocompleteItem[]>` to `WailsRuntime` in `wails.d.ts`
-
-**Dependencies:** Phase 1
+### Code Quality
+11. Consolidate settings into a single reactive store
+12. Add settings change event system (pub/sub pattern)
 
 ---
 
-### Phase 3: Autocomplete Popup Component
-**Objective**: Render the dropdown overlay
+## Development Roadmap
 
-**New file:**
-- `frontend/src/components/AutocompletePopup.ts`
+### Phase 1: Settings Infrastructure (Foundation)
+**Objective**: Build a proper settings store with reactive change propagation
 
-**Tasks:**
-- [ ] Create `AutocompletePopup` class:
-  - `el: HTMLDivElement` — the popup container
-  - `items: AutocompleteItem[]` — current filtered results
-  - `selectedIndex: number` — currently highlighted item
-  - `show(anchorRect, items, selectedIndex)` — position and display
-  - `hide()` — hide popup
-  - `updateItems(items, selectedIndex)` — update list without repositioning
-  - `onSelect: (item: AutocompleteItem) => void` — callback when item selected
-- [ ] Render each item with:
-  - Name (with match prefix bolded)
-  - Category badge (function/constant/unit/variable/plugin) with distinct color
-  - Description text (truncated)
-- [ ] Handle click events on items
-- [ ] Handle scroll within popup (max height 240px, overflow-y auto)
-- [ ] Style to match app theme using CSS variables
+- [x] **1.1** Create `frontend/src/stores/settings.ts` — reactive settings store with all current + new fields
+  - Fields: `theme`, `font_size`, `font_family`, `shortcut_overrides`, `autocomplete_enabled`, `animations_enabled`, `toast_enabled`, `opacity`, `line_numbers_enabled`
+  - Methods: `load()`, `update(partial)`, `save()`, `scheduleSave()`, `onChanged(callback)`
+- [x] **1.2** Update `frontend/src/types.ts` — expand `SettingsData` interface with new fields
+- [x] **1.3** Update `app/service/app.go` — expand Go `SettingsData` struct with new fields, update `GetSettings()` and `SaveSettings()`
+- [x] **1.4** Update `app/storage/config.go` — add new fields to `Config.Settings` struct, update `DefaultConfig()`, `parseConfigTOML()`, `SaveConfig()`
+- [x] **1.5** Wire `App.ts` to use the new settings store — replace scattered `applyTheme`/`applyFontSettings` calls with store subscriptions
 
-**Dependencies:** Phase 2
+**Dependencies**: None
+**Files touched**: `stores/settings.ts` (new), `types.ts`, `app.go`, `config.go`, `App.ts`
 
 ---
 
-### Phase 4: Input Integration
-**Objective**: Wire autocomplete to the textarea input
+### Phase 2: Autocomplete Toggle
+**Objective**: Let users turn autocomplete on/off from settings, default ON
 
-**Files to modify:**
-- `frontend/src/components/CalculatorInput.ts` — detect word boundaries, expose cursor position
-- `frontend/src/App.ts` — orchestrate autocomplete lifecycle
+- [x] **2.1** Add `autocomplete_enabled` to settings store (default: `true`)
+- [x] **2.2** Guard `updateAutocomplete()` in `App.ts` — early return + hide popup if disabled
+- [x] **2.3** Guard `scheduleKeywordRefresh()` — skip if autocomplete disabled
+- [x] **2.4** Guard keydown handler (arrows/enter/tab) — skip if autocomplete disabled
+- [x] **2.5** Hide popup immediately when toggled off mid-session
 
-**Tasks:**
-- [ ] In `CalculatorInput.ts`:
-  - Add `getCursorWord(): { word: string, start: number, end: number }` — extracts the word being typed at cursor position
-  - Add `getCursorPixelPos(): { x: number, y: number }` — returns pixel position of cursor for popup placement (using existing `measureEl`)
-  - Add `replaceWord(start, end, replacement: string)` — replaces the word and repositions cursor
-  - Expose `textarea.addEventListener('input', ...)` for autocomplete trigger
-- [ ] In `App.ts`:
-  - On init: fetch keywords from backend via `GetAutocompleteKeywords()`, cache in store
-  - On textarea input: if 1+ chars typed at word boundary, filter keywords, show popup
-  - On textarea keydown: handle ArrowUp/ArrowDown/Enter/Tab for popup navigation/selection
-  - On selection: replace word in textarea, hide popup, focus textarea
-  - On Escape or blur: hide popup
-  - Re-fetch keywords when plugins are loaded/unloaded
-
-**Dependencies:** Phase 3
+**Dependencies**: Phase 1
+**Files touched**: `App.ts`, `stores/settings.ts`
 
 ---
 
-### Phase 5: Styling & Polish
-**Objective**: Theme-consistent styling and edge cases
+### Phase 3: General Settings Tab Expansion
+**Objective**: Add opacity, animations toggle, toast toggle, line numbers toggle, and more to General tab
 
-**Files to modify:**
-- `frontend/src/style.css` — add autocomplete popup styles
-- `frontend/src/components/AutocompletePopup.ts` — refinements
+- [x] **3.1** Opacity slider (0.3 — 1.0, default 0.95)
+  - Add slider control to `SettingsModal.ts` General tab
+  - Apply via `document.body.style.background = rgba(r,g,b,opacity)` on change (live preview)
+  - Persist in config as `opacity` string (e.g. `"0.95"`)
+  - On startup, apply in `App.ts` init
+- [x] **3.2** Animations toggle (default: ON)
+  - Add toggle switch to General tab
+  - When OFF: add `animations-disabled` class to `<html>` element
+  - CSS: `.animations-disabled * { transition-duration: 0ms !important; animation-duration: 0ms !important; }`
+  - When ON: remove the class
+  - Persist in config as `animations_enabled` string (`"true"`/`"false"`)
+- [x] **3.3** Toast notifications toggle (default: ON)
+  - Add toggle switch to General tab
+  - When OFF: `toast.show()` becomes a no-op
+  - Persist in config as `toast_enabled` string
+- [x] **3.4** Autocomplete toggle in General tab UI
+  - Add toggle switch for `autocomplete_enabled`
+- [x] **3.5** Update `SettingsModal.ts` General tab layout — reorganize into sections: "Calculator", "Appearance", "Behavior"
+- [x] **3.6** Line numbers toggle (default: ON)
+  - Add toggle switch in General > Behavior section
+  - Wire to `CalculatorInput.setLineNumbersVisible()` to show/hide gutter
+  - Persist in config as `line_numbers_enabled` string
 
-**Tasks:**
-- [ ] Add CSS for `.autocomplete-popup`:
-  - Position fixed/absolute, z-index above all panels
-  - Background: `var(--surface)`, border: `1px solid var(--border)`, border-radius: 8px
-  - Box-shadow for depth
-  - Item hover: `var(--surface-hover)`, selected: `var(--accent)` with white text
-  - Category badges: small pill with distinct colors per category
-  - Scrollbar styling matching app theme
-- [ ] Handle edge cases:
-  - Popup flipped above textarea when near bottom of window
-  - Popup hidden when textarea is empty or cursor is mid-expression (not at word boundary)
-  - No popup when only 0 matches found
-  - Single match: still show popup (user may want to see description)
-  - Multiple aliases for same function: show primary name, mark alias
-- [ ] Match font: monospace, same size as textarea
-
-**Dependencies:** Phase 4
-
----
-
-### Phase 6: Plugin & Variable Dynamic Updates
-**Objective**: Keep autocomplete list in sync with runtime state
-
-**Files to modify:**
-- `frontend/src/App.ts` — re-fetch on plugin load/unload
-- `frontend/src/stores/calculator.ts` — notify on variable changes
-
-**Tasks:**
-- [ ] After plugin load/unload in `App.ts`, re-fetch `GetAutocompleteKeywords()` and update store
-- [ ] After variable assignment (e.g. `x = 5`), re-fetch or merge new variable into cached list
-- [ ] Debounce re-fetches (max once per 500ms) to avoid spam during rapid plugin loads
-
-**Dependencies:** Phase 5
+**Dependencies**: Phase 1, Phase 2
+**Files touched**: `SettingsModal.ts`, `toast.ts`, `App.ts`, `style.css`
 
 ---
 
-### Phase 7: Tests
-**Objective**: Unit tests for autocomplete logic
+### Phase 4: Font Expansion
+**Objective**: Add 15+ font options including developer-focused monospace fonts
 
-**New file:**
-- `frontend/src/components/autocomplete.test.ts`
+- [x] **4.1** Add Google Fonts `<link>` preload to `index.html` for: JetBrains Mono, Fira Code, Source Code Pro, IBM Plex Mono, Cascadia Code, Ubuntu Mono, Hack, Victor Mono, Space Mono, Overpass, Inter, JetBrains Sans
+- [x] **4.2** Update `SettingsModal.ts` font family dropdown — expand from 5 to 17 options organized by category:
+  - **Sans-Serif**: System Default, Inter, Overpass, Ubuntu
+  - **Serif**: Georgia, Times New Roman, Playfair Display
+  - **Monospace**: System Mono, JetBrains Mono, Fira Code, Source Code Pro, IBM Plex Mono, Cascadia Code, Hack, Victor Mono, Space Mono, Courier New
+- [x] **4.3** Update preview section to show the selected font live
+- [x] **4.4** Ensure font loading doesn't block UI — use `font-display: swap` in the Google Fonts CSS import
 
-**Tasks:**
-- [ ] Test `getCursorWord()` with various cursor positions and expressions
-- [ ] Test filtering logic: prefix match, case insensitivity, empty filter
-- [ ] Test selection behavior: function with parens, constant without, variable
-- [ ] Test keyboard navigation: index wrapping, Enter/Tab/Escape
-- [ ] Test popup positioning: flips above when near bottom
-- [ ] Test dynamic updates: plugin load adds new items, variable assignment adds items
-
-**Dependencies:** Phase 6
+**Dependencies**: None (can run parallel with Phase 1)
+**Files touched**: `frontend/index.html`, `SettingsModal.ts`, `style.css`
 
 ---
 
-### Phase 8: Version Bump & Docs
-**Objective**: Ship the feature with proper versioning
+### Phase 5: Proper CSS Animations
+**Objective**: Implement smooth animations for modals, panels, theme switching, and settings save
 
-**Files to modify:**
-- `.version`, `wails.json`, `app/service/app.go`, `frontend/package.json`, `frontend/package-lock.json`, `README.md`, `docs/*.md`, `CHANGELOG.md`
+- [ ] **5.1** Modal open/close animation
+  - Replace `display: none/flex` toggle with CSS transition
+  - Add opacity + scale(0.95) -> opacity:1 + scale(1) transition (150ms ease-out)
+  - Add opacity + scale(1) -> opacity:0 + scale(0.95) transition on close (100ms ease-in)
+  - Apply to: SettingsModal, ShortcutModal, ConfirmDialog, DocsViewer
+- [ ] **5.2** Theme switch animation
+  - Add CSS transition on `background-color`, `color`, `border-color` for `html`, `body`, `#notepad`, `#results-column`, and all panel elements
+  - Duration: 300ms ease — noticeable but not sluggish
+- [ ] **5.3** Settings save success animation
+  - Add a subtle checkmark animation or button color flash on successful save
+- [ ] **5.4** Panel open/close polish
+  - Current `transition-all duration-150` is decent — add `opacity` to the transition for a fade+slide effect
+  - Ensure `overflow: hidden` prevents content flash during animation
+- [ ] **5.5** Global animation class system
+  - CSS variables for animation durations: `--anim-duration-fast: 100ms`, `--anim-duration-normal: 200ms`, `--anim-duration-slow: 300ms`
+  - `.animations-disabled` class overrides all to `0ms`
 
-**Tasks:**
-- [ ] Bump version to 0.13.0 (new feature)
-- [ ] Update CHANGELOG.md
-- [ ] Update README.md features section
-- [ ] Update docs if applicable
-
-**Dependencies:** Phase 7
-
----
-
-## Prioritization
-
-| Phase | Value | Effort | Priority |
-|-------|-------|--------|----------|
-| 1 — Backend endpoint | High | Low | Must-have |
-| 2 — Frontend types/store | High | Low | Must-have |
-| 3 — Popup component | High | Medium | Must-have |
-| 4 — Input integration | High | High | Must-have |
-| 5 — Styling/polish | Medium | Medium | Must-have |
-| 6 — Dynamic updates | Medium | Low | Should-have |
-| 7 — Tests | High | Medium | Must-have |
-| 8 — Version/docs | Low | Low | Must-have |
+**Dependencies**: Phase 3 (animations toggle)
+**Files touched**: `style.css`, `SettingsModal.ts`, `ShortcutModal.ts`, `ConfirmDialog.ts`, `DocsViewer.ts`, `NotesPanel.ts`, `HistoryPanel.ts`, `StepsPanel.ts`, `VariableExplorer.ts`
 
 ---
 
-## Risks & Mitigations
-- **Popup positioning with word wrap**: Use existing `measureEl` technique from `CalculatorInput.ts` to compute cursor pixel position accurately
-- **Performance with 250+ items**: Prefix filtering is O(n) with early exit — negligible. DOM rendering limited to max 8 visible items via virtual scrolling or simple slice
-- **Plugin dynamic loading**: Re-fetch on plugin events with debounce to avoid stale data without spamming backend
-- **Mobile/responsive**: Not applicable — this is a desktop Wails app
+### Phase 6: Live Reload System
+**Objective**: Settings and plugin changes apply immediately without app restart
+
+- [x] **6.1** Settings live reload
+  - Expand `onApply` callback in `App.ts` to handle ALL settings fields (not just theme + font)
+  - Opacity: apply `document.body.style.background = rgba(r,g,b,opacity)` immediately for full-window translucency
+  - Animations: toggle `.animations-disabled` class on `<html>` immediately
+  - Toast: update toast module's enabled flag immediately
+  - Autocomplete: update enabled flag, hide popup if disabled
+  - Line numbers: toggle gutter visibility immediately
+- [x] **6.2** Plugin live reload
+  - Add `ReloadPlugins()` backend method that does: `Scan()` + `registerPluginFunctions()`
+  - Frontend: PluginPanel refresh button calls backend rescan + re-injects plugin themes + refreshes keywords
+- [x] **6.3** Startup settings application
+  - On app init, load settings from backend and apply ALL fields through the same `applySettingsState()` function used for live reload
+  - This ensures startup behavior matches runtime behavior
+
+**Dependencies**: Phase 1, Phase 2, Phase 3
+**Files touched**: `App.ts`, `app/service/app.go`, `PluginPanel.ts`
 
 ---
 
-## Completion Criteria
-- Typing in the textarea shows a filtered autocomplete popup after 1+ characters
-- All 236+ keywords (functions, constants, units) are discoverable via autocomplete
-- User-defined variables and plugin functions appear dynamically
-- Keyboard navigation works (↑/↓ Enter Tab Escape)
-- Selection inserts the keyword correctly (functions get `()`)
-- Popup matches app theme
-- All existing tests pass, new tests added
-- Version bumped to 0.13.0
+### Phase 7: Testing & Polish
+**Objective**: Ensure all new features work, tests pass, and UX is consistent
+
+- [x] **7.1** Add unit tests for `stores/settings.ts` — load, update, save, onChanged
+- [x] **7.2** Update `result-display.test.ts` if border-left removal affected selectors
+- [x] **7.3** Test autocomplete toggle — enable/disable, popup behavior, keyword refresh
+- [x] **7.4** Test settings live reload — opacity, animations, toast, font, theme
+- [x] **7.5** Test plugin live reload — install, toggle, remove, rescan
+- [x] **7.6** Test modal animations — open/close on all modals
+- [x] **7.7** Run `npm run lint` (ESLint v9 flat config) — fix any new warnings
+- [x] **7.8** Run `npx vitest run` — all tests must pass (108+ tests)
+- [x] **7.9** Run `wails build -tags "webkit2_41"` — verify build passes
+- [x] **7.10** Real-time settings: removed Save button, all controls auto-save on change with 300ms debounce
+- [x] **7.11** Line numbers toggle: added to General > Behavior, wired to CalculatorInput gutter
+- [x] **7.12** Full-window opacity: body background set to rgba for true window translucency
+
+**Dependencies**: All previous phases
+**Files touched**: Various test files, lint config
+
+---
+
+## Implementation Priority
+
+| Order | Phase | Value | Effort | Dependencies |
+|-------|-------|-------|--------|--------------|
+| 1 | Phase 1: Settings Infrastructure | High | Medium | None |
+| 2 | Phase 2: Autocomplete Toggle | High | Low | Phase 1 |
+| 3 | Phase 3: General Settings Expansion | High | Medium | Phase 1, 2 |
+| 4 | Phase 4: Font Expansion | Medium | Low | None |
+| 5 | Phase 5: Proper CSS Animations | Medium | Medium | Phase 3 |
+| 6 | Phase 6: Live Reload System | High | Medium | Phase 1, 2, 3 |
+| 7 | Phase 7: Testing & Polish | High | Medium | All |
+
+---
+
+## Risks & Considerations
+
+1. **Font loading performance**: Google Fonts require network requests. Mitigate with `font-display: swap` and preload links. Consider offering a "Use system fonts only" option.
+2. **Opacity on Windows**: Wails v2 `WindowSetBackgroundColour` on Windows only supports alpha 0 or 255. CSS-level `opacity` on body is the correct cross-platform approach.
+3. **Config migration**: New fields use `DefaultConfig()` fallback — existing configs won't break. Missing keys get defaults on load.
+4. **Animation performance**: Keep animations to `opacity` and `transform` only (GPU-composited). Avoid animating `width`, `height`, `background-color` where possible.
+5. **Plugin rescan cost**: Full `Scan()` re-reads all plugin directories. For 12 plugins this is negligible. If plugin count grows, consider incremental rescan.
+
+---
+
+## Rollback Notes
+
+- If settings infrastructure breaks: revert `stores/settings.ts`, restore scattered apply calls in `App.ts`
+- If animations cause issues: add `animations-disabled` to `:root` class by default, or remove the `.animations-disabled` CSS block
+- If font loading fails: remove Google Fonts `<link>` from `index.html`, keep system font options only
+- If live reload causes state bugs: fall back to `WindowReloadApp()` as nuclear option for settings that can't apply live

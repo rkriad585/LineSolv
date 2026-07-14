@@ -10,12 +10,12 @@ describe('ConfirmDialog', () => {
   });
 
   it('initializes hidden', () => {
-    expect(dialog.el.style.display).toBe('none');
+    expect(dialog.el.classList.contains('lsv-modal-open')).toBe(false);
   });
 
   it('shows dialog when show() is called', () => {
     dialog.show('Delete Note', 'Are you sure?', 'Delete', () => {});
-    expect(dialog.el.style.display).toBe('flex');
+    expect(dialog.el.classList.contains('lsv-modal-open')).toBe(true);
   });
 
   it('displays title and message text', () => {
@@ -44,7 +44,7 @@ describe('ConfirmDialog', () => {
   it('hide sets display to none and clears innerHTML', () => {
     dialog.show('Title', 'Message', 'OK', () => {});
     dialog.hide();
-    expect(dialog.el.style.display).toBe('none');
+    expect(dialog.el.classList.contains('lsv-modal-open')).toBe(false);
     expect(dialog.el.innerHTML).toBe('');
   });
 
@@ -64,10 +64,10 @@ describe('ConfirmDialog', () => {
 
   it('can be shown multiple times', () => {
     dialog.show('First', 'msg', 'OK', () => {});
-    expect(dialog.el.style.display).toBe('flex');
+    expect(dialog.el.classList.contains('lsv-modal-open')).toBe(true);
     dialog.hide();
-    expect(dialog.el.style.display).toBe('none');
+    expect(dialog.el.classList.contains('lsv-modal-open')).toBe(false);
     dialog.show('Second', 'msg', 'OK', () => {});
-    expect(dialog.el.style.display).toBe('flex');
+    expect(dialog.el.classList.contains('lsv-modal-open')).toBe(true);
   });
 });

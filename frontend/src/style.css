@@ -1,8 +1,35 @@
 @import "tailwindcss";
 
+/* Animation duration variables */
+:root {
+  --anim-fast: 100ms;
+  --anim-normal: 200ms;
+  --anim-slow: 300ms;
+}
+
 /* Only transition specific interactive elements, not everything (avoids flicker) */
 button, .panel-toggle, .note-item, aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+/* Theme color transitions for smooth switching */
+html, body, #notepad, #results-column, #notepad-wrapper,
+aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel,
+#graph-panel {
+  transition: background-color var(--anim-slow) ease, color var(--anim-slow) ease, border-color var(--anim-slow) ease;
+}
+
+/* Modal open/close animation */
+.lsv-modal-overlay {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity var(--anim-normal) ease-out, transform var(--anim-normal) ease-out;
+  pointer-events: none;
+}
+.lsv-modal-overlay.lsv-modal-open {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
 }
 
 :root {
@@ -137,7 +164,7 @@ html {
 body {
   margin: 0;
   overflow: hidden;
-  background: var(--surface);
+  background: transparent;
   border-radius: 10px;
   width: 100vw;
   height: 100vh;
@@ -190,6 +217,13 @@ body {
   -webkit-app-region: no-drag;
 }
 
+.animations-disabled *,
+.animations-disabled *::before,
+.animations-disabled *::after {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+}
+
 /* Fallback: if user prints via browser native Ctrl+P (not our handler), hide screen chrome */
 @media print {
   html, body {
@@ -207,6 +241,16 @@ body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes save-flash {
+  0% { background: var(--accent); }
+  50% { background: #22c55e; }
+  100% { background: var(--accent); }
+}
+
+.save-success {
+  animation: save-flash 0.4s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {

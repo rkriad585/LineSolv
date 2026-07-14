@@ -1,7 +1,8 @@
 import type {ShortcutMap} from './utils/shortcuts';
-import type {AppCallbacks, Note, SettingsData} from './types';
+import type {AppCallbacks, Note} from './types';
 import {CalculatorStore} from './stores/calculator';
 import {NotesManager, type SortField, type SortDir} from './stores/notes';
+import {SettingsStore} from './stores/settings';
 import {TitleBar} from './components/TitleBar';
 import {CalculatorInput} from './components/CalculatorInput';
 import {ResultDisplay} from './components/ResultDisplay';
@@ -21,7 +22,7 @@ import type {ContextMenuItem} from './types';
 import {buildLineResults} from './utils/format';
 import {installGlobalShortcuts, toggleFullscreen} from './utils/shortcuts';
 import {escapeHtml} from './utils/html';
-import {toast} from './utils/toast';
+import {toast, Toast} from './utils/toast';
 import * as serviceBindings from '../wailsjs/go/service/AppService';
 
 const BUILTIN_THEMES = ['dark', 'light', 'neon', 'red', 'obsidian', 'plasma', 'blood'];
@@ -58,16 +59,84 @@ function injectPluginThemes(themes: Array<{id: string; label: string; colors: Re
   document.head.appendChild(pluginThemeStyle);
 }
 
-function applyFontSettings(settings: SettingsData): void {
-  const size = settings.font_size || '16';
+function parseColor(str: string): [number, number, number] | null {
+  const hex = str.replace('#', '');
+  if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+    return [
+      parseInt(hex.substring(0, 2), 16),
+      parseInt(hex.substring(2, 4), 16),
+      parseInt(hex.substring(4, 6), 16),
+    ];
+  }
+  const rgb = str.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (rgb) return [parseInt(rgb[1]), parseInt(rgb[2]), parseInt(rgb[3])];
+  return null;
+}
+
+const THEME_ORIGINS: Record<string, Record<string, string>> = {
+  dark:   { '--surface': '#18181b', '--surface-secondary': '#27272a', '--note-bg': '#27272a' },
+  light:  { '--surface': '#fafafa', '--surface-secondary': '#e4e4e7', '--note-bg': '#e4e4e7' },
+  neon:   { '--surface': '#0a0a0a', '--surface-secondary': '#111122', '--note-bg': '#111122' },
+  red:    { '--surface': '#1a0a0a', '--surface-secondary': '#2a0f0f', '--note-bg': '#2a0f0f' },
+  obsidian: { '--surface': '#0d0d0d', '--surface-secondary': '#1a1a14', '--note-bg': '#1a1a14' },
+  plasma: { '--surface': '#0d0d1a', '--surface-secondary': '#15152a', '--note-bg': '#15152a' },
+  blood:  { '--surface': '#0a0505', '--surface-secondary': '#1a0808', '--note-bg': '#1a0808' },
+};
+
+function applySurfaceOpacity(opacity: number): void {
+  const root = document.documentElement;
+  const themeClass = root.className.replace('theme-', '') || 'dark';
+  const origins = THEME_ORIGINS[themeClass];
+
+  // Get the base RGB for the body background
+  const baseHex = origins?.['--surface'] || '#18181b';
+  const baseRgb = parseColor(baseHex) || [24, 24, 27];
+
+  // Apply translucent body background — this makes the ENTIRE window translucent
+  document.body.style.background = `rgba(${baseRgb[0]},${baseRgb[1]},${baseRgb[2]},${opacity})`;
+
+  // Also apply to surface CSS variables so child elements are translucent too
+  const props = ['--surface', '--surface-secondary', '--note-bg'];
+  for (const prop of props) {
+    const hex = origins?.[prop];
+    if (hex) {
+      const rgb = parseColor(hex);
+      if (rgb) { root.style.setProperty(prop, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${opacity})`); continue; }
+    }
+    const computed = getComputedStyle(root).getPropertyValue(prop).trim();
+    const rgb = parseColor(computed);
+    if (rgb) root.style.setProperty(prop, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${opacity})`);
+  }
+}
+
+function applySettingsState(s: {
+  theme: string;
+  font_size: string;
+  font_family: string;
+  opacity: number;
+  animations_enabled: boolean;
+  toast_enabled: boolean;
+  line_numbers_enabled: boolean;
+}): void {
+  applyTheme(s.theme || 'dark');
+  const size = s.font_size || '16';
   document.documentElement.style.setProperty('--calc-font-size', size + 'px');
-  document.documentElement.style.setProperty('--calc-font-family', settings.font_family || 'monospace');
+  document.documentElement.style.setProperty('--calc-font-family', s.font_family || 'monospace');
+  applySurfaceOpacity(s.opacity);
+  if (s.animations_enabled) {
+    document.documentElement.classList.remove('animations-disabled');
+  } else {
+    document.documentElement.classList.add('animations-disabled');
+  }
+  Toast.enabled = s.toast_enabled;
+  // Line numbers are wired directly to CalculatorInput in the init block
 }
 
 /** Mount the LineSolv application into a root element. */
 export function renderApp(root: HTMLElement): void {
   const store = new CalculatorStore();
   const notesMgr = new NotesManager();
+  const settingsStore = new SettingsStore();
 
   let pendingEval: number | null = null;
   let evalVersion = 0;
@@ -640,6 +709,10 @@ export function renderApp(root: HTMLElement): void {
   };
 
   function updateAutocomplete(): void {
+    if (!settingsStore.getState().autocomplete_enabled) {
+      autocomplete.hide();
+      return;
+    }
     const { word } = input.getCursorWord();
     if (word.length < 1) {
       autocomplete.hide();
@@ -651,6 +724,7 @@ export function renderApp(root: HTMLElement): void {
 
   let keywordRefreshTimer: number | null = null;
   function scheduleKeywordRefresh(): void {
+    if (!settingsStore.getState().autocomplete_enabled) return;
     if (keywordRefreshTimer) return;
     keywordRefreshTimer = window.setTimeout(async () => {
       keywordRefreshTimer = null;
@@ -671,10 +745,7 @@ export function renderApp(root: HTMLElement): void {
 
   const settingsModal = new SettingsModal(
     'dark',
-    (settings) => {
-      applyTheme(settings.theme || 'dark');
-      applyFontSettings(settings);
-    },
+    settingsStore,
   );
 
   const historyPanel = new HistoryPanel((inputText) => {
@@ -730,6 +801,7 @@ export function renderApp(root: HTMLElement): void {
 
   // --- Autocomplete keyboard handling ---
   input.textarea.addEventListener('keydown', (e) => {
+    if (!settingsStore.getState().autocomplete_enabled) return;
     if (!autocomplete.isVisible()) return;
 
     if (e.key === 'ArrowDown') {
@@ -849,10 +921,17 @@ export function renderApp(root: HTMLElement): void {
       }
     } catch { /* ignore */ }
     try {
-      const settings = await serviceBindings.GetSettings();
-      applyTheme(settings.theme || 'dark');
-      applyFontSettings(settings);
+      const state = await settingsStore.load();
+      applySettingsState(state);
     } catch { /* ignore */ }
+    settingsStore.onChanged((s) => {
+      applySettingsState(s);
+      if (!s.autocomplete_enabled) autocomplete.hide();
+      // Wire line numbers to CalculatorInput gutter
+      input.setLineNumbersVisible(s.line_numbers_enabled);
+      // Re-evaluate to re-render results with updated line number visibility
+      forceEval();
+    });
     try {
       allKeywords = await serviceBindings.GetAutocompleteKeywords();
       autocomplete.setItems(allKeywords as import('./types').AutocompleteItem[]);

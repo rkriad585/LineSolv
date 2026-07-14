@@ -1,4 +1,4 @@
-import type {SettingsData} from '../types';
+import type {SettingsStore, SettingsState} from '../stores/settings';
 import * as serviceBindings from '../../wailsjs/go/service/AppService';
 import {toast} from '../utils/toast';
 import {EventsOn} from '../../wailsjs/runtime/runtime';
@@ -55,10 +55,11 @@ export class SettingsModal {
   private tabPanels: HTMLDivElement[] = [];
   private activeTab: string | null = null;
 
-  private onApply: (s: SettingsData) => void;
+  private onApply: (s: Partial<SettingsState>) => void;
   private selectedTheme: string;
 
   private fontSizeInput!: HTMLInputElement;
+  private fontSizeValueEl!: HTMLSpanElement;
   private fontFamilySelect!: CustomSelect;
   private previewEl!: HTMLDivElement;
   private updateStatusEl!: HTMLDivElement;
@@ -67,15 +68,25 @@ export class SettingsModal {
   private checkBtn!: HTMLButtonElement;
   private overrides: Record<string, string> = {};
   private shortcutKbds: Map<string, HTMLElement> = new Map();
+  private opacityInput!: HTMLInputElement;
+  private opacityValueEl!: HTMLSpanElement;
+  private animationsToggle!: HTMLInputElement;
+  private toastToggle!: HTMLInputElement;
+  private autocompleteToggle!: HTMLInputElement;
+  private lineNumbersToggle!: HTMLInputElement;
 
-  constructor(initialTheme: string, onApply: (s: SettingsData) => void) {
+  constructor(initialTheme: string, settingsStore: SettingsStore) {
     this.selectedTheme = initialTheme;
-    this.onApply = onApply;
+    this.onApply = (partial: Partial<SettingsState>) => {
+      settingsStore.update(partial);
+      settingsStore.scheduleSave();
+    };
 
     this.el = document.createElement('div');
     this.el.id = 'settings-modal';
+    this.el.className = 'lsv-modal-overlay';
     this.el.style.cssText =
-      'position:fixed;inset:0;z-index:1000;display:none;flex-direction:column;' +
+      'position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;' +
       'background:var(--surface);';
 
     const header = document.createElement('div');
@@ -90,14 +101,15 @@ export class SettingsModal {
     const headerActions = document.createElement('div');
     headerActions.style.cssText = 'display:flex;align-items:center;gap:8px;--wails-draggable:no-drag;';
 
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = 'Save';
-    saveBtn.style.cssText =
-      'padding:6px 16px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;' +
-      'background:var(--accent);color:var(--surface);transition:opacity 0.15s;';
-    saveBtn.addEventListener('mouseenter', () => { saveBtn.style.opacity = '0.85'; });
-    saveBtn.addEventListener('mouseleave', () => { saveBtn.style.opacity = '1'; });
-    saveBtn.addEventListener('click', () => this.save());
+    const resetBtn = document.createElement('button');
+    resetBtn.textContent = 'Reset';
+    resetBtn.title = 'Reset all settings to defaults';
+    resetBtn.style.cssText =
+      'padding:5px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;' +
+      'background:transparent;color:var(--text-muted);transition:all 0.15s;';
+    resetBtn.addEventListener('mouseenter', () => { resetBtn.style.borderColor = 'var(--accent)'; resetBtn.style.color = 'var(--text)'; });
+    resetBtn.addEventListener('mouseleave', () => { resetBtn.style.borderColor = 'var(--border)'; resetBtn.style.color = 'var(--text-muted)'; });
+    resetBtn.addEventListener('click', () => this.resetToDefaults());
 
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = CLOSE_ICON;
@@ -110,7 +122,7 @@ export class SettingsModal {
     closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'transparent'; });
     closeBtn.addEventListener('click', () => this.close());
 
-    headerActions.append(saveBtn, closeBtn);
+    headerActions.append(resetBtn, closeBtn);
     header.append(this.headerTitleEl, headerActions);
 
     const body = document.createElement('div');
@@ -214,32 +226,20 @@ export class SettingsModal {
     });
   }
 
-  private styledInput(type: string, extra = ''): HTMLInputElement {
-    const el = document.createElement('input');
-    el.type = type;
-    el.style.cssText =
-      'padding:5px 10px;border:1px solid var(--border);border-radius:6px;' +
-      'background:var(--surface-secondary);color:var(--text);font-size:13px;outline:none;' +
-      'transition:border-color .15s;' + extra;
-    el.addEventListener('focus', () => { el.style.borderColor = 'var(--accent)'; });
-    el.addEventListener('blur', () => { el.style.borderColor = 'var(--border)'; });
-    return el;
-  }
-
-  private styledSelect(options: string[]): CustomSelect {
+  private styledFontSelect(fonts: Array<{ group: string; value: string; label: string }>): CustomSelect {
     const container = document.createElement('div');
     container.style.cssText = 'position:relative;max-width:240px;';
 
     const display = document.createElement('div');
     display.tabIndex = 0;
     display.style.cssText =
-      'padding:5px 10px;border:1px solid var(--border);border-radius:6px;' +
+      'padding:6px 10px;border:1px solid var(--border);border-radius:6px;' +
       'background:var(--surface-secondary);color:var(--text);font-size:13px;' +
       'cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;' +
       'outline:none;user-select:none;transition:border-color .15s;';
 
     const label = document.createElement('span');
-    label.style.flex = '1';
+    label.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
 
     const arrow = document.createElement('span');
     arrow.innerHTML =
@@ -250,9 +250,9 @@ export class SettingsModal {
 
     const panel = document.createElement('div');
     panel.style.cssText =
-      'display:none;position:absolute;top:100%;left:0;right:0;z-index:100;' +
+      'display:none;position:absolute;top:100%;left:0;right:0;z-index:100;max-height:320px;overflow-y:auto;' +
       'margin-top:2px;border:1px solid var(--border);border-radius:6px;' +
-      'background:var(--surface);box-shadow:0 8px 24px rgba(0,0,0,0.3);overflow:hidden;';
+      'background:var(--surface);box-shadow:0 8px 24px rgba(0,0,0,0.3);';
 
     let currentIndex = 0;
     const changeCallbacks: Array<() => void> = [];
@@ -266,16 +266,30 @@ export class SettingsModal {
       display.style.borderColor = 'var(--accent)';
     };
 
-    options.forEach((o, idx) => {
+    let lastGroup = '';
+    fonts.forEach((f, idx) => {
+      if (f.group !== lastGroup) {
+        lastGroup = f.group;
+        const header = document.createElement('div');
+        header.textContent = f.group;
+        header.style.cssText =
+          'font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;' +
+          'color:var(--text-muted);padding:8px 10px 3px;user-select:none;' +
+          (panel.children.length > 0 ? 'border-top:1px solid var(--border);margin-top:2px;' : '');
+        panel.appendChild(header);
+      }
+
       const item = document.createElement('div');
-      item.textContent = o.split(',')[0].replace(/['"]/g, '');
+      item.textContent = f.label;
       item.style.cssText =
-        'padding:6px 10px;font-size:13px;color:var(--text);cursor:pointer;transition:background .1s;';
+        'padding:5px 10px;font-size:13px;color:var(--text);cursor:pointer;transition:background .1s;' +
+        `font-family:${f.value};`;
       item.addEventListener('mouseenter', () => { item.style.background = 'var(--surface-hover)'; });
       item.addEventListener('mouseleave', () => { item.style.background = 'transparent'; });
       item.addEventListener('click', () => {
         currentIndex = idx;
-        label.textContent = options[idx].split(',')[0].replace(/['"]/g, '');
+        label.textContent = f.label;
+        label.style.fontFamily = f.value;
         closePanel();
         changeCallbacks.forEach(fn => fn());
       });
@@ -299,20 +313,22 @@ export class SettingsModal {
     };
     document.addEventListener('click', docClick);
 
-    label.textContent = options[0].split(',')[0].replace(/['"]/g, '');
+    label.textContent = fonts[0].label;
+    label.style.fontFamily = fonts[0].value;
     container.append(display, panel);
 
     return {
       el: container,
-      get value() { return options[currentIndex]; },
+      get value() { return fonts[currentIndex].value; },
       set value(v: string) {
-        const idx = options.indexOf(v);
+        const idx = fonts.findIndex(f => f.value === v);
         if (idx >= 0) {
           currentIndex = idx;
-          label.textContent = options[idx].split(',')[0].replace(/['"]/g, '');
+          label.textContent = fonts[idx].label;
+          label.style.fontFamily = fonts[idx].value;
         }
       },
-      options,
+      options: fonts.map(f => f.value),
       addEventListener(type: string, fn: () => void) {
         if (type === 'change') changeCallbacks.push(fn);
       },
@@ -331,64 +347,213 @@ export class SettingsModal {
     return row;
   }
 
+  private toggleRow(label: string, desc: string, checked: boolean): { el: HTMLDivElement; toggle: HTMLInputElement } {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
+
+    const left = document.createElement('div');
+    left.style.cssText = 'display:flex;flex-direction:column;gap:1px;';
+    const lbl = document.createElement('span');
+    lbl.textContent = label;
+    lbl.style.cssText = 'font-size:13px;color:var(--text);user-select:none;';
+    const sub = document.createElement('span');
+    sub.textContent = desc;
+    sub.style.cssText = 'font-size:11px;color:var(--text-muted);user-select:none;';
+    left.append(lbl, sub);
+
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    toggle.checked = checked;
+    toggle.style.cssText = 'display:none;';
+
+    const track = document.createElement('div');
+    track.style.cssText =
+      `width:36px;height:20px;border-radius:10px;cursor:pointer;position:relative;transition:background .2s;` +
+      (checked ? 'background:var(--accent);' : 'background:var(--border);');
+    const thumb = document.createElement('div');
+    thumb.style.cssText =
+      `width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;` +
+      `transition:left .2s;${checked ? 'left:18px;' : 'left:2px;'}`;
+    track.append(thumb);
+
+    track.addEventListener('click', () => {
+      toggle.checked = !toggle.checked;
+      track.style.background = toggle.checked ? 'var(--accent)' : 'var(--border)';
+      thumb.style.left = toggle.checked ? '18px' : '2px';
+      toggle.dispatchEvent(new Event('change'));
+    });
+
+    row.append(left, track);
+    return { el: row, toggle };
+  }
+
+  private sectionHeader(text: string): HTMLDivElement {
+    const h = document.createElement('div');
+    h.textContent = text;
+    h.style.cssText =
+      'font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;' +
+      'color:var(--text-muted);padding:12px 0 4px;border-top:1px solid var(--border);user-select:none;';
+    return h;
+  }
+
   private buildGeneral(panel: HTMLDivElement): void {
     panel.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
 
+    // --- Calculator section ---
+    panel.appendChild(this.sectionHeader('Calculator'));
+
     const familyRow = this.fieldRow('Font Family', () => {
-      const sel = this.styledSelect([
-        '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif',
-        'monospace',
-        'serif',
-        'sans-serif',
-        'Georgia, serif',
-        '\'Courier New\', monospace',
-      ]);
+      const fonts = [
+        { group: 'Sans-Serif', value: '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif', label: 'System Default' },
+        { group: 'Sans-Serif', value: 'Inter, sans-serif', label: 'Inter' },
+        { group: 'Sans-Serif', value: 'Overpass, sans-serif', label: 'Overpass' },
+        { group: 'Sans-Serif', value: 'Ubuntu, sans-serif', label: 'Ubuntu' },
+        { group: 'Serif', value: 'Georgia, serif', label: 'Georgia' },
+        { group: 'Serif', value: '\'Times New Roman\', serif', label: 'Times New Roman' },
+        { group: 'Serif', value: '\'Playfair Display\', serif', label: 'Playfair Display' },
+        { group: 'Monospace', value: 'monospace', label: 'System Mono' },
+        { group: 'Monospace', value: '\'JetBrains Mono\', monospace', label: 'JetBrains Mono' },
+        { group: 'Monospace', value: '\'Fira Code\', monospace', label: 'Fira Code' },
+        { group: 'Monospace', value: '\'Source Code Pro\', monospace', label: 'Source Code Pro' },
+        { group: 'Monospace', value: '\'IBM Plex Mono\', monospace', label: 'IBM Plex Mono' },
+        { group: 'Monospace', value: '\'Cascadia Code\', monospace', label: 'Cascadia Code' },
+        { group: 'Monospace', value: '\'Hack\', monospace', label: 'Hack' },
+        { group: 'Monospace', value: '\'Victor Mono\', monospace', label: 'Victor Mono' },
+        { group: 'Monospace', value: '\'Space Mono\', monospace', label: 'Space Mono' },
+        { group: 'Monospace', value: '\'Courier New\', monospace', label: 'Courier New' },
+      ];
+      const sel = this.styledFontSelect(fonts);
       this.fontFamilySelect = sel;
       sel.addEventListener('change', () => this.updatePreview());
       return sel.el;
     });
 
-    const sizeRow = this.fieldRow('Font Size', () => {
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;align-items:center;gap:6px;';
+    const sizeRow = document.createElement('div');
+    sizeRow.style.cssText = 'padding:9px 0;';
 
-      const decBtn = document.createElement('button');
-      decBtn.textContent = '\u2212';
-      decBtn.style.cssText =
-        'display:flex;align-items:center;justify-content:center;width:26px;height:26px;' +
-        'border:1px solid var(--border);border-radius:6px;background:var(--surface-secondary);' +
-        'color:var(--text);font-size:14px;cursor:pointer;transition:border-color .15s;';
-      decBtn.addEventListener('mouseenter', () => { decBtn.style.borderColor = 'var(--accent)'; });
-      decBtn.addEventListener('mouseleave', () => { decBtn.style.borderColor = 'var(--border)'; });
+    const sizeTop = document.createElement('div');
+    sizeTop.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
 
-      const input = this.styledInput('number', 'width:52px;text-align:center;');
-      this.fontSizeInput = input;
-      input.min = '10';
-      input.max = '32';
+    const sizeLabel = document.createElement('span');
+    sizeLabel.textContent = 'Font Size';
+    sizeLabel.style.cssText = 'font-size:13px;color:var(--text);user-select:none;';
 
-      const incBtn = document.createElement('button');
-      incBtn.textContent = '+';
-      incBtn.style.cssText =
-        'display:flex;align-items:center;justify-content:center;width:26px;height:26px;' +
-        'border:1px solid var(--border);border-radius:6px;background:var(--surface-secondary);' +
-        'color:var(--text);font-size:14px;cursor:pointer;transition:border-color .15s;';
-      incBtn.addEventListener('mouseenter', () => { incBtn.style.borderColor = 'var(--accent)'; });
-      incBtn.addEventListener('mouseleave', () => { incBtn.style.borderColor = 'var(--border)'; });
+    const sizeValue = document.createElement('span');
+    this.fontSizeValueEl = sizeValue;
+    sizeValue.style.cssText = 'font-size:12px;color:var(--text-muted);min-width:28px;text-align:right;';
+    sizeTop.append(sizeLabel, sizeValue);
 
-      decBtn.addEventListener('click', () => {
-        let v = parseInt(input.value) || 16;
-        if (v > 10) { v--; input.value = String(v); this.updatePreview(); }
-      });
-      incBtn.addEventListener('click', () => {
-        let v = parseInt(input.value) || 16;
-        if (v < 32) { v++; input.value = String(v); this.updatePreview(); }
-      });
-      input.addEventListener('input', () => this.updatePreview());
-
-      wrap.append(decBtn, input, incBtn);
-      return wrap;
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = '10';
+    slider.max = '32';
+    slider.step = '1';
+    slider.value = '16';
+    slider.style.cssText = 'width:100%;accent-color:var(--accent);cursor:pointer;margin:0;';
+    this.fontSizeInput = slider as unknown as HTMLInputElement;
+    slider.addEventListener('input', () => {
+      sizeValue.textContent = slider.value + 'px';
+      this.updatePreview();
     });
 
+    const presets = document.createElement('div');
+    presets.style.cssText = 'display:flex;gap:6px;margin-top:8px;';
+    const sizes = [
+      { label: 'S', value: '12' },
+      { label: 'M', value: '16' },
+      { label: 'L', value: '20' },
+      { label: 'XL', value: '24' },
+    ];
+    for (const s of sizes) {
+      const chip = document.createElement('button');
+      chip.textContent = s.label;
+      chip.style.cssText =
+        'padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:transparent;' +
+        'color:var(--text-muted);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;';
+      chip.addEventListener('mouseenter', () => { chip.style.borderColor = 'var(--accent)'; chip.style.color = 'var(--text)'; });
+      chip.addEventListener('mouseleave', () => { chip.style.borderColor = 'var(--border)'; chip.style.color = 'var(--text-muted)'; });
+      chip.addEventListener('click', () => {
+        slider.value = s.value;
+        sizeValue.textContent = s.value + 'px';
+        this.updatePreview();
+      });
+      presets.appendChild(chip);
+    }
+
+    sizeValue.textContent = slider.value + 'px';
+    sizeRow.append(sizeTop, slider, presets);
+
+    const autocompleteRow = this.toggleRow(
+      'Autocomplete',
+      'Show keyword suggestions as you type',
+      true,
+    );
+    this.autocompleteToggle = autocompleteRow.toggle;
+
+    panel.append(familyRow, sizeRow, autocompleteRow.el);
+
+    // --- Appearance section ---
+    panel.appendChild(this.sectionHeader('Appearance'));
+
+    const opacityRow = document.createElement('div');
+    opacityRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
+    const opacityLeft = document.createElement('div');
+    opacityLeft.style.cssText = 'display:flex;flex-direction:column;gap:1px;';
+    const opacityLabel = document.createElement('span');
+    opacityLabel.textContent = 'Opacity';
+    opacityLabel.style.cssText = 'font-size:13px;color:var(--text);user-select:none;';
+    const opacityDesc = document.createElement('span');
+    opacityDesc.textContent = 'Window transparency level';
+    opacityDesc.style.cssText = 'font-size:11px;color:var(--text-muted);user-select:none;';
+    opacityLeft.append(opacityLabel, opacityDesc);
+    const opacityRight = document.createElement('div');
+    opacityRight.style.cssText = 'display:flex;align-items:center;gap:8px;';
+    this.opacityInput = document.createElement('input');
+    this.opacityInput.type = 'range';
+    this.opacityInput.min = '0.3';
+    this.opacityInput.max = '1';
+    this.opacityInput.step = '0.05';
+    this.opacityInput.value = '0.95';
+    this.opacityInput.style.cssText =
+      'width:100px;accent-color:var(--accent);cursor:pointer;';
+    this.opacityValueEl = document.createElement('span');
+    this.opacityValueEl.textContent = '95%';
+    this.opacityValueEl.style.cssText = 'font-size:12px;color:var(--text-muted);min-width:32px;text-align:right;';
+    this.opacityInput.addEventListener('input', () => {
+      this.opacityValueEl.textContent = Math.round(parseFloat(this.opacityInput.value) * 100) + '%';
+    });
+    opacityRight.append(this.opacityInput, this.opacityValueEl);
+    opacityRow.append(opacityLeft, opacityRight);
+
+    const animationsRow = this.toggleRow(
+      'Animations',
+      'Enable smooth transitions and effects',
+      true,
+    );
+    this.animationsToggle = animationsRow.toggle;
+
+    panel.append(opacityRow, animationsRow.el);
+
+    // --- Behavior section ---
+    panel.appendChild(this.sectionHeader('Behavior'));
+
+    const lineNumbersRow = this.toggleRow(
+      'Line Numbers',
+      'Show line numbers in the editor gutter',
+      true,
+    );
+    this.lineNumbersToggle = lineNumbersRow.toggle;
+
+    const toastRow = this.toggleRow(
+      'Toast Notifications',
+      'Show success and error messages',
+      true,
+    );
+    this.toastToggle = toastRow.toggle;
+
+    panel.append(lineNumbersRow.el, toastRow.el);
+
+    // --- Preview ---
     const previewSection = document.createElement('div');
     previewSection.style.cssText =
       'margin-top:14px;padding:12px 14px;border:1px solid var(--border);' +
@@ -403,7 +568,16 @@ export class SettingsModal {
     this.previewEl.style.cssText = 'font-size:14px;font-family:monospace;color:var(--text);padding:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
 
     previewSection.append(previewLabel, this.previewEl);
-    panel.append(familyRow, sizeRow, previewSection);
+    panel.appendChild(previewSection);
+
+    // --- Real-time apply: wire all controls ---
+    this.autocompleteToggle.addEventListener('change', () => this.applyAll());
+    this.lineNumbersToggle.addEventListener('change', () => this.applyAll());
+    this.toastToggle.addEventListener('change', () => this.applyAll());
+    this.animationsToggle.addEventListener('change', () => this.applyAll());
+    this.opacityInput.addEventListener('input', () => this.applyAll());
+    this.fontSizeInput.addEventListener('input', () => this.applyAll());
+    this.fontFamilySelect.addEventListener('change', () => this.applyAll());
   }
 
   private buildTheme(panel: HTMLDivElement): void {
@@ -479,6 +653,7 @@ export class SettingsModal {
           const chk = c.querySelector('span:last-child') as HTMLElement;
           if (chk) chk.style.display = id === t.id ? '' : 'none';
         });
+        this.applyAll();
       });
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -768,23 +943,53 @@ export class SettingsModal {
     }
   }
 
-  private async save(): Promise<void> {
-    const settings: SettingsData = {
+  private async resetToDefaults(): Promise<void> {
+    this.selectedTheme = 'dark';
+    this.fontSizeInput.value = '16';
+    this.fontSizeValueEl.textContent = '16px';
+    this.fontFamilySelect.value = '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif';
+    this.opacityInput.value = '0.95';
+    this.opacityValueEl.textContent = '95%';
+    this.animationsToggle.checked = true;
+    this.toastToggle.checked = true;
+    this.autocompleteToggle.checked = true;
+    this.lineNumbersToggle.checked = true;
+    this.overrides = {};
+    this.updatePreview();
+
+    // Update theme card highlights
+    const thumbGrid = this.el.querySelector('div[style*="grid-template-columns:1fr 1fr"]');
+    if (thumbGrid) {
+      const cards = thumbGrid.children;
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i] as ThemeCardElement;
+        const themeId = card.themeId || null;
+        const isActive = themeId === 'dark';
+        card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+        const chk = card.querySelector('span:last-child') as HTMLElement;
+        if (chk) chk.style.display = isActive ? '' : 'none';
+      }
+    }
+
+    // Update shortcut displays
+    this.shortcutKbds.forEach((kbd) => { kbd.textContent = ''; });
+
+    this.applyAll();
+    toast.show('Settings reset to defaults', 'info');
+  }
+
+  private applyAll(): void {
+    this.onApply({
       theme: this.selectedTheme,
       font_size: this.fontSizeInput.value,
       font_family: this.fontFamilySelect.value,
       shortcut_overrides: JSON.stringify(this.overrides),
-    };
-
-    try {
-      await serviceBindings.SaveSettings(settings);
-      this.onApply(settings);
-      toast.show('Settings saved', 'success');
-    } catch {
-      toast.show('Failed to save settings', 'error');
-    }
-
-    this.close();
+      autocomplete_enabled: this.autocompleteToggle.checked,
+      animations_enabled: this.animationsToggle.checked,
+      toast_enabled: this.toastToggle.checked,
+      opacity: parseFloat(this.opacityInput.value) || 0.95,
+      line_numbers_enabled: this.lineNumbersToggle.checked,
+    });
   }
 
   async open(tab?: string): Promise<void> {
@@ -808,11 +1013,21 @@ export class SettingsModal {
 
       this.selectedTheme = settings.theme || 'dark';
       this.fontSizeInput.value = settings.font_size || '16';
+      this.fontSizeValueEl.textContent = (settings.font_size || '16') + 'px';
       const fontFamily = settings.font_family || '';
       if (this.fontFamilySelect.options.some(o => o === fontFamily)) {
         this.fontFamilySelect.value = fontFamily;
       }
       this.updatePreview();
+
+      // Populate new controls
+      const opacity = parseFloat(settings.opacity) || 0.95;
+      this.opacityInput.value = String(opacity);
+      this.opacityValueEl.textContent = Math.round(opacity * 100) + '%';
+      this.animationsToggle.checked = settings.animations_enabled !== 'false';
+      this.toastToggle.checked = settings.toast_enabled !== 'false';
+      this.autocompleteToggle.checked = settings.autocomplete_enabled !== 'false';
+      this.lineNumbersToggle.checked = settings.line_numbers_enabled !== 'false';
 
       const thumbGrid = this.el.querySelector('div[style*="grid-template-columns:1fr 1fr"]');
       if (thumbGrid) {
@@ -837,14 +1052,14 @@ export class SettingsModal {
       toast.show('Failed to load settings', 'error');
     }
 
-    this.el.style.display = 'flex';
+    this.el.classList.add('lsv-modal-open');
     this.switchTab(tab || 'General');
   }
 
   close(): void {
     if (!this.isVisible) return;
     this.isVisible = false;
-    this.el.style.display = 'none';
+    this.el.classList.remove('lsv-modal-open');
   }
 
   isOpen(): boolean {

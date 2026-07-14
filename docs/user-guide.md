@@ -1042,6 +1042,11 @@ Open Settings with `Ctrl/Cmd + ,` or the gear icon in the title bar. Settings ha
 |---------|-------------|-------|
 | **Font Family** | Select from: system default, monospace, serif, sans-serif, Georgia, Courier New | 6 options |
 | **Font Size** | Adjust between 10px and 32px with +/- buttons or direct input | 10--32 |
+| **Opacity** | Window opacity slider | 30%--100% (default 95%) |
+| **Line Numbers** | Toggle line numbers in the input area | on/off |
+| **Autocomplete** | Toggle autocomplete suggestions | on/off |
+| **Animations** | Toggle UI animations (transitions, toast slide-ins) | on/off |
+| **Toast Notifications** | Toggle toast notifications for actions and errors | on/off |
 | **Preview** | Live preview showing "AaBbCc 123 -- The quick brown fox jumps over the lazy dog." | -- |
 
 ### Theme Tab
@@ -1060,7 +1065,7 @@ Select from 7 built-in themes plus any plugin-provided themes:
 
 Plugin themes appear below the built-in themes, labeled with a "Plugin" badge.
 
-Each theme card shows a color swatch with "Aa" in the accent color and "123" in the text color. Click a card to select it, then click **Save**.
+Each theme card shows a color swatch with "Aa" in the accent color and "123" in the text color. Click a card to select it; theme changes apply instantly (no Save button).
 
 ### Keyboard Shortcuts Tab
 
@@ -1075,8 +1080,7 @@ To customize:
 1. Click the key binding or the pencil icon.
 2. A "Press keys..." input appears.
 3. Press your desired key combination.
-4. The binding updates immediately.
-5. Click **Save** to persist.
+4. The binding updates immediately and auto-saves.
 
 Overrides are stored in `config.toml` as a JSON string in `settings.shortcut_overrides`.
 

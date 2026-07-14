@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.14.0] — 2026-07-14
+
+### Added
+- **Full-window opacity/transparency** — window opacity now applies to the entire app window including body, panels, and all surfaces. Default opacity changed to 95%.
+- **Real-time settings** — all settings (theme, font, opacity, toggles) apply instantly on change. No Save button required. Changes auto-persist to `config.toml` with debounced writes.
+- **Line numbers toggle** — new setting in General > Behavior to show/hide line number gutter (default: on).
+- **Reset to Defaults** — new button in settings header replaces the old Save button. Resets all settings to factory defaults with one click.
+- **Opacity slider** — adjustable window transparency from 30% to 100% in General > Appearance section.
+- **Autocomplete toggle** — enable/disable keyword autocomplete popup from General > Calculator section.
+- **Animations toggle** — enable/disable CSS animations and transitions from General > Appearance section.
+- **Toast toggle** — enable/disable toast notifications from General > Behavior section.
+
+### Changed
+- **SettingsModal** — removed Save button; all controls now call `settingsStore.update()` + `settingsStore.scheduleSave()` on every change for instant apply.
+- **SettingsStore** — added `scheduleSave()` method with 300ms debounce for automatic persistence.
+- **applySurfaceOpacity()** — now sets `document.body.style.background` directly with rgba for full-window translucency, in addition to CSS variable overrides.
+- **Default opacity** — changed from 1.0 (fully opaque) to 0.95 (95% translucent).
+- **CalculatorInput** — added `setLineNumbersVisible()` method to show/hide gutter dynamically.
+- **SettingsData** — expanded with `opacity`, `line_numbers_enabled`, `autocomplete_enabled`, `animations_enabled`, `toast_enabled` fields.
+- **CSS** — `body { background: transparent }` moved from `var(--surface)` to support JS-controlled translucent backgrounds.
+
 ## [0.13.0] — 2026-07-14
 
 ### Added

@@ -146,8 +146,9 @@ export class DocsViewer {
   constructor() {
     this.el = document.createElement('div');
     this.el.id = 'docs-viewer';
+    this.el.className = 'lsv-modal-overlay';
     this.el.style.cssText =
-      'position:fixed;inset:0;z-index:1000;display:none;flex-direction:column;' +
+      'position:fixed;inset:0;z-index:1000;flex-direction:column;' +
       'background:var(--surface);';
 
     const header = document.createElement('div');
@@ -224,7 +225,7 @@ export class DocsViewer {
   async open(): Promise<void> {
     if (this.isVisible) return;
     this.isVisible = true;
-    this.el.style.display = 'flex';
+    this.el.classList.add('lsv-modal-open');
     this.contentEl.innerHTML = '';
     this.contentEl.appendChild(this.loadingEl);
     if (this.searchInput) this.searchInput.value = '';
@@ -250,7 +251,7 @@ export class DocsViewer {
   close(): void {
     if (!this.isVisible) return;
     this.isVisible = false;
-    this.el.style.display = 'none';
+    this.el.classList.remove('lsv-modal-open');
     if (this.searchInput) {
       this.searchInput.removeEventListener('input', this.handleSearch);
     }

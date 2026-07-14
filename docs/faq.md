@@ -389,10 +389,12 @@ Press `Ctrl/Cmd+,` or click the gear icon in the title bar.
 
 | Tab | Settings |
 |-----|----------|
-| **General** | Font family (from system fonts), font size (10px–32px), live preview |
-| **Theme** | Choose from 7 built-in color themes (+ plugin themes) |
-| **Keyboard Shortcuts** | View and rebind all shortcuts |
+| **General** | Font family (17 options), font size (10px–32px slider), autocomplete toggle, opacity slider (30%–100%, default 95%), animations toggle, line numbers toggle, toast toggle, live preview |
+| **Theme** | Choose from 7 built-in color themes (+ plugin themes) — applies instantly |
+| **Keyboard Shortcuts** | View and rebind all shortcuts — auto-saves on change |
 | **About** | Version info, author links, check for updates |
+
+All settings apply immediately and auto-save — no Save button required.
 
 ### Where are settings stored?
 All settings are stored in `~/.config/neostore/linesolv/config.toml`. The file has four sections:
@@ -402,10 +404,10 @@ All settings are stored in `~/.config/neostore/linesolv/config.toml`. The file h
 | `[app]` | `theme`, `version` | Active theme and app version |
 | `[notes]` | `last_active`, `sort_by` | Last active note ID and sort order |
 | `[behavior]` | `delete_without_confirm` | Delete confirmation preference (`"true"` / `"false"`) |
-| `[settings]` | `font_size`, `font_family`, `shortcut_overrides` | Font and shortcut configuration |
+| `[settings]` | `font_size`, `font_family`, `shortcut_overrides`, `opacity`, `line_numbers_enabled`, `autocomplete_enabled`, `animations_enabled`, `toast_enabled` | Font, shortcut, and display configuration |
 
 ### Can I reset settings to defaults?
-Delete `~/.config/neostore/linesolv/config.toml` and restart the app. A new default config will be created with the Dark theme, 16px font size, and system default font family.
+Click **Reset** in the settings header bar to reset all settings to defaults. Alternatively, delete `~/.config/neostore/linesolv/config.toml` and restart the app. Defaults: Dark theme, 95% opacity, 16px system font, line numbers on, autocomplete on, animations on, toast on.
 
 ---
 

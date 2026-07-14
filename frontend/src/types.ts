@@ -39,6 +39,11 @@ export interface SettingsData {
   font_size: string;
   font_family: string;
   shortcut_overrides: string;
+  autocomplete_enabled: string;
+  animations_enabled: string;
+  toast_enabled: string;
+  opacity: string;
+  line_numbers_enabled: string;
 }
 
 export interface UpdateInfo {

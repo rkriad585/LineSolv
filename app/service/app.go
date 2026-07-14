@@ -430,10 +430,15 @@ func (s *AppService) UpdateCurrencyRates() (*CurrencyCacheInfo, error) {
 }
 
 type SettingsData struct {
-	Theme             string `json:"theme"`
-	FontSize          string `json:"font_size"`
-	FontFamily        string `json:"font_family"`
-	ShortcutOverrides string `json:"shortcut_overrides"`
+	Theme               string `json:"theme"`
+	FontSize            string `json:"font_size"`
+	FontFamily          string `json:"font_family"`
+	ShortcutOverrides   string `json:"shortcut_overrides"`
+	AutocompleteEnabled string `json:"autocomplete_enabled"`
+	AnimationsEnabled   string `json:"animations_enabled"`
+	ToastEnabled        string `json:"toast_enabled"`
+	Opacity             string `json:"opacity"`
+	LineNumbersEnabled  string `json:"line_numbers_enabled"`
 }
 
 type UpdateInfo struct {
@@ -449,10 +454,15 @@ func (s *AppService) GetSettings() (*SettingsData, error) {
 		return nil, err
 	}
 	return &SettingsData{
-		Theme:             cfg.App.Theme,
-		FontSize:          cfg.Settings.FontSize,
-		FontFamily:        cfg.Settings.FontFamily,
-		ShortcutOverrides: cfg.Settings.ShortcutOverrides,
+		Theme:               cfg.App.Theme,
+		FontSize:            cfg.Settings.FontSize,
+		FontFamily:          cfg.Settings.FontFamily,
+		ShortcutOverrides:   cfg.Settings.ShortcutOverrides,
+		AutocompleteEnabled: cfg.Settings.AutocompleteEnabled,
+		AnimationsEnabled:   cfg.Settings.AnimationsEnabled,
+		ToastEnabled:        cfg.Settings.ToastEnabled,
+		Opacity:             cfg.Settings.Opacity,
+		LineNumbersEnabled:  cfg.Settings.LineNumbersEnabled,
 	}, nil
 }
 
@@ -465,6 +475,11 @@ func (s *AppService) SaveSettings(settings *SettingsData) error {
 	cfg.Settings.FontSize = settings.FontSize
 	cfg.Settings.FontFamily = settings.FontFamily
 	cfg.Settings.ShortcutOverrides = settings.ShortcutOverrides
+	cfg.Settings.AutocompleteEnabled = settings.AutocompleteEnabled
+	cfg.Settings.AnimationsEnabled = settings.AnimationsEnabled
+	cfg.Settings.ToastEnabled = settings.ToastEnabled
+	cfg.Settings.Opacity = settings.Opacity
+	cfg.Settings.LineNumbersEnabled = settings.LineNumbersEnabled
 	return storage.SaveConfig(cfg)
 }
 

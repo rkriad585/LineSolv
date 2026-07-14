@@ -1,5 +1,6 @@
 export class Toast {
   private el: HTMLDivElement;
+  static enabled = true;
 
   constructor() {
     this.el = document.createElement('div');
@@ -10,6 +11,7 @@ export class Toast {
   }
 
   show(message: string, type: 'success' | 'error' | 'info' = 'info', duration = 2500): void {
+    if (!Toast.enabled) return;
     const colors = {
       success: 'rgba(34,197,94,0.95)',
       error: 'rgba(239,68,68,0.95)',

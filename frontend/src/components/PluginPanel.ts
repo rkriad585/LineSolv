@@ -188,7 +188,13 @@ export class PluginPanel {
     refreshBtn.innerHTML = REFRESH_ICON;
     refreshBtn.title = 'Refresh';
     refreshBtn.style.cssText = this.iconBtnStyle();
-    refreshBtn.addEventListener('click', () => this.loadPlugins());
+    refreshBtn.addEventListener('click', async () => {
+      try {
+        await serviceBindings.ReloadPlugins();
+        await this.loadPlugins();
+        this.onPluginsChanged?.();
+      } catch { /* ignore */ }
+    });
 
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = CLOSE_ICON;

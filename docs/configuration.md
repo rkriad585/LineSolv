@@ -34,6 +34,11 @@ delete_without_confirm = "false"
 font_size = "16"
 font_family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
 shortcut_overrides = "{}"
+opacity = "0.95"
+line_numbers_enabled = "true"
+autocomplete_enabled = "true"
+animations_enabled = "true"
+toast_enabled = "true"
 ```
 
 ## Sections
@@ -73,6 +78,11 @@ Controls display and input preferences.
 | `font_size` | string | `"16"` | Calculator font size in pixels. Applied to the input area, gutter, and results column. |
 | `font_family` | string | `"-apple-system, ..."` | CSS font-family stack for the calculator text. |
 | `shortcut_overrides` | string | `"{}"` | JSON-encoded map of keyboard shortcut overrides. Example: `"{\"toggleNotes\":\"Ctrl+Shift+B\"}"`. |
+| `opacity` | string | `"0.95"` | Window opacity (30%–100%). `"1.0"` is fully opaque. |
+| `line_numbers_enabled` | string | `"true"` | Show line numbers in the input area. |
+| `autocomplete_enabled` | string | `"true"` | Enable variable/function autocomplete suggestions. |
+| `animations_enabled` | string | `"true"` | Enable UI animations (transitions, toast slide-ins). |
+| `toast_enabled` | string | `"true"` | Show toast notifications for actions and errors. |
 
 ## Data Directory
 

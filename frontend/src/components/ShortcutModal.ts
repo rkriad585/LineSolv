@@ -6,8 +6,9 @@ export class ShortcutModal {
   constructor() {
     this.el = document.createElement('div');
     this.el.id = 'shortcut-modal';
+    this.el.className = 'lsv-modal-overlay';
     this.el.style.cssText = `
-      display: none; position: fixed; inset: 0; z-index: 1000;
+      position: fixed; inset: 0; z-index: 1000;
       background: rgba(0,0,0,0.5); align-items: center; justify-content: center;
     `;
     this.el.addEventListener('click', (e) => {
@@ -64,14 +65,14 @@ export class ShortcutModal {
   }
 
   open(): void {
-    this.el.style.display = 'flex';
+    this.el.classList.add('lsv-modal-open');
   }
 
   close(): void {
-    this.el.style.display = 'none';
+    this.el.classList.remove('lsv-modal-open');
   }
 
   isOpen(): boolean {
-    return this.el.style.display === 'flex';
+    return this.el.classList.contains('lsv-modal-open');
   }
 }
