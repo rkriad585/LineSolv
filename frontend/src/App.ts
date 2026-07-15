@@ -13,6 +13,7 @@ import {ShortcutModal} from './components/ShortcutModal';
 import {SettingsModal} from './components/SettingsModal';
 import {DocsViewer} from './components/DocsViewer';
 import {HistoryPanel} from './components/HistoryPanel';
+import {loadFontForFamily} from './utils/fonts';
 import {StepsPanel} from './components/StepsPanel';
 import {GraphPanel} from './components/GraphPanel';
 import {PluginPanel} from './components/PluginPanel';
@@ -98,44 +99,28 @@ function parseColor(str: string): [number, number, number] | null {
   return null;
 }
 
-const THEME_ORIGINS: Record<string, Record<string, string>> = {
-  dark:   { '--surface': '#18181b', '--surface-secondary': '#27272a', '--note-bg': '#27272a' },
-  light:  { '--surface': '#fafafa', '--surface-secondary': '#e4e4e7', '--note-bg': '#e4e4e7' },
-  neon:   { '--surface': '#0a0a0a', '--surface-secondary': '#111122', '--note-bg': '#111122' },
-  red:    { '--surface': '#1a0a0a', '--surface-secondary': '#2a0f0f', '--note-bg': '#2a0f0f' },
-  obsidian: { '--surface': '#0d0d0d', '--surface-secondary': '#1a1a14', '--note-bg': '#1a1a14' },
-  plasma: { '--surface': '#0d0d1a', '--surface-secondary': '#15152a', '--note-bg': '#15152a' },
-  blood:  { '--surface': '#0a0505', '--surface-secondary': '#1a0808', '--note-bg': '#1a0808' },
-  midnight: { '--surface': '#0f172a', '--surface-secondary': '#1e293b', '--note-bg': '#1e293b' },
-  aurora: { '--surface': '#0c0a1a', '--surface-secondary': '#161230', '--note-bg': '#161230' },
-  mono:   { '--surface': '#000000', '--surface-secondary': '#0a0a0a', '--note-bg': '#0a0a0a' },
-  frost:  { '--surface': '#0a1628', '--surface-secondary': '#132038', '--note-bg': '#132038' },
-  prism:  { '--surface': '#1a0a28', '--surface-secondary': '#241438', '--note-bg': '#241438' },
-  lavender: { '--surface': '#1a1528', '--surface-secondary': '#241e38', '--note-bg': '#241e38' },
-  sage:   { '--surface': '#0f1a14', '--surface-secondary': '#182820', '--note-bg': '#182820' },
-  'warm-light': { '--surface': '#1a1510', '--surface-secondary': '#282018', '--note-bg': '#282018' },
-};
-
 function applySurfaceOpacity(opacity: number): void {
   const root = document.documentElement;
-  const themeClass = Array.from(root.classList).find(c => c.startsWith('theme-'))?.replace('theme-', '') || 'dark';
-  const origins = THEME_ORIGINS[themeClass];
 
-  // Get the base RGB for the body background
-  const baseHex = origins?.['--surface'] || '#18181b';
-  const baseRgb = parseColor(baseHex) || [24, 24, 27];
+  // At full opacity, clear inline styles so CSS rules take effect directly
+  if (opacity >= 1) {
+    root.style.removeProperty('--surface');
+    root.style.removeProperty('--surface-secondary');
+    root.style.removeProperty('--note-bg');
+    document.body.style.background = '';
+    return;
+  }
 
-  // Apply translucent body background — this makes the ENTIRE window translucent
+  // Read current CSS variable values from the DOM (works for built-in and plugin themes)
+  const props = ['--surface', '--surface-secondary', '--note-bg'];
+  const baseSurface = getComputedStyle(root).getPropertyValue('--surface').trim();
+  const baseRgb = parseColor(baseSurface) || [24, 24, 27];
+
+  // Apply translucent body background
   document.body.style.background = `rgba(${baseRgb[0]},${baseRgb[1]},${baseRgb[2]},${opacity})`;
 
-  // Also apply to surface CSS variables so child elements are translucent too
-  const props = ['--surface', '--surface-secondary', '--note-bg'];
+  // Apply to surface CSS variables so child elements are translucent too
   for (const prop of props) {
-    const hex = origins?.[prop];
-    if (hex) {
-      const rgb = parseColor(hex);
-      if (rgb) { root.style.setProperty(prop, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${opacity})`); continue; }
-    }
     const computed = getComputedStyle(root).getPropertyValue(prop).trim();
     const rgb = parseColor(computed);
     if (rgb) root.style.setProperty(prop, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${opacity})`);
@@ -157,6 +142,7 @@ function applySettingsState(s: {
   const size = s.font_size || '16';
   document.documentElement.style.setProperty('--calc-font-size', size + 'px');
   document.documentElement.style.setProperty('--calc-font-family', s.font_family || 'monospace');
+  loadFontForFamily(s.font_family || 'monospace');
   applySurfaceOpacity(s.opacity);
   if (s.animations_enabled) {
     document.documentElement.classList.remove('animations-disabled');
@@ -548,7 +534,7 @@ export function renderApp(root: HTMLElement): void {
     onTab: () => scheduleEval(),
     onInput: () => {
       scheduleEval();
-      updateAutocomplete();
+      throttledUpdateAutocomplete();
       if (notesMgr.activeNote()) {
         notesMgr.activeNote().content = input.text;
         scheduleSaveContent(notesMgr.activeNote().id, input.text);
@@ -778,6 +764,15 @@ export function renderApp(root: HTMLElement): void {
     autocomplete.updateFilter(word, pos.x, pos.y);
   }
 
+  let autocompleteThrottleTimer: number | null = null;
+  function throttledUpdateAutocomplete(): void {
+    if (autocompleteThrottleTimer) return;
+    autocompleteThrottleTimer = window.setTimeout(() => {
+      autocompleteThrottleTimer = null;
+      updateAutocomplete();
+    }, 50);
+  }
+
   let keywordRefreshTimer: number | null = null;
   function scheduleKeywordRefresh(): void {
     if (!settingsStore.getState().autocomplete_enabled) return;
@@ -846,11 +841,16 @@ export function renderApp(root: HTMLElement): void {
     results.el.scrollTop = input.textarea.scrollTop;
   });
 
+  let resizeRaf = 0;
   window.addEventListener('resize', () => {
-    if (window.innerWidth < 700 && notesPanel.isOpen()) notesPanel.close();
-    if (window.innerWidth < 700 && historyPanel.isOpen()) historyPanel.close();
-    if (window.innerWidth < 600 && stepsPanel.isOpen()) stepsPanel.close();
-    if (window.innerWidth < 500 && varsPanel.isOpen()) varsPanel.close();
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(() => {
+      resizeRaf = 0;
+      if (window.innerWidth < 700 && notesPanel.isOpen()) notesPanel.close();
+      if (window.innerWidth < 700 && historyPanel.isOpen()) historyPanel.close();
+      if (window.innerWidth < 600 && stepsPanel.isOpen()) stepsPanel.close();
+      if (window.innerWidth < 500 && varsPanel.isOpen()) varsPanel.close();
+    });
   });
 
   installGlobalShortcuts(input.textarea, shortcuts);
@@ -945,9 +945,99 @@ export function renderApp(root: HTMLElement): void {
     ctxMenu.show(items, e.clientX, e.clientY);
   });
 
+  // Docs viewer context menu
+  docsViewer.contentEl.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const notes = notesMgr.getNotes();
+    const activeId = notesMgr.getActiveId();
+
+    const items: ContextMenuItem[] = [
+      {label: 'Select All', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>', shortcut: mod + '+A', action: () => {
+        const range = document.createRange();
+        range.selectNodeContents(docsViewer.contentEl);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }},
+      {separator: true},
+      {label: 'New Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>', shortcut: mod + '+N', action: handleNewNote},
+    ];
+
+    if (notes.length > 1) {
+      const switchChildren: ContextMenuItem[] = notes.map(n => ({
+        label: n.name || 'Untitled',
+        icon: n.id === activeId ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : undefined,
+        action: () => switchNote(n.id),
+      }));
+      items.push({label: 'Switch Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>', children: switchChildren});
+    }
+
+    items.push(
+      {separator: true},
+      {label: 'Panels', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>', children: [
+          {label: 'Docs', action: shortcuts.onToggleDocs},
+          {label: 'Plugins', action: shortcuts.onTogglePlugins},
+          {label: 'Settings', action: shortcuts.onToggleSettings},
+        ]},
+      {separator: true},
+      {label: 'About LineSolv', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>', action: () => { settingsModal.open('About'); }},
+      {separator: true},
+      {label: 'Select text, then press ' + mod + '+C to copy', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', disabled: true},
+    );
+
+    ctxMenu.show(items, e.clientX, e.clientY);
+  });
+
+  // Plugin detail view context menu
+  pluginPanel.detailContent.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const notes = notesMgr.getNotes();
+    const activeId = notesMgr.getActiveId();
+
+    const items: ContextMenuItem[] = [
+      {label: 'Select All', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>', shortcut: mod + '+A', action: () => {
+        const range = document.createRange();
+        range.selectNodeContents(pluginPanel.detailContent);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }},
+      {separator: true},
+      {label: 'New Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>', shortcut: mod + '+N', action: handleNewNote},
+    ];
+
+    if (notes.length > 1) {
+      const switchChildren: ContextMenuItem[] = notes.map(n => ({
+        label: n.name || 'Untitled',
+        icon: n.id === activeId ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : undefined,
+        action: () => switchNote(n.id),
+      }));
+      items.push({label: 'Switch Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>', children: switchChildren});
+    }
+
+    items.push(
+      {separator: true},
+      {label: 'Panels', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>', children: [
+          {label: 'Docs', action: shortcuts.onToggleDocs},
+          {label: 'Plugins', action: shortcuts.onTogglePlugins},
+          {label: 'Settings', action: shortcuts.onToggleSettings},
+        ]},
+      {separator: true},
+      {label: 'About LineSolv', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>', action: () => { settingsModal.open('About'); }},
+      {separator: true},
+      {label: 'Select text, then press ' + mod + '+C to copy', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', disabled: true},
+    );
+
+    ctxMenu.show(items, e.clientX, e.clientY);
+  });
+
+  let lastHistoryRef: readonly import('./stores/calculator').HistoryEntry[] | null = null;
   store.subscribe((state) => {
     loadingSpinner.style.display = state.evalState === 'loading' ? '' : 'none';
-    if (historyPanel.isOpen()) {
+    if (historyPanel.isOpen() && state.history !== lastHistoryRef) {
+      lastHistoryRef = state.history;
       historyPanel.render(state.history);
     }
   });

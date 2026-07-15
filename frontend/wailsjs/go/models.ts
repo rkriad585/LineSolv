@@ -275,6 +275,7 @@ export namespace service {
 	    opacity: string;
 	    line_numbers_enabled: string;
 	    ui_style: string;
+	    theme_manually_set: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SettingsData(source);
@@ -292,6 +293,7 @@ export namespace service {
 	        this.opacity = source["opacity"];
 	        this.line_numbers_enabled = source["line_numbers_enabled"];
 	        this.ui_style = source["ui_style"];
+	        this.theme_manually_set = source["theme_manually_set"];
 	    }
 	}
 	export class UpdateInfo {

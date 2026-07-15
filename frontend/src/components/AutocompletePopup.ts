@@ -174,7 +174,7 @@ export class AutocompletePopup {
       row.style.cssText = `
         display:flex;align-items:center;gap:8px;
         padding:4px 10px;cursor:pointer;height:${ITEM_HEIGHT}px;
-        ${i === this.selectedIndex ? 'background:var(--accent);color:#fff;' : ''}
+        ${i === this.selectedIndex ? 'background:var(--accent);color:var(--text);' : ''}
       `;
 
       const badge = document.createElement('span');

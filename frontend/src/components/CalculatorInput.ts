@@ -10,6 +10,13 @@ export class CalculatorInput {
   private measureEl: HTMLDivElement | null = null;
   private lineInfoCache: { logicalStarts: number[]; totalVisual: number } | null = null;
   private lastText = '';
+  private cachedPaddingTop = 0;
+  private cachedPaddingLeft = 0;
+  private cachedCharWidth = 0;
+  private cachedFontSize = '';
+  private cachedFontFamily = '';
+  private cachedFontWeight = '';
+  private cachedLetterSpacing = '';
 
   constructor() {
     this.el = document.createElement('div');
@@ -23,8 +30,8 @@ export class CalculatorInput {
 
     this.textarea = document.createElement('textarea');
     this.textarea.id = 'input-area';
-    this.textarea.className = 'flex-1 resize-none bg-transparent text-sm !outline-none border-none pt-[20px] pb-4 pl-2 leading-[24px] font-mono';
-    this.textarea.style.cssText = 'color:var(--text);background:transparent;';
+    this.textarea.className = 'flex-1 resize-none text-sm !outline-none border-none pt-[20px] pb-4 pl-2 leading-[24px] font-mono';
+    this.textarea.style.cssText = 'color:var(--text);background:var(--surface);';
     this.textarea.spellcheck = false;
     this.textarea.autocomplete = 'off';
     this.textarea.setAttribute('autocorrect', 'off');
@@ -36,6 +43,18 @@ export class CalculatorInput {
 
     this.textarea.addEventListener('scroll', () => this.scheduleViewportUpdate(), { passive: true });
     this.textarea.addEventListener('input', () => { this.lineInfoCache = null; }, { passive: true });
+    window.addEventListener('resize', () => this.invalidateStyleCache(), { passive: true });
+  }
+
+  private invalidateStyleCache(): void {
+    this.cachedPaddingTop = 0;
+    this.cachedPaddingLeft = 0;
+    this.cachedCharWidth = 0;
+    this.cachedFontSize = '';
+    this.cachedFontFamily = '';
+    this.cachedFontWeight = '';
+    this.cachedLetterSpacing = '';
+    this.lineInfoCache = null;
   }
 
   /** Get the visual start pixel of each logical line (accounts for word wrap). */
@@ -224,14 +243,16 @@ export class CalculatorInput {
     const lineIdx = lines.length - 1;
     const colIdx = lines[lineIdx].length;
 
-    const cs = getComputedStyle(ta);
-    const paddingTop = parseInt(cs.paddingTop) || 0;
-    const paddingLeft = parseInt(cs.paddingLeft) || 0;
+    if (!this.cachedPaddingTop) {
+      const cs = getComputedStyle(ta);
+      this.cachedPaddingTop = parseInt(cs.paddingTop) || 0;
+      this.cachedPaddingLeft = parseInt(cs.paddingLeft) || 0;
+    }
     const lineHeight = this.lineHeight;
 
     const charWidth = this.measureCharWidth();
-    const x = ta.offsetLeft + paddingLeft + colIdx * charWidth + 2;
-    const y = ta.offsetTop + paddingTop + (lineIdx * lineHeight) - ta.scrollTop + lineHeight + 2;
+    const x = ta.offsetLeft + this.cachedPaddingLeft + colIdx * charWidth + 2;
+    const y = ta.offsetTop + this.cachedPaddingTop + (lineIdx * lineHeight) - ta.scrollTop + lineHeight + 2;
 
     return { x, y };
   }
@@ -250,14 +271,26 @@ export class CalculatorInput {
       document.body.appendChild(this.measureEl);
     }
     const cs = getComputedStyle(this.textarea);
+    const fs = cs.fontSize;
+    const ff = cs.fontFamily;
+    const fw = cs.fontWeight;
+    const ls = cs.letterSpacing;
+    if (fs === this.cachedFontSize && ff === this.cachedFontFamily && fw === this.cachedFontWeight && ls === this.cachedLetterSpacing && this.cachedCharWidth) {
+      return this.cachedCharWidth;
+    }
+    this.cachedFontSize = fs;
+    this.cachedFontFamily = ff;
+    this.cachedFontWeight = fw;
+    this.cachedLetterSpacing = ls;
     this.measureEl.style.cssText = `
-      position:absolute;visibility:hidden;font-size:${cs.fontSize};
-      font-family:${cs.fontFamily};font-weight:${cs.fontWeight};
-      letter-spacing:${cs.letterSpacing};white-space:pre;
+      position:absolute;visibility:hidden;font-size:${fs};
+      font-family:${ff};font-weight:${fw};
+      letter-spacing:${ls};white-space:pre;
       left:-9999px;top:-9999px;
     `;
     this.measureEl.textContent = 'M';
-    return this.measureEl.getBoundingClientRect().width;
+    this.cachedCharWidth = this.measureEl.getBoundingClientRect().width;
+    return this.cachedCharWidth;
   }
 }
 

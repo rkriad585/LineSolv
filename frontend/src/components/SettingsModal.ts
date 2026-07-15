@@ -43,6 +43,15 @@ const STYLES = [
   {id: 'neon',      label: 'Neon',      desc: 'Cyberpunk, glowing borders',  radius: '4px',  shadow: '0 0 8px var(--accent)'},
 ];
 
+const STYLE_THEME_DEFAULTS: Record<string, string> = {
+  'default':  'dark',
+  'nothing':  'mono',
+  'glass':    'dark',
+  'material': 'midnight',
+  'alivated': 'warm-light',
+  'neon':     'neon',
+};
+
 const EDIT_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
 
 const CLOSE_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
@@ -71,14 +80,16 @@ export class SettingsModal {
   private tabButtons = new Map<string, HTMLButtonElement>();
   private tabPanels: HTMLDivElement[] = [];
   private activeTab: string | null = null;
-
   private onApply: (s: Partial<SettingsState>) => void;
+  private settingsStore: SettingsStore;
+
   private selectedTheme: string;
   private selectedStyle: string;
 
   private fontSizeInput!: HTMLInputElement;
   private fontSizeValueEl!: HTMLSpanElement;
   private fontFamilySelect!: CustomSelect;
+  private fontSelectDocClick: ((e: MouseEvent) => void) | null = null;
   private previewEl!: HTMLDivElement;
   private updateStatusEl!: HTMLDivElement;
   private updateProgressEl!: HTMLDivElement;
@@ -104,9 +115,9 @@ export class SettingsModal {
   constructor(initialTheme: string, settingsStore: SettingsStore) {
     this.selectedTheme = initialTheme;
     this.selectedStyle = 'default';
+    this.settingsStore = settingsStore;
     this.onApply = (partial: Partial<SettingsState>) => {
       settingsStore.update(partial);
-      settingsStore.scheduleSave();
     };
 
     this.el = document.createElement('div');
@@ -248,7 +259,7 @@ export class SettingsModal {
     for (const [n, btn] of this.tabButtons) {
       if (n === name) {
         btn.style.background = 'var(--accent)';
-        btn.style.color = '#fff';
+        btn.style.color = 'var(--surface)';
       } else {
         btn.style.background = 'transparent';
         btn.style.color = 'var(--text-muted)';
@@ -345,6 +356,7 @@ export class SettingsModal {
       if (!container.contains(e.target as Node)) closePanel();
     };
     document.addEventListener('click', docClick);
+    this.fontSelectDocClick = docClick;
 
     label.textContent = fonts[0].label;
     label.style.fontFamily = fonts[0].value;
@@ -699,6 +711,7 @@ export class SettingsModal {
           const chk = c.querySelector('span:last-child') as HTMLElement;
           if (chk) chk.style.display = id === t.id ? '' : 'none';
         });
+        this.settingsStore.update({ theme_manually_set: true });
         this.applyAll();
       });
       card.addEventListener('keydown', (e) => {
@@ -806,6 +819,13 @@ export class SettingsModal {
           const chk = c.querySelector('span:last-child') as HTMLElement;
           if (chk) chk.style.display = id === s.id ? '' : 'none';
         });
+        if (!this.settingsStore.getState().theme_manually_set) {
+          const defaultTheme = STYLE_THEME_DEFAULTS[s.id] || 'dark';
+          if (this.selectedTheme !== defaultTheme) {
+            this.selectedTheme = defaultTheme;
+            this.settingsStore.update({ theme: defaultTheme });
+          }
+        }
         this.applyAll();
       });
       card.addEventListener('keydown', (e) => {
@@ -1093,6 +1113,7 @@ export class SettingsModal {
     this.updateToggleVisual(this.lineNumbersToggle, this.lineNumbersTrack, this.lineNumbersThumb);
     this.overrides = {};
     this.updatePreview();
+    this.settingsStore.update({ theme_manually_set: false });
 
     // Update theme card highlights
     const thumbGrid = this.el.querySelector('div[style*="grid-template-columns:1fr 1fr"]');
@@ -1102,6 +1123,20 @@ export class SettingsModal {
         const card = cards[i] as ThemeCardElement;
         const themeId = card.themeId || null;
         const isActive = themeId === 'dark';
+        card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+        const chk = card.querySelector('span:last-child') as HTMLElement;
+        if (chk) chk.style.display = isActive ? '' : 'none';
+      }
+    }
+
+    // Update UI Style card highlights
+    const styleGrids = this.el.querySelectorAll('div[style*="grid-template-columns:1fr 1fr"]');
+    if (styleGrids.length > 1) {
+      const styleCards = styleGrids[1].children;
+      for (let i = 0; i < styleCards.length; i++) {
+        const card = styleCards[i] as StyleCardElement;
+        const styleId = card.styleId || null;
+        const isActive = styleId === 'default';
         card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
         const chk = card.querySelector('span:last-child') as HTMLElement;
         if (chk) chk.style.display = isActive ? '' : 'none';
@@ -1138,13 +1173,11 @@ export class SettingsModal {
     this.isVisible = true;
 
     try {
-      const [settings, version] = await Promise.all([
-        serviceBindings.GetSettings(),
-        serviceBindings.GetAppVersion(),
-      ]);
+      const state = this.settingsStore.getState();
+      const version = await serviceBindings.GetAppVersion();
 
       try {
-        const parsed = JSON.parse(settings.shortcut_overrides || '{}');
+        const parsed = JSON.parse(state.shortcut_overrides || '{}');
         if (typeof parsed === 'object' && !Array.isArray(parsed)) {
           this.overrides = parsed;
         } else {
@@ -1152,24 +1185,24 @@ export class SettingsModal {
         }
       } catch { this.overrides = {}; }
 
-      this.selectedTheme = settings.theme || 'dark';
-      this.selectedStyle = settings.ui_style || 'default';
-      this.fontSizeInput.value = settings.font_size || '16';
-      this.fontSizeValueEl.textContent = (settings.font_size || '16') + 'px';
-      const fontFamily = settings.font_family || '';
+      this.selectedTheme = state.theme || 'dark';
+      this.selectedStyle = state.ui_style || 'default';
+      this.fontSizeInput.value = state.font_size || '16';
+      this.fontSizeValueEl.textContent = (state.font_size || '16') + 'px';
+      const fontFamily = state.font_family || '';
       if (this.fontFamilySelect.options.some(o => o === fontFamily)) {
         this.fontFamilySelect.value = fontFamily;
       }
       this.updatePreview();
 
       // Populate new controls
-      const opacity = parseFloat(settings.opacity) || 0.95;
+      const opacity = state.opacity || 0.95;
       this.opacityInput.value = String(opacity);
       this.opacityValueEl.textContent = Math.round(opacity * 100) + '%';
-      this.animationsToggle.checked = settings.animations_enabled !== 'false';
-      this.toastToggle.checked = settings.toast_enabled !== 'false';
-      this.autocompleteToggle.checked = settings.autocomplete_enabled !== 'false';
-      this.lineNumbersToggle.checked = settings.line_numbers_enabled !== 'false';
+      this.animationsToggle.checked = state.animations_enabled;
+      this.toastToggle.checked = state.toast_enabled;
+      this.autocompleteToggle.checked = state.autocomplete_enabled;
+      this.lineNumbersToggle.checked = state.line_numbers_enabled;
 
       const thumbGrid = this.el.querySelector('div[style*="grid-template-columns:1fr 1fr"]');
       if (thumbGrid) {
@@ -1209,6 +1242,9 @@ export class SettingsModal {
     }
 
     this.el.classList.add('lsv-modal-open');
+    if (this.fontSelectDocClick) {
+      document.addEventListener('click', this.fontSelectDocClick);
+    }
     this.switchTab(tab || 'General');
   }
 
@@ -1216,6 +1252,9 @@ export class SettingsModal {
     if (!this.isVisible) return;
     this.isVisible = false;
     this.el.classList.remove('lsv-modal-open');
+    if (this.fontSelectDocClick) {
+      document.removeEventListener('click', this.fontSelectDocClick);
+    }
   }
 
   isOpen(): boolean {
@@ -1224,6 +1263,9 @@ export class SettingsModal {
 
   destroy(): void {
     document.removeEventListener('keydown', this.handleKeydown);
+    if (this.fontSelectDocClick) {
+      document.removeEventListener('click', this.fontSelectDocClick);
+    }
     if (this.el.parentElement) this.el.parentElement.removeChild(this.el);
   }
 }

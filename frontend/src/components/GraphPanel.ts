@@ -1,9 +1,9 @@
-import {Chart, registerables} from 'chart.js';
+import { Chart, LineController, LineElement, PointElement, LinearScale } from 'chart.js';
 import type {calculator} from '../../wailsjs/go/models';
 
 type Point = calculator.Point;
 
-Chart.register(...registerables);
+Chart.register(LineController, LineElement, PointElement, LinearScale);
 
 export class GraphPanel {
   readonly el: HTMLElement;
@@ -30,8 +30,10 @@ export class GraphPanel {
 
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-    closeBtn.style.cssText = 'border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:2px;display:flex;';
+    closeBtn.style.cssText = 'border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:2px;display:flex;border-radius:4px;';
     closeBtn.setAttribute('aria-label', 'Close graph');
+    closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'var(--surface-secondary)'; });
+    closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'transparent'; });
     closeBtn.addEventListener('click', () => this.hide());
     header.appendChild(closeBtn);
 

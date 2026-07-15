@@ -24,6 +24,7 @@ func TestConfigSaveAndLoad(t *testing.T) {
 	dir := t.TempDir()
 	old := DataDir
 	DataDir = dir
+	ResetCache()
 	t.Cleanup(func() { DataDir = old })
 
 	cfg := DefaultConfig()
@@ -72,6 +73,7 @@ func TestConfigLoadNonexistentReturnsDefaults(t *testing.T) {
 	dir := t.TempDir()
 	old := DataDir
 	DataDir = dir
+	ResetCache()
 	t.Cleanup(func() { DataDir = old })
 
 	cfg, err := LoadConfig()

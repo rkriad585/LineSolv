@@ -140,7 +140,7 @@ const LINE_SOLV_LOGO = '<svg width="16" height="16" viewBox="0 0 24 24" fill="no
 export class DocsViewer {
   readonly el: HTMLDivElement;
   private tabsEl: HTMLDivElement;
-  private contentEl: HTMLDivElement;
+  readonly contentEl: HTMLDivElement;
   private docNames: string[] = [];
   private activeTab: string | null = null;
   private loadedCache = new Map<string, string>();
@@ -152,9 +152,9 @@ export class DocsViewer {
   constructor() {
     this.el = document.createElement('div');
     this.el.id = 'docs-viewer';
-    this.el.className = 'lsv-modal-overlay';
+    this.el.className = 'lsv-modal-overlay lsv-modal-fullscreen';
     this.el.style.cssText =
-      'position:fixed;inset:0;z-index:1000;flex-direction:column;' +
+      'position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;' +
       'background:var(--surface);';
 
     const header = document.createElement('div');
@@ -214,6 +214,7 @@ export class DocsViewer {
     sidebar.append(searchWrap, this.tabsEl);
 
     this.contentEl = document.createElement('div');
+    this.contentEl.className = 'docs-scroll-container';
     this.contentEl.style.cssText =
       'flex:1;overflow-y:auto;padding:24px 32px;' +
       'font-size:14px;line-height:1.6;color:var(--text);user-select:text;-webkit-user-select:text;';
@@ -322,7 +323,7 @@ export class DocsViewer {
     for (const [n, btn] of this.tabButtons) {
       if (n === name) {
         btn.style.background = 'var(--accent)';
-        btn.style.color = '#fff';
+        btn.style.color = 'var(--text)';
       } else {
         btn.style.background = 'transparent';
         btn.style.color = 'var(--text-muted)';

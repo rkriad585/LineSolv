@@ -13,16 +13,16 @@ export class Toast {
   show(message: string, type: 'success' | 'error' | 'info' = 'info', duration = 2500): void {
     if (!Toast.enabled) return;
     const colors = {
-      success: 'rgba(34,197,94,0.95)',
-      error: 'rgba(239,68,68,0.95)',
-      info: 'rgba(99,102,241,0.95)',
+      success: 'var(--success)',
+      error: 'var(--error)',
+      info: 'var(--accent)',
     };
 
     const t = document.createElement('div');
     t.className = 'toast-item pointer-events-auto';
     t.style.cssText = `
       padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;
-      color:#fff;background:${colors[type]};
+      color:#fff;background:${colors[type]};opacity:0.95;
       box-shadow:0 4px 12px rgba(0,0,0,0.3);
       opacity:0;transform:translateX(100%);
       transition:opacity 0.25s ease,transform 0.25s ease;

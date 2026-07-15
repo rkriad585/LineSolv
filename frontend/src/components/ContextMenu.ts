@@ -1,10 +1,16 @@
 import type {ContextMenuItem} from '../types';
 import {escapeHtml} from '../utils/html';
 
+interface SubTimer {
+  show: number | null;
+  hide: number | null;
+}
+
 export class ContextMenu {
   readonly el: HTMLDivElement;
   private onClose: (() => void) | null = null;
   private openSubs: HTMLDivElement[] = [];
+  private subTimers: SubTimer[] = [];
 
   constructor() {
     this.el = document.createElement('div');
@@ -15,7 +21,11 @@ export class ContextMenu {
     document.body.appendChild(this.el);
 
     const close = (e: Event) => {
-      if (this.el.contains(e.target as Node)) return;
+      const target = e.target as Node;
+      if (this.el.contains(target)) return;
+      for (const sub of this.openSubs) {
+        if (sub.contains(target)) return;
+      }
       this.hide();
     };
     document.addEventListener('click', close);
@@ -26,8 +36,16 @@ export class ContextMenu {
     };
   }
 
+  private clearAllTimers(): void {
+    for (const t of this.subTimers) {
+      if (t.show != null) { clearTimeout(t.show); t.show = null; }
+      if (t.hide != null) { clearTimeout(t.hide); t.hide = null; }
+    }
+    this.subTimers = [];
+  }
+
   show(items: ContextMenuItem[], x: number, y: number): void {
-    // Clean up any open submenus before clearing
+    this.clearAllTimers();
     for (const sub of this.openSubs) {
       sub.remove();
     }
@@ -69,6 +87,7 @@ export class ContextMenu {
   }
 
   hide(): void {
+    this.clearAllTimers();
     this.el.style.display = 'none';
     this.el.innerHTML = '';
     for (const sub of this.openSubs) {
@@ -112,9 +131,6 @@ export class ContextMenu {
   }
 
   private renderSubmenu(item: Extract<ContextMenuItem, {label: string}>): void {
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:relative;';
-
     const trigger = document.createElement('div');
     trigger.className = 'context-menu-item';
     trigger.style.cssText =
@@ -124,9 +140,9 @@ export class ContextMenu {
       `<span style="flex:1">${escapeHtml(item.label)}</span>` +
       '<span style="margin-left:auto;font-size:10px;color:var(--text-muted)">▶</span>';
 
-    const sub = document.createElement('div');
-    sub.style.cssText =
-      'position:fixed;min-width:140px;max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 0;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none;z-index:10001;';
+const sub = document.createElement('div');
+sub.style.cssText =
+    'position:fixed;min-width:140px;max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 0;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none;z-index:10001;transition:opacity 150ms ease;';
 
     for (const child of item.children!) {
       if ('separator' in child && child.separator) {
@@ -155,63 +171,73 @@ export class ContextMenu {
       });
       sub.appendChild(childDiv);
     }
+    this.el.appendChild(trigger);
 
-    wrapper.appendChild(trigger);
-    this.el.appendChild(wrapper);
+    const timers: SubTimer = {show: null, hide: null};
+    this.subTimers.push(timers);
 
-    let showTimeout: number | null = null;
-    let hideTimeout: number | null = null;
+    const positionSub = () => {
+      if (!document.body.contains(sub)) return;
+      const triggerRect = trigger.getBoundingClientRect();
+      const subRect = sub.getBoundingClientRect();
+      const margin = 8;
+
+      let left = triggerRect.right + 2;
+      let top = triggerRect.top;
+
+      if (left + subRect.width > window.innerWidth - margin) {
+        left = triggerRect.left - subRect.width - 2;
+      }
+      if (left < margin) {
+        left = margin;
+      }
+
+      if (top + subRect.height > window.innerHeight - margin) {
+        top = Math.max(margin, window.innerHeight - subRect.height - margin);
+      }
+      if (top < margin) {
+        top = margin;
+      }
+
+      sub.style.left = left + 'px';
+      sub.style.top = top + 'px';
+    };
 
     const showSub = () => {
-      if (hideTimeout) { clearTimeout(hideTimeout); }
-      showTimeout = window.setTimeout(() => {
-        document.body.appendChild(sub);
-        this.openSubs.push(sub);
+      if (timers.hide != null) { clearTimeout(timers.hide); timers.hide = null; }
+      if (timers.show != null) { clearTimeout(timers.show); }
+      timers.show = window.setTimeout(() => {
+        timers.show = null;
+        const alreadyVisible = document.body.contains(sub);
+        if (!alreadyVisible) {
+          document.body.appendChild(sub);
+          if (!this.openSubs.includes(sub)) this.openSubs.push(sub);
+        }
         sub.style.display = 'block';
+        if (alreadyVisible) return;
         sub.style.opacity = '0';
-
         requestAnimationFrame(() => {
-          const triggerRect = trigger.getBoundingClientRect();
-          const subRect = sub.getBoundingClientRect();
-          const margin = 8;
-
-          let left = triggerRect.right + 2;
-          let top = triggerRect.top;
-
-          if (left + subRect.width > window.innerWidth - margin) {
-            left = triggerRect.left - subRect.width - 2;
-          }
-          if (left < margin) {
-            left = margin;
-          }
-
-          if (top + subRect.height > window.innerHeight - margin) {
-            top = Math.max(margin, window.innerHeight - subRect.height - margin);
-          }
-          if (top < margin) {
-            top = margin;
-          }
-
-          sub.style.left = left + 'px';
-          sub.style.top = top + 'px';
+          if (!document.body.contains(sub)) return;
+          positionSub();
           sub.style.opacity = '1';
         });
-      }, 80);
+      }, 50);
     };
 
     const hideSub = () => {
-      if (showTimeout) { clearTimeout(showTimeout); }
-      hideTimeout = window.setTimeout(() => {
+      if (timers.show != null) { clearTimeout(timers.show); timers.show = null; }
+      timers.hide = window.setTimeout(() => {
+        timers.hide = null;
         sub.style.display = 'none';
         sub.remove();
         this.openSubs = this.openSubs.filter(s => s !== sub);
-      }, 150);
+      }, 300);
     };
 
     trigger.addEventListener('mouseenter', showSub);
     trigger.addEventListener('mouseleave', hideSub);
     sub.addEventListener('mouseenter', () => {
-      if (hideTimeout) { clearTimeout(hideTimeout); }
+      if (timers.hide != null) { clearTimeout(timers.hide); timers.hide = null; }
     });
     sub.addEventListener('mouseleave', hideSub);
   }

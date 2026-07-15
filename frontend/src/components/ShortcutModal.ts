@@ -6,7 +6,7 @@ export class ShortcutModal {
   constructor() {
     this.el = document.createElement('div');
     this.el.id = 'shortcut-modal';
-    this.el.className = 'lsv-modal-overlay';
+    this.el.className = 'lsv-modal-overlay lsv-modal-fullscreen';
     this.el.style.cssText = `
       position: fixed; inset: 0; z-index: 1000;
       background: rgba(0,0,0,0.5); align-items: center; justify-content: center;
@@ -14,6 +14,9 @@ export class ShortcutModal {
     this.el.addEventListener('click', (e) => {
       if (e.target === this.el) this.close();
     });
+    this.handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && this.isOpen()) this.close();
+    };
 
     const box = document.createElement('div');
     box.style.cssText = `
@@ -64,12 +67,16 @@ export class ShortcutModal {
     document.body.appendChild(this.el);
   }
 
+  private handleKeydown: (e: KeyboardEvent) => void;
+
   open(): void {
     this.el.classList.add('lsv-modal-open');
+    document.addEventListener('keydown', this.handleKeydown);
   }
 
   close(): void {
     this.el.classList.remove('lsv-modal-open');
+    document.removeEventListener('keydown', this.handleKeydown);
   }
 
   isOpen(): boolean {

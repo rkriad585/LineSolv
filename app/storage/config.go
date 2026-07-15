@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 type Config struct {
@@ -29,8 +30,14 @@ type Config struct {
 		Opacity             string `toml:"opacity"`
 		LineNumbersEnabled  string `toml:"line_numbers_enabled"`
 		UIStyle             string `toml:"ui_style"`
+		ThemeManuallySet    string `toml:"theme_manually_set"`
 	} `toml:"settings"`
 }
+
+var (
+	cachedConfig *Config
+	configMu     sync.Mutex
+)
 
 func DefaultConfig() *Config {
 	c := &Config{}
@@ -47,6 +54,7 @@ func DefaultConfig() *Config {
 	c.Settings.Opacity = "0.95"
 	c.Settings.LineNumbersEnabled = "true"
 	c.Settings.UIStyle = "default"
+	c.Settings.ThemeManuallySet = "false"
 	return c
 }
 
@@ -54,24 +62,39 @@ func configPath() string {
 	return filepath.Join(DataDir, "config.toml")
 }
 
+// LoadConfig returns the cached config, loading from disk on first call.
 func LoadConfig() (*Config, error) {
+	configMu.Lock()
+	defer configMu.Unlock()
+
+	if cachedConfig != nil {
+		return cachedConfig, nil
+	}
+
 	cfg := DefaultConfig()
 	data, err := os.ReadFile(configPath())
 	if err != nil {
 		if os.IsNotExist(err) {
+			cachedConfig = cfg
 			return cfg, nil
 		}
 		return nil, err
 	}
 	parseConfigTOML(string(data), cfg)
+	cachedConfig = cfg
 	return cfg, nil
 }
 
+// SaveConfig persists the config to disk atomically (write-to-temp + rename).
 func SaveConfig(cfg *Config) error {
+	configMu.Lock()
+	defer configMu.Unlock()
+
 	dir := configPath()
 	if err := os.MkdirAll(filepath.Dir(dir), 0700); err != nil {
 		return err
 	}
+
 	var buf strings.Builder
 	buf.WriteString("# LineSolv Configuration\n\n")
 	buf.WriteString("[app]\n")
@@ -92,7 +115,27 @@ func SaveConfig(cfg *Config) error {
 	buf.WriteString(fmt.Sprintf("opacity = %q\n", cfg.Settings.Opacity))
 	buf.WriteString(fmt.Sprintf("line_numbers_enabled = %q\n", cfg.Settings.LineNumbersEnabled))
 	buf.WriteString(fmt.Sprintf("ui_style = %q\n", cfg.Settings.UIStyle))
-	return os.WriteFile(dir, []byte(buf.String()), 0600)
+	buf.WriteString(fmt.Sprintf("theme_manually_set = %q\n", cfg.Settings.ThemeManuallySet))
+
+	// Atomic write: write to temp file, then rename
+	tmp := dir + ".tmp"
+	if err := os.WriteFile(tmp, []byte(buf.String()), 0600); err != nil {
+		return err
+	}
+	if err := os.Rename(tmp, dir); err != nil {
+		os.Remove(tmp)
+		return err
+	}
+
+	cachedConfig = cfg
+	return nil
+}
+
+// ResetCache clears the in-memory config cache. For use in tests only.
+func ResetCache() {
+	configMu.Lock()
+	defer configMu.Unlock()
+	cachedConfig = nil
 }
 
 func parseConfigTOML(data string, cfg *Config) {
@@ -155,6 +198,8 @@ func parseConfigTOML(data string, cfg *Config) {
 				cfg.Settings.LineNumbersEnabled = val
 			case "ui_style":
 				cfg.Settings.UIStyle = val
+			case "theme_manually_set":
+				cfg.Settings.ThemeManuallySet = val
 			}
 		default:
 			switch key {

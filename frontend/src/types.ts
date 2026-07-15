@@ -45,6 +45,7 @@ export interface SettingsData {
   opacity: string;
   line_numbers_enabled: string;
   ui_style: string;
+  theme_manually_set: string;
 }
 
 export interface UpdateInfo {

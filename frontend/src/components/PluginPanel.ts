@@ -137,7 +137,7 @@ export class PluginPanel {
   private loadingEl!: HTMLElement;
   private errorEl!: HTMLElement;
   private detailView!: HTMLElement;
-  private detailContent!: HTMLElement;
+  detailContent!: HTMLElement;
   private bodyEl!: HTMLElement;
   private headerTitleEl!: HTMLElement;
   private searchWrapper!: HTMLElement;
@@ -153,7 +153,7 @@ export class PluginPanel {
   constructor() {
     this.el = document.createElement('div');
     this.el.id = 'plugin-viewer';
-    this.el.className = 'lsv-modal-overlay';
+    this.el.className = 'lsv-modal-overlay lsv-modal-fullscreen';
     this.el.style.cssText =
       'position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;' +
       'background:var(--surface);';
@@ -298,8 +298,6 @@ export class PluginPanel {
 
     this.bodyEl.append(this.loadingEl, this.errorEl, this.pluginListEl, this.detailView);
     this.el.append(header, this.bodyEl);
-
-    document.addEventListener('keydown', this.handleKeydown);
   }
 
   private iconBtnStyle(): string {
@@ -325,6 +323,7 @@ export class PluginPanel {
     this.searchInput.value = '';
     this.searchQuery = '';
     this.hideDetail();
+    document.addEventListener('keydown', this.handleKeydown);
     await this.loadPlugins();
   }
 
@@ -332,6 +331,7 @@ export class PluginPanel {
     if (!this.isVisible) return;
     this.isVisible = false;
     this.el.classList.remove('lsv-modal-open');
+    document.removeEventListener('keydown', this.handleKeydown);
   }
 
   isOpen(): boolean {
@@ -950,7 +950,7 @@ export class PluginPanel {
   private confirmRemove(name: string): Promise<boolean> {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
 
       const dialog = document.createElement('div');
       dialog.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:360px;width:90%;';

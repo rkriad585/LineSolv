@@ -10,6 +10,7 @@ func newTestService(t *testing.T) *AppService {
 	t.Helper()
 	db := storage.NewTestDB()
 	storage.DataDir = t.TempDir()
+	storage.ResetCache()
 	return NewAppService(db)
 }
 

@@ -8,6 +8,7 @@ export class HistoryPanel {
   private onRestore: (input: string) => void;
   private allEntries: HistoryEntry[] = [];
   private needsRender = true;
+  private searchTimer = 0;
 
   constructor(onRestore: (input: string) => void) {
     this.onRestore = onRestore;
@@ -31,7 +32,11 @@ export class HistoryPanel {
       'width:100%;padding:5px 8px;font-size:11px;background:var(--surface-secondary);' +
       'color:var(--text);border:1px solid var(--border);border-radius:4px;outline:none;' +
       'box-sizing:border-box;';
-    this.searchInput.addEventListener('input', () => { this.needsRender = true; this.applyFilter(); });
+    this.searchInput.addEventListener('input', () => {
+      this.needsRender = true;
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+      this.searchTimer = window.setTimeout(() => { this.searchTimer = 0; this.applyFilter(); }, 150);
+    });
     this.searchInput.addEventListener('click', (e) => e.stopPropagation());
     this.el.appendChild(this.searchInput);
 

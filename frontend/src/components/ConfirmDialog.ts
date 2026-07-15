@@ -40,7 +40,7 @@ export class ConfirmDialog {
         </label>
         <div style="display:flex;gap:6px;justify-content:flex-end;padding:14px 20px 16px 20px;">
           <button id="confirm-cancel" style="padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;cursor:default;outline:none;font-family:inherit;">Cancel</button>
-          <button id="confirm-ok" style="padding:5px 14px;border-radius:6px;border:none;background:#ef4444;color:#fff;font-size:12px;cursor:default;outline:none;font-weight:500;font-family:inherit;">${confirmLabel}</button>
+          <button id="confirm-ok" style="padding:5px 14px;border-radius:6px;border:none;background:var(--error);color:#fff;font-size:12px;cursor:default;outline:none;font-weight:500;font-family:inherit;">${confirmLabel}</button>
         </div>
       </div>
     `;
@@ -57,8 +57,8 @@ export class ConfirmDialog {
       this.emit({confirmed: false, remember: false});
     });
     if (ok) {
-      ok.addEventListener('mouseenter', () => { ok.style.background = '#dc2626'; });
-      ok.addEventListener('mouseleave', () => { ok.style.background = '#ef4444'; });
+      ok.addEventListener('mouseenter', () => { ok.style.opacity = '0.8'; });
+      ok.addEventListener('mouseleave', () => { ok.style.opacity = '1'; });
     }
     if (cancel) {
       cancel.addEventListener('mouseenter', () => { cancel.style.background = 'var(--surface-hover)'; });

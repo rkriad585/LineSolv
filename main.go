@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"log"
 	"os"
@@ -60,6 +61,10 @@ func main() {
 	pluginsDir := filepath.Join(dataDir, "neostore", "linesolv", "plugins")
 	svc.InitPlugins(pluginsDir)
 
+	// Disable the floating toolbar that appears on image hover in WebView2
+	existing := os.Getenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGS")
+	os.Setenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGS", existing+" --disable-features=msEdgeImageHoverToolbar")
+
 	err = wails.Run(&options.App{
 		Title:     "LineSolv",
 		Width:     900,
@@ -76,6 +81,9 @@ func main() {
 			svc,
 		},
 		OnStartup: service.SetAppContext,
+		OnShutdown: func(ctx context.Context) {
+			service.FlushPendingSaves()
+		},
 		Mac: &mac.Options{
 			TitleBar: mac.TitleBarHiddenInset(),
 		},

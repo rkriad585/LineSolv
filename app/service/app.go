@@ -45,6 +45,11 @@ func getCtx() context.Context {
 	return globalCtx
 }
 
+// FlushPendingSaves is called on app shutdown. The in-memory config cache
+// is already persisted on each SaveConfig call, so this is a no-op for now.
+// If a debounced frontend save is in-flight, it may be lost on force-quit.
+func FlushPendingSaves() {}
+
 // AutocompleteItem represents a single autocomplete candidate.
 type AutocompleteItem struct {
 	Name        string `json:"name"`
@@ -451,6 +456,7 @@ type SettingsData struct {
 	Opacity             string `json:"opacity"`
 	LineNumbersEnabled  string `json:"line_numbers_enabled"`
 	UIStyle             string `json:"ui_style"`
+	ThemeManuallySet    string `json:"theme_manually_set"`
 }
 
 type UpdateInfo struct {
@@ -476,6 +482,7 @@ func (s *AppService) GetSettings() (*SettingsData, error) {
 		Opacity:             cfg.Settings.Opacity,
 		LineNumbersEnabled:  cfg.Settings.LineNumbersEnabled,
 		UIStyle:             cfg.Settings.UIStyle,
+		ThemeManuallySet:    cfg.Settings.ThemeManuallySet,
 	}, nil
 }
 
@@ -494,6 +501,7 @@ func (s *AppService) SaveSettings(settings *SettingsData) error {
 	cfg.Settings.Opacity = settings.Opacity
 	cfg.Settings.LineNumbersEnabled = settings.LineNumbersEnabled
 	cfg.Settings.UIStyle = settings.UIStyle
+	cfg.Settings.ThemeManuallySet = settings.ThemeManuallySet
 	return storage.SaveConfig(cfg)
 }
 

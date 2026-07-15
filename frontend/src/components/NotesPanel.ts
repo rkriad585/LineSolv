@@ -28,6 +28,7 @@ export class NotesPanel {
   private sortField: SortField = 'updated';
   private sortDir: SortDir = 'desc';
   private sortBtn: HTMLButtonElement;
+  private searchTimer = 0;
 
   constructor(onSwitchNote: (id: string) => void, onNewNote: () => void, actions: NoteAction) {
     this.callback = onSwitchNote;
@@ -57,7 +58,8 @@ export class NotesPanel {
     this.searchInput.addEventListener('input', () => {
       this.filterText = this.searchInput.value.toLowerCase();
       this.needsRender = true;
-      if (this.isOpen()) this.renderNow();
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+      this.searchTimer = window.setTimeout(() => { this.searchTimer = 0; if (this.isOpen()) this.renderNow(); }, 100);
     });
     this.searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -86,6 +88,40 @@ export class NotesPanel {
     this.listEl.className = 'flex-1 overflow-y-auto py-1';
     this.listEl.tabIndex = -1;
     this.el.appendChild(this.listEl);
+
+    this.listEl.addEventListener('click', (e) => {
+      const item = (e.target as HTMLElement).closest('.note-item') as HTMLElement | null;
+      if (item) {
+        const nid = item.dataset.noteId;
+        if (nid) this.callback(nid);
+      }
+    });
+
+    this.listEl.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const item = (e.target as HTMLElement).closest('.note-item') as HTMLElement | null;
+      if (item) {
+        const nid = item.dataset.noteId;
+        if (nid) this.showContextMenu(nid, e.clientX, e.clientY);
+      }
+    });
+
+    this.listEl.addEventListener('mouseover', (e) => {
+      const item = (e.target as HTMLElement).closest('.note-item') as HTMLElement | null;
+      if (item && item.dataset.noteId !== this.lastActiveId) {
+        item.style.color = 'var(--note-text)';
+        item.style.background = 'var(--note-hover)';
+      }
+    });
+
+    this.listEl.addEventListener('mouseout', (e) => {
+      const item = (e.target as HTMLElement).closest('.note-item') as HTMLElement | null;
+      if (item && item.dataset.noteId !== this.lastActiveId) {
+        item.style.color = 'var(--text-muted)';
+        item.style.background = 'transparent';
+      }
+    });
 
     this.listEl.addEventListener('keydown', (e) => {
       const items = this.listEl.querySelectorAll<HTMLElement>('.note-item');
@@ -204,18 +240,6 @@ export class NotesPanel {
         }
       )
       .join('');
-    this.listEl.querySelectorAll('.note-item').forEach(el => {
-      const e = el as HTMLElement;
-      const nid = e.dataset.noteId!;
-      e.addEventListener('mouseenter', () => { if (nid !== activeId) { e.style.color = 'var(--note-text)'; e.style.background = 'var(--note-hover)'; } });
-      e.addEventListener('mouseleave', () => { if (nid !== activeId) { e.style.color = 'var(--text-muted)'; e.style.background = 'transparent'; } });
-      e.addEventListener('click', () => this.callback(nid));
-      e.addEventListener('contextmenu', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        this.showContextMenu(nid, ev.clientX, ev.clientY);
-      });
-    });
   }
 
   destroy(): void {
