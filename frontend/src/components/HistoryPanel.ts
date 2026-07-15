@@ -1,5 +1,5 @@
-import type {HistoryEntry} from '../stores/calculator';
-import {escapeHtml} from '../utils/html';
+import type { HistoryEntry } from '../stores/calculator';
+import { escapeHtml } from '../utils/html';
 
 export class HistoryPanel {
   readonly el: HTMLElement;
@@ -8,18 +8,19 @@ export class HistoryPanel {
   private onRestore: (input: string) => void;
   private allEntries: HistoryEntry[] = [];
   private needsRender = true;
-  private searchTimer = 0;
 
   constructor(onRestore: (input: string) => void) {
     this.onRestore = onRestore;
     this.el = document.createElement('aside');
     this.el.id = 'history-panel';
-    this.el.className = 'shrink-0 flex flex-col overflow-hidden transition-all duration-150 ease-out';
+    this.el.className =
+      'shrink-0 flex flex-col overflow-hidden transition-all duration-150 ease-out';
     this.el.style.cssText = 'width:0;border-right:0;background:var(--surface);order:-1;';
     this.el.style.borderRightWidth = '0';
 
     const header = document.createElement('div');
-    header.className = 'px-4 py-2 text-[10px] font-semibold tracking-wider uppercase border-b shrink-0';
+    header.className =
+      'px-4 py-2 text-[10px] font-semibold tracking-wider uppercase border-b shrink-0';
     header.style.cssText = 'color:var(--text-muted);border-color:var(--border);';
     header.textContent = 'History';
     this.el.appendChild(header);
@@ -33,9 +34,7 @@ export class HistoryPanel {
       'color:var(--text);border:1px solid var(--border);border-radius:4px;outline:none;' +
       'box-sizing:border-box;';
     this.searchInput.addEventListener('input', () => {
-      this.needsRender = true;
-      if (this.searchTimer) clearTimeout(this.searchTimer);
-      this.searchTimer = window.setTimeout(() => { this.searchTimer = 0; this.applyFilter(); }, 150);
+      this.applyFilter();
     });
     this.searchInput.addEventListener('click', (e) => e.stopPropagation());
     this.el.appendChild(this.searchInput);
@@ -63,7 +62,7 @@ export class HistoryPanel {
         let idx = focused ? items.indexOf(focused) : -1;
         idx = e.key === 'ArrowDown' ? Math.min(idx + 1, items.length - 1) : Math.max(idx - 1, 0);
         items[idx].focus();
-        items[idx].scrollIntoView?.({block: 'nearest'});
+        items[idx].scrollIntoView?.({ block: 'nearest' });
         return;
       }
 
@@ -90,23 +89,29 @@ export class HistoryPanel {
 
   private applyFilter(): void {
     const q = this.searchInput.value.toLowerCase().trim();
-    const filtered = q ? this.allEntries.filter(e =>
-      e.input.toLowerCase().includes(q) || e.output.toLowerCase().includes(q)
-    ) : this.allEntries;
+    const filtered = q
+      ? this.allEntries.filter(
+          (e) => e.input.toLowerCase().includes(q) || e.output.toLowerCase().includes(q),
+        )
+      : this.allEntries;
 
     if (filtered.length === 0) {
-      this.contentEl.innerHTML = '<div class="text-xs p-2" style="color:var(--text-muted)">' +
-        (q ? 'No matching history' : 'No history') + '</div>';
+      this.contentEl.innerHTML =
+        '<div class="text-xs p-2" style="color:var(--text-muted)">' +
+        (q ? 'No matching history' : 'No history') +
+        '</div>';
       return;
     }
-    const html = filtered.map((e) => {
-      const shortInput = e.input.length > 40 ? e.input.slice(0, 40) + '...' : e.input;
-      return `
+    const html = filtered
+      .map((e) => {
+        const shortInput = e.input.length > 40 ? e.input.slice(0, 40) + '...' : e.input;
+        return `
         <div data-history-input="${escapeHtml(e.input)}" class="history-item" tabindex="-1" style="padding:6px 8px;border-radius:var(--ui-radius-sm);cursor:pointer;margin-bottom:2px;">
           <div style="font-size:12px;color:var(--text);white-space:pre;overflow:hidden;text-overflow:ellipsis;font-family:monospace">${escapeHtml(shortInput)}</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:pre">${escapeHtml(e.output)}</div>
         </div>`;
-    }).join('');
+      })
+      .join('');
     this.contentEl.innerHTML = html;
     this.needsRender = false;
   }
@@ -116,7 +121,9 @@ export class HistoryPanel {
     this.el.style.width = '200px';
     this.el.style.borderRightWidth = '1px';
     this.contentEl.focus();
-    setTimeout(() => { this.contentEl.focus(); }, 0);
+    setTimeout(() => {
+      this.contentEl.focus();
+    }, 0);
   }
 
   close(): void {
