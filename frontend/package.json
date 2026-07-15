@@ -14,8 +14,7 @@
     "lint:fix": "eslint src/ --fix",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write 'src/**/*.{ts,tsx,css,json}'",
-    "format:check": "prettier --check 'src/**/*.{ts,tsx,css,json}'",
-    "prepare": "cd .. && husky"
+    "format:check": "prettier --check 'src/**/*.{ts,tsx,css,json}'"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
