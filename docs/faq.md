@@ -236,7 +236,7 @@ The print output includes all lines currently in the input area. Clear or commen
 ## Themes
 
 ### What themes are available?
-LineSolv comes with 7 color themes:
+LineSolv comes with 15 color themes:
 
 | Theme | Description |
 |-------|-------------|
@@ -247,11 +247,19 @@ LineSolv comes with 7 color themes:
 | **Obsidian** | Near-black with warm amber/gold accents |
 | **Plasma** | Dark purple with vibrant purple accents |
 | **Blood** | Deep crimson with blood-red accents |
+| **Midnight** | Navy-blue with sky-blue accents |
+| **Aurora** | Dark purple with cyan accents |
+| **Mono** | Pure black and white monochrome |
+| **Frost** | Blue-steel with bright blue accents |
+| **Prism** | Deep violet with bright purple accents |
+| **Lavender** | Soft purple with lavender accents |
+| **Sage** | Deep green with mint accents |
+| **Warm Light** | Warm cream with amber accents |
 
 Plugins can add additional themes — see the [Plugin System](#plugin-system) section.
 
 ### How do I change the theme?
-Press `Ctrl/Cmd+,` or click the gear icon in the title bar, then go to the **Theme** tab. Click a theme thumbnail to preview it, then press **Save** to apply.
+Press `Ctrl/Cmd+,` or click the gear icon in the title bar, then go to the **Theme** tab to select a color theme, or the **UI Style** tab to select a visual style. Click a theme thumbnail to apply it instantly — no Save button needed.
 
 ### My theme preference isn't persisting across restarts
 The theme is stored in `~/.config/neostore/linesolv/config.toml` under `[app] -> theme`. If the config file is deleted or corrupted, the app falls back to the Dark theme.
@@ -390,7 +398,7 @@ Press `Ctrl/Cmd+,` or click the gear icon in the title bar.
 | Tab | Settings |
 |-----|----------|
 | **General** | Font family (17 options), font size (10px–32px slider), autocomplete toggle, opacity slider (30%–100%, default 95%), animations toggle, line numbers toggle, toast toggle, live preview |
-| **Theme** | Choose from 7 built-in color themes (+ plugin themes) — applies instantly |
+| **Theme** | Choose from 15 built-in color themes (+ plugin themes) — applies instantly |
 | **Keyboard Shortcuts** | View and rebind all shortcuts — auto-saves on change |
 | **About** | Version info, author links, check for updates |
 

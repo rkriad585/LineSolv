@@ -181,8 +181,8 @@ export class AutocompletePopup {
       badge.style.cssText = `
         font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;
         padding:1px 5px;border-radius:3px;white-space:nowrap;
-        background:${i === this.selectedIndex ? 'rgba(255,255,255,0.2)' : (CATEGORY_COLORS[item.category] ?? '#666')}22;
-        color:${i === this.selectedIndex ? '#fff' : (CATEGORY_COLORS[item.category] ?? '#999')};
+        background:${i === this.selectedIndex ? 'color-mix(in srgb, var(--surface) 80%, var(--accent))' : (CATEGORY_COLORS[item.category] ?? '#666') + '22'};
+        color:${i === this.selectedIndex ? 'var(--text)' : (CATEGORY_COLORS[item.category] ?? '#999')};
       `;
       badge.textContent = CATEGORY_LABELS[item.category] ?? item.category;
       row.appendChild(badge);
@@ -203,7 +203,7 @@ export class AutocompletePopup {
         const desc = document.createElement('span');
         desc.style.cssText = `
           font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-          color:${i === this.selectedIndex ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)'};
+          color:${i === this.selectedIndex ? 'var(--text-muted)' : 'var(--text-muted)'};
           margin-left:auto;flex-shrink:0;max-width:180px;
         `;
         desc.textContent = item.description;

@@ -22,7 +22,7 @@ export class Toast {
     t.className = 'toast-item pointer-events-auto';
     t.style.cssText = `
       padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;
-      color:#fff;background:${colors[type]};opacity:0.95;
+      color:var(--text);background:${colors[type]};opacity:0.95;
       box-shadow:0 4px 12px rgba(0,0,0,0.3);
       opacity:0;transform:translateX(100%);
       transition:opacity 0.25s ease,transform 0.25s ease;

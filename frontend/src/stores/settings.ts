@@ -124,7 +124,7 @@ export class SettingsStore {
       } catch {
         toast.show('Failed to save settings', 'error');
       }
-    }, 300);
+    }, 50);
   }
 
   async save(): Promise<void> {

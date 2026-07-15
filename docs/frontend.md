@@ -76,7 +76,7 @@ interface StoreState {
 
 State updates use immutable spread (`{ ...state, field: newVal }`). All subscribers receive the full state on every change. `pushHistory` appends an entry and resets `historyIndex`. `navigateHistory` walks the history array in reverse order (most recent first).
 
-`SettingsStore` (`stores/settings.ts`) is a separate reactive store for application settings. It manages theme, font, opacity, line numbers, autocomplete, animations, and toast preferences. Changes are debounced (300ms) and auto-saved to the backend. Subscribers are notified on every state change.
+`SettingsStore` (`stores/settings.ts`) is a separate reactive store for application settings. It manages theme, font, opacity, line numbers, autocomplete, animations, and toast preferences. Changes are debounced (50ms) and auto-saved to the backend. Subscribers are notified on every state change.
 
 `NotesManager` (`stores/notes.ts`) manages multiple notes in memory with active-note tracking, sort state (field: name/created/updated, direction: asc/desc), and CRUD operations.
 
@@ -251,9 +251,9 @@ Full-screen documentation viewer with sidebar tab navigation:
 
 ### SettingsModal
 
-4-tab settings panel:
+5-tab settings panel:
 - **General** — font family (dropdown), font size (slider/input), opacity (slider 30%-100%), line numbers toggle, autocomplete toggle, animations toggle, toast notifications toggle, with live preview
-- **Theme** — 7 built-in color themes + plugin themes with color swatch thumbnails (surface, accent, text colors)
+- **Theme** — 15 built-in color themes + plugin themes with color swatch thumbnails (surface, accent, text colors)
 - **Keyboard Shortcuts** — view and rebind all shortcuts; reset to defaults button
 - **About** — version info, author, repo links, check for updates
 
@@ -336,7 +336,7 @@ All theme colors are defined as CSS custom properties in `style.css`. The `:root
 
 The active theme is set by adding a `theme-{name}` class to `<html>`. Font settings (`--calc-font-size`, `--calc-font-family`, `--calc-font-color`) are applied as inline style properties on `<html>`.
 
-**7 built-in themes**: dark, light, neon, red, obsidian, plasma, blood. Plugin themes are injected at runtime as additional CSS custom properties, making them selectable in Settings alongside built-in themes.
+**15 built-in themes**: dark, light, neon, red, obsidian, plasma, blood, midnight, aurora, mono, frost, prism, lavender, sage, warm-light. Plugin themes are injected at runtime as additional CSS custom properties, making them selectable in Settings alongside built-in themes.
 
 ### Custom Scrollbar
 

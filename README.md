@@ -6,9 +6,9 @@
     <a href="https://github.com/rkriad585/LineSolv/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
     </a>
-    <img src="https://img.shields.io/badge/version-0.14.0-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/version-0.14.1-green.svg" alt="Version">
     <img src="https://img.shields.io/badge/platform-linux%20|%20macOS%20|%20windows-lightgrey" alt="Platform">
-    <img src="https://img.shields.io/badge/go-1.23+-00ADD8?logo=go&logoColor=white" alt="Go">
+    <img src="https://img.shields.io/badge/go-1.24+-00ADD8?logo=go&logoColor=white" alt="Go">
     <img src="https://img.shields.io/badge/wails-v2-5c2d91?logo=wails&logoColor=white" alt="Wails">
   </p>
 </p>
@@ -24,7 +24,8 @@ Built with **Wails v2** (Go + WebView), **Vite**, **TypeScript**, and **CSS cust
 - **Real-Time Settings** — Every setting (theme, font, opacity, line numbers, autocomplete) applies instantly with no Save button
 - **Line Number Toggle** — Show or hide line numbers in the calculator editor
 - **Autocomplete Popup** — Type-aware keyword suggestions that can be toggled on/off
-- **7 Color Themes** — Dark, Light, Neon, Red, Obsidian, Plasma, Blood with instant switching
+- **15 Color Themes** — Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light with instant switching
+- **6 UI Styles** — Default, Nothing, Liquid Glass, Material 3, Alivated, Neon with configurable radius, shadows, and blur
 - **17 Font Options** — Sans-Serif, Serif, and Monospace fonts including JetBrains Mono, Fira Code, and more
 - **40+ Unit Conversions** — Length, mass, volume, temperature, time, and 30+ live currencies
 - **Function Graphing** — Auto-detect plot expressions and render live charts
@@ -200,7 +201,7 @@ Auto-detect plot/graph expressions and render live charts:
 
 | Feature | Description |
 |---------|-------------|
-| **7 Color Themes** | Dark, Light, Neon, Red, Obsidian, Plasma, Blood |
+| **15 Color Themes** | Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light |
 | **Multiple Notes** | Create, rename, delete, export, import calculation notebooks |
 | **Notes Sidebar** | Drag-and-drop reorder, search, PDF export |
 | **History Panel** | Searchable calculation history with timestamps |
@@ -208,7 +209,7 @@ Auto-detect plot/graph expressions and render live charts:
 | **Steps Panel** | Step-by-step evaluation with intermediate results |
 | **Documentation Viewer** | Built-in docs with offline caching |
 | **Plugin Marketplace** | Browse, install, enable/disable plugins |
-| **Settings** | General, Theme, Keyboard Shortcuts, About tabs — all real-time, no Save button |
+| **Settings** | General, Theme, UI Style, Keyboard Shortcuts, About tabs — all real-time, no Save button |
 | **Configurable Font** | 17 font options (Sans-Serif, Serif, Monospace) with live preview |
 | **Window Opacity** | Adjustable opacity slider (30%–100%, default 95%) for full-window transparency |
 | **Line Numbers Toggle** | Show or hide line number gutter in the calculator editor |
@@ -454,18 +455,21 @@ LineSolv/
 │       │   ├── GraphPanel.ts         # Chart.js graphing
 │       │   ├── DocsViewer.ts         # Built-in documentation
 │       │   ├── PluginPanel.ts        # Plugin marketplace
-│       │   ├── SettingsModal.ts      # Settings (4 tabs)
+│   │   ├── SettingsModal.ts      # Settings (5 tabs)
 │       │   ├── ShortcutModal.ts      # Keyboard shortcuts
 │       │   ├── ConfirmDialog.ts      # Confirmation dialogs
+│       │   ├── AutocompletePopup.ts  # Autocomplete dropdown
 │       │   └── ContextMenu.ts        # Right-click menu
 │       ├── stores/         # Reactive state
 │       │   ├── calculator.ts         # Calculator state store
-│       │   └── notes.ts             # Notes state store
+│       │   ├── notes.ts             # Notes state store
+│       │   └── settings.ts          # Settings state store
 │       ├── utils/          # Utilities
 │       │   ├── shortcuts.ts          # Keyboard shortcut handler
 │       │   ├── shortcutDefs.ts       # Shortcut definitions
 │       │   ├── format.ts            # Number formatting
 │       │   ├── html.ts              # HTML escaping
+│       │   ├── fonts.ts             # Font loading
 │       │   └── toast.ts             # Toast notifications
 │       ├── App.ts          # Main orchestrator
 │       └── style.css       # CSS custom properties + theming
@@ -473,7 +477,7 @@ LineSolv/
 ├── main.go                 # Entrypoint
 ├── wails.json              # Wails configuration
 ├── go.mod                  # Go module definition
-├── .version                # Current version (0.13.0)
+├── .version                # Current version (0.14.1)
 ├── logo.svg                # Project logo
 ├── docs/examples.txt       # Input examples
 ├── CHANGELOG.md            # Version history

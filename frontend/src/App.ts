@@ -49,6 +49,8 @@ function applyUiStyle(style: string): void {
     'style-material', 'style-alivated', 'style-neon',
   );
   document.documentElement.classList.add('style-' + currentStyle);
+  // Force WebKit to recalculate styles and repaint immediately
+  void(document.documentElement.offsetHeight);
 }
 
 function applyTheme(theme: string): void {
@@ -63,6 +65,8 @@ function applyTheme(theme: string): void {
   } else {
     document.documentElement.classList.add('theme-dark');
   }
+  // Force WebKit to recalculate styles and repaint immediately
+  void(document.documentElement.offsetHeight);
 }
 
 function injectPluginThemes(themes: Array<{id: string; label: string; colors: Record<string, string>}>): void {
@@ -102,16 +106,15 @@ function parseColor(str: string): [number, number, number] | null {
 function applySurfaceOpacity(opacity: number): void {
   const root = document.documentElement;
 
-  // At full opacity, clear inline styles so CSS rules take effect directly
-  if (opacity >= 1) {
-    root.style.removeProperty('--surface');
-    root.style.removeProperty('--surface-secondary');
-    root.style.removeProperty('--note-bg');
-    document.body.style.background = '';
-    return;
-  }
+  // Always clear stale inline overrides FIRST so getComputedStyle reads class-level values
+  root.style.removeProperty('--surface');
+  root.style.removeProperty('--surface-secondary');
+  root.style.removeProperty('--note-bg');
+  document.body.style.background = '';
 
-  // Read current CSS variable values from the DOM (works for built-in and plugin themes)
+  if (opacity >= 1) return;
+
+  // Read CSS variable values from the class-based theme rules (not inline)
   const props = ['--surface', '--surface-secondary', '--note-bg'];
   const baseSurface = getComputedStyle(root).getPropertyValue('--surface').trim();
   const baseRgb = parseColor(baseSurface) || [24, 24, 27];
@@ -143,18 +146,21 @@ function applySettingsState(s: {
   document.documentElement.style.setProperty('--calc-font-size', size + 'px');
   document.documentElement.style.setProperty('--calc-font-family', s.font_family || 'monospace');
   loadFontForFamily(s.font_family || 'monospace');
-  applySurfaceOpacity(s.opacity);
+  // Re-apply opacity after class swap so computed values reflect the new theme
+  requestAnimationFrame(() => applySurfaceOpacity(s.opacity));
   if (s.animations_enabled) {
     document.documentElement.classList.remove('animations-disabled');
   } else {
     document.documentElement.classList.add('animations-disabled');
   }
   Toast.enabled = s.toast_enabled;
-  // Line numbers are wired directly to CalculatorInput in the init block
 }
 
 /** Mount the LineSolv application into a root element. */
 export function renderApp(root: HTMLElement): void {
+  // Hide page until settings are loaded and applied to prevent flash of defaults
+  document.documentElement.style.visibility = 'hidden';
+
   const store = new CalculatorStore();
   const notesMgr = new NotesManager();
   const settingsStore = new SettingsStore();
@@ -748,6 +754,10 @@ export function renderApp(root: HTMLElement): void {
       ta.selectionStart = ta.selectionEnd - 1;
       ta.selectionEnd = ta.selectionEnd - 1;
     }
+    if (autocompleteThrottleTimer) {
+      clearTimeout(autocompleteThrottleTimer);
+      autocompleteThrottleTimer = null;
+    }
   };
 
   function updateAutocomplete(): void {
@@ -869,6 +879,10 @@ export function renderApp(root: HTMLElement): void {
     } else if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault();
       autocomplete.selectCurrent();
+      if (autocompleteThrottleTimer) {
+        clearTimeout(autocompleteThrottleTimer);
+        autocompleteThrottleTimer = null;
+      }
     }
   }, true);
 
@@ -1069,13 +1083,14 @@ export function renderApp(root: HTMLElement): void {
     try {
       const state = await settingsStore.load();
       applySettingsState(state);
+      input.setLineNumbersVisible(state.line_numbers_enabled);
     } catch { /* ignore */ }
+    // Reveal page now that settings (theme, style, font) are applied
+    document.documentElement.style.visibility = '';
     settingsStore.onChanged((s) => {
       applySettingsState(s);
       if (!s.autocomplete_enabled) autocomplete.hide();
-      // Wire line numbers to CalculatorInput gutter
       input.setLineNumbersVisible(s.line_numbers_enabled);
-      // Re-evaluate to re-render results with updated line number visibility
       forceEval();
     });
     try {

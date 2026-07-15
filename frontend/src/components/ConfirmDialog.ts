@@ -29,7 +29,7 @@ export class ConfirmDialog {
     this.callback = cb;
 
     this.el.innerHTML = `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0;min-width:300px;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,0.4);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--ui-radius-md, 6px);padding:0;min-width:300px;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,0.4);font-family:var(--calc-font-family, -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif);">
         <div style="padding:16px 20px 0 20px;">
           <div style="font-size:14px;font-weight:600;color:var(--text);">${title}</div>
           <div style="font-size:13px;color:var(--text-muted);margin-top:8px;line-height:1.5;">${message}</div>
@@ -40,7 +40,7 @@ export class ConfirmDialog {
         </label>
         <div style="display:flex;gap:6px;justify-content:flex-end;padding:14px 20px 16px 20px;">
           <button id="confirm-cancel" style="padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;cursor:default;outline:none;font-family:inherit;">Cancel</button>
-          <button id="confirm-ok" style="padding:5px 14px;border-radius:6px;border:none;background:var(--error);color:#fff;font-size:12px;cursor:default;outline:none;font-weight:500;font-family:inherit;">${confirmLabel}</button>
+          <button id="confirm-ok" style="padding:5px 14px;border-radius:6px;border:none;background:var(--error);color:var(--text);font-size:12px;cursor:default;outline:none;font-weight:500;font-family:inherit;">${confirmLabel}</button>
         </div>
       </div>
     `;

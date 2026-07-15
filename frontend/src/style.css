@@ -49,7 +49,7 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   --border: #27272a;
   --text: #f4f4f5;
   --text-muted: #52525b;
-  --text-subtle: #3f3f46;
+  --text-subtle: #52525b;
   --accent: #a78bfa;
   --error: #ef4444;
   --success: #22c55e;
@@ -68,7 +68,7 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   --border: #d4d4d8;
   --text: #18181b;
   --text-muted: #71717a;
-  --text-subtle: #a1a1aa;
+  --text-subtle: #8a8a94;
   --accent: #7c3aed;
   --error: #dc2626;
   --success: #16a34a;
@@ -85,7 +85,7 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   --border: #0f3460;
   --text: #e0e0e0;
   --text-muted: #536878;
-  --text-subtle: #222244;
+  --text-subtle: #3a3a66;
   --accent: #00ff41;
   --error: #ff0040;
   --success: #00ff41;
@@ -102,7 +102,7 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   --border: #4a2020;
   --text: #f0e0e0;
   --text-muted: #805050;
-  --text-subtle: #4a3030;
+  --text-subtle: #6a4040;
   --accent: #e53935;
   --error: #ff1744;
   --success: #4caf50;
@@ -119,7 +119,7 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   --border: #333333;
   --text: #d4c5a9;
   --text-muted: #665d4d;
-  --text-subtle: #2a2a2a;
+  --text-subtle: #4a4a4a;
   --accent: #d4a043;
   --error: #c0392b;
   --success: #27ae60;
@@ -136,7 +136,7 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   --border: #3a3a55;
   --text: #e0dff0;
   --text-muted: #6a6090;
-  --text-subtle: #2a2a44;
+  --text-subtle: #4a4a66;
   --accent: #bb86fc;
   --error: #cf6679;
   --success: #66bb6a;
@@ -153,7 +153,7 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   --border: #3f1515;
   --text: #e8d0d0;
   --text-muted: #803030;
-  --text-subtle: #3a1515;
+  --text-subtle: #5a3535;
   --accent: #b71c1c;
   --error: #f44336;
   --success: #66bb6a;
@@ -213,7 +213,7 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   --border: #222222;
   --text: #ffffff;
   --text-muted: #666666;
-  --text-subtle: #333333;
+  --text-subtle: #555555;
   --accent: #ffffff;
   --error: #ff3333;
   --success: #00ff00;
@@ -371,6 +371,10 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 }
 .style-nothing .nothing-segmented > *:last-child { border-right: none; }
 .style-nothing .nothing-segmented > *.active { background: var(--accent); color: var(--surface); font-weight: 600; }
+/* Nothing + Light: use dark shadow border instead of white */
+.theme-light.style-nothing {
+  --ui-shadow-lg: 0 0 0 1px rgba(0,0,0,0.1);
+}
 
 /* ═══════════════════════════════════════════
    UI Style: Liquid Glass
@@ -390,6 +394,7 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 
 .style-glass #settings-modal,
 .style-glass #shortcut-modal,
+.style-glass .lsv-modal-overlay,
 .style-glass .context-menu-item,
 .style-glass .autocomplete-popup {
   backdrop-filter: blur(var(--ui-blur));
@@ -422,6 +427,18 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
+/* Glass + Light: invert tint from white to dark */
+.theme-light.style-glass .glass-specular::before {
+  background: linear-gradient(135deg, rgba(0,0,0,0.05) 0%, transparent 50%);
+}
+.theme-light.style-glass input[type="text"],
+.theme-light.style-glass input[type="search"],
+.theme-light.style-glass textarea,
+.theme-light.style-glass #input-area,
+.theme-light.style-glass #notepad,
+.theme-light.style-glass #results-column {
+  background: rgba(0,0,0,0.04) !important;
+}
 
 /* ═══════════════════════════════════════════
    UI Style: Material 3
@@ -444,17 +461,27 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 }
 .style-material .material-tint::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface-secondary));
   border-radius: inherit; z-index: 0;
 }
 .style-material .material-chip {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 12px; border-radius: var(--ui-radius-sm); font-size: 12px; font-weight: 500;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-secondary));
   color: var(--accent); border: none; cursor: pointer; transition: background 0.2s var(--ui-transition);
 }
 .style-material .material-chip:hover {
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface-secondary));
+}
+/* Material + Light: increase tint intensity */
+.theme-light.style-material .material-tint::before {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-secondary));
+}
+.theme-light.style-material .material-chip {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-secondary));
+}
+.theme-light.style-material .material-chip:hover {
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface-secondary));
 }
 .style-material .material-fab {
   width: 40px; height: 40px; border-radius: var(--ui-radius-md);
@@ -488,8 +515,20 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 .style-alivated #notes-sidebar,
 .style-alivated #vars-panel,
 .style-alivated #steps-panel,
-.style-alivated #history-panel {
+.style-alivated #history-panel,
+.style-alivated #graph-panel {
   box-shadow: var(--ui-shadow-md);
+}
+.style-alivated #settings-modal,
+.style-alivated #shortcut-modal,
+.style-alivated .lsv-modal-overlay {
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-lg);
+}
+.style-alivated .autocomplete-popup,
+.style-alivated .context-menu-item {
+  box-shadow: var(--ui-shadow-md);
+  border-radius: var(--ui-radius-md);
 }
 .style-alivated button:active,
 .style-alivated .note-item:active {
@@ -498,6 +537,22 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 .style-alivated .alivated-soft-border {
   border: 1px solid rgba(255,255,255,0.06);
   box-shadow: var(--ui-shadow-sm);
+}
+/* Alivated + Light: invert neumorphic shadows for visibility */
+.theme-light.style-alivated aside,
+.theme-light.style-alivated #notes-sidebar,
+.theme-light.style-alivated #vars-panel,
+.theme-light.style-alivated #steps-panel,
+.theme-light.style-alivated #history-panel,
+.theme-light.style-alivated #graph-panel {
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.1), -4px -4px 12px rgba(0,0,0,0.04);
+}
+.theme-light.style-alivated button:active,
+.theme-light.style-alivated .note-item:active {
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(0,0,0,0.04);
+}
+.theme-light.style-alivated .alivated-soft-border {
+  border: 1px solid rgba(0,0,0,0.08);
 }
 
 /* ═══════════════════════════════════════════
@@ -510,7 +565,7 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   --ui-radius-lg: 6px;
   --ui-shadow-sm: none;
   --ui-shadow-md: 0 0 8px var(--accent), 0 0 2px var(--accent);
-  --ui-shadow-lg: 0 0 16px var(--accent), 0 0 4px var(--accent), 0 0 32px rgba(0,255,65,0.15);
+  --ui-shadow-lg: 0 0 16px var(--accent), 0 0 4px var(--accent), 0 0 32px color-mix(in srgb, var(--accent) 15%, transparent);
   --ui-blur: 0px;
   --ui-transition: ease;
   --ui-font-display: 'Fira Code', 'JetBrains Mono', monospace;
@@ -520,8 +575,9 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 .style-neon #notes-sidebar,
 .style-neon #vars-panel,
 .style-neon #steps-panel,
-.style-neon #history-panel {
-  box-shadow: 0 0 8px var(--accent), inset 0 0 4px rgba(0,255,65,0.05);
+.style-neon #history-panel,
+.style-neon #graph-panel {
+  box-shadow: 0 0 8px var(--accent), inset 0 0 4px color-mix(in srgb, var(--accent) 5%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
 }
 .style-neon button:hover,
@@ -531,6 +587,17 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 .style-neon button:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent);
+}
+.style-neon #settings-modal,
+.style-neon #shortcut-modal,
+.style-neon .lsv-modal-overlay {
+  box-shadow: 0 0 16px var(--accent), 0 0 4px var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.style-neon .autocomplete-popup,
+.style-neon .context-menu-item {
+  box-shadow: 0 0 8px var(--accent), 0 0 2px var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
 }
 @keyframes neon-border-pulse {
   0%, 100% { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
@@ -545,16 +612,30 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0,0,0,0.03) 2px,
-    rgba(0,0,0,0.03) 4px
+    color-mix(in srgb, var(--text) 3%, transparent) 2px,
+    color-mix(in srgb, var(--text) 3%, transparent) 4px
   );
   mix-blend-mode: overlay;
 }
+/* Neon + Light: increase glow intensity for visibility on white */
+.theme-light.style-neon aside,
+.theme-light.style-neon #notes-sidebar,
+.theme-light.style-neon #vars-panel,
+.theme-light.style-neon #steps-panel,
+.theme-light.style-neon #history-panel,
+.theme-light.style-neon #graph-panel {
+  box-shadow: 0 0 12px var(--accent), inset 0 0 6px color-mix(in srgb, var(--accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.theme-light.style-neon::before {
+  mix-blend-mode: multiply;
+}
 
 html {
-  background: transparent;
+  background: var(--surface, #18181b);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--calc-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
+  font-size: var(--calc-font-size, 16px);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -562,7 +643,7 @@ html {
 body {
   margin: 0;
   overflow: hidden;
-  background: transparent;
+  background: var(--surface, #18181b);
   border-radius: var(--ui-radius-lg, 10px);
   width: 100vw;
   height: 100vh;
@@ -577,11 +658,41 @@ body {
   display: none !important;
 }
 
+/* UI Style: consume --ui-radius-* and --ui-shadow-* for common components */
+aside,
+#vars-panel,
+#steps-panel,
+#history-panel,
+#graph-panel {
+  border-radius: var(--ui-radius-md);
+  box-shadow: var(--ui-shadow-md);
+  transition: box-shadow 0.2s var(--ui-transition, ease);
+}
+#settings-modal,
+#shortcut-modal,
+.lsv-modal-overlay {
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-lg);
+}
+.autocomplete-popup {
+  border-radius: var(--ui-radius-md);
+  box-shadow: var(--ui-shadow-md);
+}
+.context-menu-item {
+  border-radius: var(--ui-radius-sm);
+}
+kbd {
+  border-radius: var(--ui-radius-sm);
+}
+button {
+  border-radius: var(--ui-radius-sm);
+}
+
 /* Calculator font (overrides Tailwind font-mono/text-sm) */
 #input-area {
-  font-family: var(--calc-font-family, monospace) !important;
-  font-size: var(--calc-font-size, 16px) !important;
-  color: var(--calc-font-color, var(--text)) !important;
+  font-family: var(--calc-font-family, monospace);
+  font-size: var(--calc-font-size, 16px);
+  color: var(--calc-font-color, var(--text));
   appearance: none;
   -webkit-appearance: none;
   box-shadow: none;
@@ -590,12 +701,12 @@ body {
   resize: none;
 }
 #gutter {
-  font-family: var(--calc-font-family, monospace) !important;
-  font-size: var(--calc-font-size, 16px) !important;
+  font-family: var(--calc-font-family, monospace);
+  font-size: var(--calc-font-size, 16px);
 }
 #results-column {
-  font-family: var(--calc-font-family, monospace) !important;
-  font-size: var(--calc-font-size, 16px) !important;
+  font-family: var(--calc-font-family, monospace);
+  font-size: var(--calc-font-size, 16px);
 }
 
 /* Settings modal */

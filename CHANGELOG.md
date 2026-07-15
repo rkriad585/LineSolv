@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.14.1] — 2026-07-15
+
+### Fixed
+- **Settings persistence** — TOML parser corrupted quoted strings; debounced saves were lost on close.
+- **Theme switching** — only text color changed, background stayed the same due to inline style shadowing.
+- **UI styles** — partial application across app components.
+- **Theme×Style conflicts** — 24 affected combinations across 90 total resolved.
+- **Active indicators** — theme, style, font, and size checkmarks no longer reflected current selection.
+- **Autocomplete popup** — not hiding after Enter/Tab selection for constants.
+- **App crash on close** — deadlock in `FlushPendingSave` calling `SaveConfig` while holding mutex.
+- **Flash of default theme on startup** — eliminated brief flash before user theme loaded.
+
 ## [0.14.0] — 2026-07-14
 
 ### Added

@@ -91,6 +91,8 @@ export class SettingsModal {
   private fontFamilySelect!: CustomSelect;
   private fontSelectDocClick: ((e: MouseEvent) => void) | null = null;
   private previewEl!: HTMLDivElement;
+  private sizeChipEls: HTMLButtonElement[] = [];
+  private sizeChipValues: string[] = [];
   private updateStatusEl!: HTMLDivElement;
   private updateProgressEl!: HTMLDivElement;
   private updateProgressBarEl!: HTMLDivElement;
@@ -111,6 +113,8 @@ export class SettingsModal {
   private lineNumbersToggle!: HTMLInputElement;
   private lineNumbersTrack!: HTMLDivElement;
   private lineNumbersThumb!: HTMLDivElement;
+  private themeCards: Map<string, HTMLDivElement> = new Map();
+  private styleCards: Map<string, HTMLDivElement> = new Map();
 
   constructor(initialTheme: string, settingsStore: SettingsStore) {
     this.selectedTheme = initialTheme;
@@ -311,6 +315,7 @@ export class SettingsModal {
     };
 
     let lastGroup = '';
+    const itemEls: HTMLDivElement[] = [];
     fonts.forEach((f, idx) => {
       if (f.group !== lastGroup) {
         lastGroup = f.group;
@@ -324,21 +329,39 @@ export class SettingsModal {
       }
 
       const item = document.createElement('div');
-      item.textContent = f.label;
       item.style.cssText =
         'padding:5px 10px;font-size:13px;color:var(--text);cursor:pointer;transition:background .1s;' +
-        `font-family:${f.value};`;
+        `font-family:${f.value};display:flex;align-items:center;justify-content:space-between;`;
+
+      const itemLabel = document.createElement('span');
+      itemLabel.textContent = f.label;
+      item.appendChild(itemLabel);
+
+      const check = document.createElement('span');
+      check.innerHTML = CHECK_ICON;
+      check.style.cssText = 'display:none;color:var(--accent);flex-shrink:0;';
+      item.appendChild(check);
+
       item.addEventListener('mouseenter', () => { item.style.background = 'var(--surface-hover)'; });
       item.addEventListener('mouseleave', () => { item.style.background = 'transparent'; });
       item.addEventListener('click', () => {
         currentIndex = idx;
         label.textContent = f.label;
         label.style.fontFamily = f.value;
+        updateActiveItem();
         closePanel();
         changeCallbacks.forEach(fn => fn());
       });
       panel.appendChild(item);
+      itemEls.push(item);
     });
+
+    function updateActiveItem(): void {
+      itemEls.forEach((el, i) => {
+        const check = el.querySelector('span:last-child') as HTMLElement;
+        if (check) check.style.display = i === currentIndex ? '' : 'none';
+      });
+    }
 
     display.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -360,6 +383,7 @@ export class SettingsModal {
 
     label.textContent = fonts[0].label;
     label.style.fontFamily = fonts[0].value;
+    updateActiveItem();
     container.append(display, panel);
 
     return {
@@ -371,6 +395,7 @@ export class SettingsModal {
           currentIndex = idx;
           label.textContent = fonts[idx].label;
           label.style.fontFamily = fonts[idx].value;
+          updateActiveItem();
         }
       },
       options: fonts.map(f => f.value),
@@ -435,6 +460,38 @@ export class SettingsModal {
   private updateToggleVisual(toggle: HTMLInputElement, track: HTMLDivElement, thumb: HTMLDivElement): void {
     track.style.background = toggle.checked ? 'var(--accent)' : 'var(--border)';
     thumb.style.left = toggle.checked ? '18px' : '2px';
+  }
+
+  private highlightThemeCard(activeId: string): void {
+    this.themeCards.forEach((card, id) => {
+      card.style.borderColor = id === activeId ? 'var(--accent)' : 'var(--border)';
+      const swatch = card.querySelector('div') as HTMLElement | null;
+      if (swatch) {
+        const chk = swatch.querySelector('span:last-child') as HTMLElement | null;
+        if (chk) chk.style.display = id === activeId ? '' : 'none';
+      }
+    });
+  }
+
+  private highlightStyleCard(activeId: string): void {
+    this.styleCards.forEach((card, id) => {
+      card.style.borderColor = id === activeId ? 'var(--accent)' : 'var(--border)';
+      const preview = card.querySelector('div') as HTMLElement | null;
+      if (preview) {
+        const chk = preview.querySelector('span:last-child') as HTMLElement | null;
+        if (chk) chk.style.display = id === activeId ? '' : 'none';
+      }
+    });
+  }
+
+  private updateSizeChipHighlight(): void {
+    const current = this.fontSizeInput?.value || '16';
+    this.sizeChipEls.forEach((chip, i) => {
+      const isActive = this.sizeChipValues[i] === current;
+      chip.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+      chip.style.color = isActive ? 'var(--text)' : 'var(--text-muted)';
+      chip.style.background = isActive ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent';
+    });
   }
 
   private sectionHeader(text: string): HTMLDivElement {
@@ -514,6 +571,8 @@ export class SettingsModal {
       { label: 'L', value: '20' },
       { label: 'XL', value: '24' },
     ];
+    this.sizeChipEls = [];
+    this.sizeChipValues = [];
     for (const s of sizes) {
       const chip = document.createElement('button');
       chip.textContent = s.label;
@@ -521,14 +580,22 @@ export class SettingsModal {
         'padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:transparent;' +
         'color:var(--text-muted);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;';
       chip.addEventListener('mouseenter', () => { chip.style.borderColor = 'var(--accent)'; chip.style.color = 'var(--text)'; });
-      chip.addEventListener('mouseleave', () => { chip.style.borderColor = 'var(--border)'; chip.style.color = 'var(--text-muted)'; });
+      chip.addEventListener('mouseleave', () => { this.updateSizeChipHighlight(); });
       chip.addEventListener('click', () => {
         slider.value = s.value;
         sizeValue.textContent = s.value + 'px';
-        this.updatePreview();
+        this.updateSizeChipHighlight();
+      this.updatePreview();
+      this.updateSizeChipHighlight();
       });
       presets.appendChild(chip);
+      this.sizeChipEls.push(chip);
+      this.sizeChipValues.push(s.value);
     }
+
+    slider.addEventListener('input', () => {
+      this.updateSizeChipHighlight();
+    });
 
     sizeValue.textContent = slider.value + 'px';
     sizeRow.append(sizeTop, slider, presets);
@@ -648,7 +715,7 @@ export class SettingsModal {
     const grid = document.createElement('div');
     grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;';
 
-    const thumbnails: Map<string, HTMLDivElement> = new Map();
+    this.themeCards.clear();
 
     const addThemeCard = (t: {id: string; label: string; bg: string; accent: string; text: string}, isPlugin = false) => {
       const card = document.createElement('div');
@@ -702,15 +769,11 @@ export class SettingsModal {
 
       card.append(swatch, label);
       grid.appendChild(card);
-      thumbnails.set(t.id, card);
+      this.themeCards.set(t.id, card);
 
       card.addEventListener('click', () => {
         this.selectedTheme = t.id;
-        thumbnails.forEach((c, id) => {
-          c.style.borderColor = id === t.id ? 'var(--accent)' : 'var(--border)';
-          const chk = c.querySelector('span:last-child') as HTMLElement;
-          if (chk) chk.style.display = id === t.id ? '' : 'none';
-        });
+        this.highlightThemeCard(t.id);
         this.settingsStore.update({ theme_manually_set: true });
         this.applyAll();
       });
@@ -725,12 +788,9 @@ export class SettingsModal {
     THEMES.forEach((t) => addThemeCard(t));
 
     requestAnimationFrame(() => {
-      const initial = thumbnails.get(this.selectedTheme);
-      if (initial) {
-        initial.style.borderColor = 'var(--accent)';
-        const chk = initial.querySelector('span:last-child') as HTMLElement;
-        if (chk) chk.style.display = '';
-      }
+      const currentTheme = this.settingsStore.getState().theme || 'dark';
+      this.selectedTheme = currentTheme;
+      this.highlightThemeCard(currentTheme);
     });
 
     serviceBindings.GetPluginThemes().then((pluginThemes) => {
@@ -745,12 +805,7 @@ export class SettingsModal {
             text: colors['--text'] || '#f4f4f5',
           }, true);
         }
-        const initial = thumbnails.get(this.selectedTheme);
-        if (initial) {
-          initial.style.borderColor = 'var(--accent)';
-          const chk = initial.querySelector('span:last-child') as HTMLElement;
-          if (chk) chk.style.display = '';
-        }
+        this.highlightThemeCard(this.selectedTheme);
       }
     }).catch(() => {});
 
@@ -767,7 +822,7 @@ export class SettingsModal {
     const grid = document.createElement('div');
     grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;';
 
-    const styleCards = new Map<string, HTMLDivElement>();
+    this.styleCards.clear();
 
     const addStyleCard = (s: {id: string; label: string; desc: string; radius: string; shadow: string}) => {
       const card = document.createElement('div');
@@ -810,19 +865,16 @@ export class SettingsModal {
 
       card.append(preview, label);
       grid.appendChild(card);
-      styleCards.set(s.id, card);
+      this.styleCards.set(s.id, card);
 
       card.addEventListener('click', () => {
         this.selectedStyle = s.id;
-        styleCards.forEach((c, id) => {
-          c.style.borderColor = id === s.id ? 'var(--accent)' : 'var(--border)';
-          const chk = c.querySelector('span:last-child') as HTMLElement;
-          if (chk) chk.style.display = id === s.id ? '' : 'none';
-        });
+        this.highlightStyleCard(s.id);
         if (!this.settingsStore.getState().theme_manually_set) {
           const defaultTheme = STYLE_THEME_DEFAULTS[s.id] || 'dark';
           if (this.selectedTheme !== defaultTheme) {
             this.selectedTheme = defaultTheme;
+            this.highlightThemeCard(defaultTheme);
             this.settingsStore.update({ theme: defaultTheme });
           }
         }
@@ -839,12 +891,9 @@ export class SettingsModal {
     STYLES.forEach((s) => addStyleCard(s));
 
     requestAnimationFrame(() => {
-      const initial = styleCards.get(this.selectedStyle);
-      if (initial) {
-        initial.style.borderColor = 'var(--accent)';
-        const chk = initial.querySelector('span:last-child') as HTMLElement;
-        if (chk) chk.style.display = '';
-      }
+      const currentStyle = this.settingsStore.getState().ui_style || 'default';
+      this.selectedStyle = currentStyle;
+      this.highlightStyleCard(currentStyle);
     });
 
     panel.append(note, grid);
@@ -1115,33 +1164,8 @@ export class SettingsModal {
     this.updatePreview();
     this.settingsStore.update({ theme_manually_set: false });
 
-    // Update theme card highlights
-    const thumbGrid = this.el.querySelector('div[style*="grid-template-columns:1fr 1fr"]');
-    if (thumbGrid) {
-      const cards = thumbGrid.children;
-      for (let i = 0; i < cards.length; i++) {
-        const card = cards[i] as ThemeCardElement;
-        const themeId = card.themeId || null;
-        const isActive = themeId === 'dark';
-        card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
-        const chk = card.querySelector('span:last-child') as HTMLElement;
-        if (chk) chk.style.display = isActive ? '' : 'none';
-      }
-    }
-
-    // Update UI Style card highlights
-    const styleGrids = this.el.querySelectorAll('div[style*="grid-template-columns:1fr 1fr"]');
-    if (styleGrids.length > 1) {
-      const styleCards = styleGrids[1].children;
-      for (let i = 0; i < styleCards.length; i++) {
-        const card = styleCards[i] as StyleCardElement;
-        const styleId = card.styleId || null;
-        const isActive = styleId === 'default';
-        card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
-        const chk = card.querySelector('span:last-child') as HTMLElement;
-        if (chk) chk.style.display = isActive ? '' : 'none';
-      }
-    }
+    this.highlightThemeCard('dark');
+    this.highlightStyleCard('default');
 
     // Update shortcut displays — restore default keys
     ALL_SHORTCUTS.forEach((s) => {
@@ -1174,7 +1198,6 @@ export class SettingsModal {
 
     try {
       const state = this.settingsStore.getState();
-      const version = await serviceBindings.GetAppVersion();
 
       try {
         const parsed = JSON.parse(state.shortcut_overrides || '{}');
@@ -1195,7 +1218,6 @@ export class SettingsModal {
       }
       this.updatePreview();
 
-      // Populate new controls
       const opacity = state.opacity || 0.95;
       this.opacityInput.value = String(opacity);
       this.opacityValueEl.textContent = Math.round(opacity * 100) + '%';
@@ -1203,40 +1225,23 @@ export class SettingsModal {
       this.toastToggle.checked = state.toast_enabled;
       this.autocompleteToggle.checked = state.autocomplete_enabled;
       this.lineNumbersToggle.checked = state.line_numbers_enabled;
+      this.updateToggleVisual(this.animationsToggle, this.animationsTrack, this.animationsThumb);
+      this.updateToggleVisual(this.toastToggle, this.toastTrack, this.toastThumb);
+      this.updateToggleVisual(this.autocompleteToggle, this.autocompleteTrack, this.autocompleteThumb);
+      this.updateToggleVisual(this.lineNumbersToggle, this.lineNumbersTrack, this.lineNumbersThumb);
 
-      const thumbGrid = this.el.querySelector('div[style*="grid-template-columns:1fr 1fr"]');
-      if (thumbGrid) {
-        const cards = thumbGrid.children;
-        for (let i = 0; i < cards.length; i++) {
-          const card = cards[i] as ThemeCardElement;
-          const themeId = card.themeId || null;
-          const isActive = themeId === this.selectedTheme;
-          card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
-          const chk = card.querySelector('span:last-child') as HTMLElement;
-          if (chk) chk.style.display = isActive ? '' : 'none';
-        }
-      }
-
-      // Update UI Style card highlights
-      const styleGrids = this.el.querySelectorAll('div[style*="grid-template-columns:1fr 1fr"]');
-      if (styleGrids.length > 1) {
-        const styleCards = styleGrids[1].children;
-        for (let i = 0; i < styleCards.length; i++) {
-          const card = styleCards[i] as StyleCardElement;
-          const styleId = card.styleId || null;
-          const isActive = styleId === this.selectedStyle;
-          card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
-          const chk = card.querySelector('span:last-child') as HTMLElement;
-          if (chk) chk.style.display = isActive ? '' : 'none';
-        }
-      }
-
-      const verEl = this.el.querySelector('#settings-version');
-      if (verEl) verEl.textContent = `Version ${version}`;
+      this.highlightThemeCard(this.selectedTheme);
+      this.highlightStyleCard(this.selectedStyle);
 
       this.shortcutKbds.forEach((kbd, id) => {
         if (this.overrides[id]) kbd.textContent = this.overrides[id];
       });
+
+      // Version fetch does not block highlight setup
+      serviceBindings.GetAppVersion().then((version) => {
+        const verEl = this.el.querySelector('#settings-version');
+        if (verEl) verEl.textContent = `Version ${version}`;
+      }).catch(() => {});
     } catch {
       toast.show('Failed to load settings', 'error');
     }

@@ -1034,7 +1034,7 @@ Any valid expression can be plotted, including:
 
 ## 11. Settings
 
-Open Settings with `Ctrl/Cmd + ,` or the gear icon in the title bar. Settings has four tabs:
+Open Settings with `Ctrl/Cmd + ,` or the gear icon in the title bar. Settings has five tabs:
 
 ### General Tab
 
@@ -1051,7 +1051,7 @@ Open Settings with `Ctrl/Cmd + ,` or the gear icon in the title bar. Settings ha
 
 ### Theme Tab
 
-Select from 7 built-in themes plus any plugin-provided themes:
+Select from 15 built-in themes plus any plugin-provided themes:
 
 | Theme | Background | Accent | Text |
 |-------|-----------|--------|------|
@@ -1101,7 +1101,7 @@ Shows:
 
 ### Theme
 
-Switch themes in **Settings > Theme**. The theme change applies instantly across the entire app via CSS custom properties. All 7 built-in themes and any plugin themes are available.
+Switch themes in **Settings > Theme**. The theme change applies instantly across the entire app via CSS custom properties. All 15 built-in themes and any plugin themes are available.
 
 ### Font
 

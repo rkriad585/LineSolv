@@ -138,6 +138,17 @@ func ResetCache() {
 	cachedConfig = nil
 }
 
+// FlushPendingSave forces an immediate write of the cached config to disk.
+// Called on app shutdown to prevent losing debounced saves.
+func FlushPendingSave() {
+	configMu.Lock()
+	cfg := cachedConfig
+	configMu.Unlock()
+	if cfg != nil {
+		_ = SaveConfig(cfg)
+	}
+}
+
 func parseConfigTOML(data string, cfg *Config) {
 	lines := strings.Split(data, "\n")
 	var section string
@@ -156,7 +167,10 @@ func parseConfigTOML(data string, cfg *Config) {
 		}
 		key := strings.TrimSpace(parts[0])
 		val := strings.TrimSpace(parts[1])
-		val = strings.Trim(val, "\"'")
+		// Properly unquote TOML strings: strip matching outer quotes only
+		if len(val) >= 2 && ((val[0] == '"' && val[len(val)-1] == '"') || (val[0] == '\'' && val[len(val)-1] == '\'')) {
+			val = val[1 : len(val)-1]
+		}
 		val = strings.ReplaceAll(val, "\\\"", "\"")
 		switch section {
 		case "app":

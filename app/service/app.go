@@ -45,10 +45,11 @@ func getCtx() context.Context {
 	return globalCtx
 }
 
-// FlushPendingSaves is called on app shutdown. The in-memory config cache
-// is already persisted on each SaveConfig call, so this is a no-op for now.
-// If a debounced frontend save is in-flight, it may be lost on force-quit.
-func FlushPendingSaves() {}
+// FlushPendingSaves is called on app shutdown. It triggers an immediate
+// save to ensure no debounced frontend writes are lost.
+func FlushPendingSaves() {
+	storage.FlushPendingSave()
+}
 
 // AutocompleteItem represents a single autocomplete candidate.
 type AutocompleteItem struct {

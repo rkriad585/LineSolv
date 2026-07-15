@@ -2,7 +2,7 @@
 
 ## Built-in Themes
 
-LineSolv ships with 7 themes. All themes define the same 14 CSS custom properties, so plugins can contribute additional themes that integrate seamlessly.
+LineSolv ships with 15 themes. All themes define the same 14 CSS custom properties, so plugins can contribute additional themes that integrate seamlessly.
 
 ### Dark (default)
 
@@ -32,14 +32,61 @@ A dark theme with deep indigo-purple surfaces and a vibrant purple (`#bb86fc`) a
 
 A deep crimson theme with blood-red accents (`#b71c1c`). Near-black surfaces with warm red undertones. Dramatic and intense.
 
+### Midnight
+
+A dark navy-blue theme with sky-blue accents (`#38bdf8`). Clean, professional look inspired by Tailwind's slate palette.
+
+### Aurora
+
+A dark theme with deep purple surfaces and cyan accents (`#22d3ee`). Ethereal and futuristic with soft violet text.
+
+### Mono
+
+A pure black theme with white accents (`#ffffff`). Minimalist monochrome — no color, just contrast.
+
+### Frost
+
+A dark blue-steel theme with bright blue accents (`#60a5fa`). Cool and crisp, like a winter morning.
+
+### Prism
+
+A dark theme with deep violet surfaces and bright purple accents (`#c084fc`). Vibrant and colorful.
+
+### Lavender
+
+A dark theme with soft purple surfaces and lavender accents (`#a78bfa`). Gentle and calming.
+
+### Sage
+
+A dark theme with deep green surfaces and mint accents (`#34d399`). Nature-inspired and restful.
+
+### Warm Light
+
+A light theme with warm cream surfaces and amber accents (`#f59e0b`). Comfortable for extended reading.
+
+## UI Styles
+
+In addition to themes, LineSolv offers 6 UI styles that control shape, depth, and motion:
+
+| Style | Description |
+|-------|-------------|
+| **Default** | Flat, clean, minimal |
+| **Nothing** | Monochrome, industrial, Swiss |
+| **Liquid Glass** | Frosted glass, translucent |
+| **Material 3** | Rounded, tinted, elevation |
+| **Alivated** | Soft, warm, neumorphic |
+| **Neon** | Cyberpunk, glowing borders |
+
+Each style defines CSS tokens for border-radius (`--ui-radius-*`), shadows (`--ui-shadow-*`), blur, and transitions. Styles are applied via CSS class on the root element and can be combined with any theme.
+
 ## Changing Themes
 
 1. Open Settings with `Ctrl+,` (or `Cmd+,` on macOS)
-2. Click the **Theme** tab
-3. Select a theme from the dropdown
+2. Click the **Theme** tab to select a color theme
+3. Click the **UI Style** tab to select a visual style
 4. The change takes effect immediately — no restart required
 
-The active theme is saved to `config.toml` under `[app] theme` and persists across sessions.
+The active theme and style are saved to `config.toml` and persist across sessions.
 
 ## CSS Custom Properties
 

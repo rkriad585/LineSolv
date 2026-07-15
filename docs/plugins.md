@@ -344,7 +344,7 @@ Themes are defined in the `themes` array of `plugin.json`. Each theme provides C
 | `--info` | Informational color | `#3b82f6` |
 | `--shadow` | Box shadow color | `rgba(0,0,0,0.3)` |
 
-Plugin themes appear in **Settings > Theme** alongside the 7 built-in themes, labeled with a "Plugin" badge. The theme's `--surface`, `--accent`, and `--text` values are used for the preview swatch.
+Plugin themes appear in **Settings > Theme** alongside the 15 built-in themes, labeled with a "Plugin" badge. The theme's `--surface`, `--accent`, and `--text` values are used for the preview swatch.
 
 ### Theme ID Rules
 
