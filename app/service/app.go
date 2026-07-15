@@ -135,7 +135,7 @@ func (s *AppService) EvaluateLine(input string) (string, error) {
 	case r := <-ch:
 		return r.res, r.err
 	case <-time.After(evalTimeout):
-		return "Error: evaluation timed out", nil
+		return "", nil
 	}
 }
 
@@ -151,7 +151,7 @@ func (s *AppService) GetSteps(input string) *calculator.EvalDetail {
 	case r := <-ch:
 		return r.res
 	case <-time.After(evalTimeout):
-		return &calculator.EvalDetail{Result: "Error: evaluation timed out"}
+		return &calculator.EvalDetail{Result: ""}
 	}
 }
 
@@ -167,7 +167,7 @@ func (s *AppService) EvaluateAll(input string) []string {
 	case r := <-ch:
 		return r.res
 	case <-time.After(evalTimeout):
-		return []string{"Error: evaluation timed out"}
+		return []string{""}
 	}
 }
 

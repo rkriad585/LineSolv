@@ -8,15 +8,17 @@
 }
 
 /* Only transition specific interactive elements, not everything (avoids flicker) */
-button, .panel-toggle, .note-item, aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
+button, .panel-toggle, .note-item {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-/* Theme color transitions for smooth switching */
+/* Theme color transitions for smooth switching + sidebar panel width animation */
 html, body, #notepad, #results-column, #notepad-wrapper,
-aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel,
 #graph-panel {
   transition: background-color var(--anim-slow) ease, color var(--anim-slow) ease, border-color var(--anim-slow) ease;
+}
+aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
+  transition: width 0.15s ease, background-color var(--anim-slow) ease, color var(--anim-slow) ease, border-color var(--anim-slow) ease;
 }
 
 /* Modal open/close animation */
@@ -674,8 +676,10 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  button, .panel-toggle, .note-item, aside,
-  #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
+  button, .panel-toggle, .note-item {
+    transition: none !important;
+  }
+  aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
     transition: none !important;
   }
 }

@@ -153,8 +153,9 @@ export class PluginPanel {
   constructor() {
     this.el = document.createElement('div');
     this.el.id = 'plugin-viewer';
+    this.el.className = 'lsv-modal-overlay';
     this.el.style.cssText =
-      'position:fixed;inset:0;z-index:1000;display:none;flex-direction:column;' +
+      'position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;' +
       'background:var(--surface);';
     this.build();
   }
@@ -320,7 +321,7 @@ export class PluginPanel {
   async open(): Promise<void> {
     if (this.isVisible) return;
     this.isVisible = true;
-    this.el.style.display = 'flex';
+    this.el.classList.add('lsv-modal-open');
     this.searchInput.value = '';
     this.searchQuery = '';
     this.hideDetail();
@@ -330,7 +331,7 @@ export class PluginPanel {
   close(): void {
     if (!this.isVisible) return;
     this.isVisible = false;
-    this.el.style.display = 'none';
+    this.el.classList.remove('lsv-modal-open');
   }
 
   isOpen(): boolean {

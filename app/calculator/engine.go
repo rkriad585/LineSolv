@@ -144,7 +144,7 @@ func (e *Engine) EvaluateAll(input string) []string {
 	for i, line := range lines {
 		res, err := e.evaluateLineUnlocked(line)
 		if err != nil {
-			results[i] = "Error: " + err.Error()
+			results[i] = ""
 		} else {
 			results[i] = res
 		}
