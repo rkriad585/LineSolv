@@ -8,6 +8,7 @@
 
 # Wails
 build/bin
+build/.bin
 *.exe
 
 # Go
@@ -18,19 +19,43 @@ build/bin
 *.dylib
 go.work
 coverage.out
+*.test
 
 # Node
 node_modules
+frontend/node_modules
 frontend/dist
 frontend/coverage
+frontend/.vite
+package-lock.json
 
 # Editor
-.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 .idea/
 *.sublime-*
+*.code-workspace
 
 # OS
 Thumbs.db
 
+# Environment
+.env
+.env.local
+.env.*.local
+
 # Stale
 frontend/package.json.md5
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Temp
+tmp/
+temp/
+.tmp/

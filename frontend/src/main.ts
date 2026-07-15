@@ -1,8 +1,9 @@
 import './style.css';
-import {renderApp} from './App';
+import { renderApp } from './App';
+import { toast } from './utils/toast';
 
 // Initialize Wails runtime
-import {EventsOn} from '../wailsjs/runtime/runtime';
+import { EventsOn } from '../wailsjs/runtime/runtime';
 
 document.addEventListener('DOMContentLoaded', () => {
   const root = document.querySelector<HTMLDivElement>('#app');
@@ -12,5 +13,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Listen for any Go-side events
 EventsOn('error', (msg: string) => {
-  console.error('Go error:', msg);
+  toast.show(msg, 'error');
 });

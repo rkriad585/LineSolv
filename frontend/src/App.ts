@@ -1,57 +1,77 @@
-import type {ShortcutMap} from './utils/shortcuts';
-import type {AppCallbacks, Note} from './types';
-import {CalculatorStore} from './stores/calculator';
-import {NotesManager, type SortField, type SortDir} from './stores/notes';
-import {SettingsStore} from './stores/settings';
-import {TitleBar} from './components/TitleBar';
-import {CalculatorInput} from './components/CalculatorInput';
-import {ResultDisplay} from './components/ResultDisplay';
-import {NotesPanel} from './components/NotesPanel';
-import {VariableExplorer} from './components/VariableExplorer';
-import {ConfirmDialog} from './components/ConfirmDialog';
-import {ShortcutModal} from './components/ShortcutModal';
-import {SettingsModal} from './components/SettingsModal';
-import {DocsViewer} from './components/DocsViewer';
-import {HistoryPanel} from './components/HistoryPanel';
-import {loadFontForFamily} from './utils/fonts';
-import {StepsPanel} from './components/StepsPanel';
-import {GraphPanel} from './components/GraphPanel';
-import {PluginPanel} from './components/PluginPanel';
-import {ContextMenu} from './components/ContextMenu';
-import {AutocompletePopup} from './components/AutocompletePopup';
-import type {ContextMenuItem} from './types';
-import {buildLineResults} from './utils/format';
-import {installGlobalShortcuts, toggleFullscreen} from './utils/shortcuts';
-import {escapeHtml} from './utils/html';
-import {toast, Toast} from './utils/toast';
+import type { ShortcutMap } from './utils/shortcuts';
+import type { AppCallbacks, Note } from './types';
+import { CalculatorStore } from './stores/calculator';
+import { NotesManager, type SortField, type SortDir } from './stores/notes';
+import { SettingsStore } from './stores/settings';
+import { TitleBar } from './components/TitleBar';
+import { CalculatorInput } from './components/CalculatorInput';
+import { ResultDisplay } from './components/ResultDisplay';
+import { NotesPanel } from './components/NotesPanel';
+import { VariableExplorer } from './components/VariableExplorer';
+import { ConfirmDialog } from './components/ConfirmDialog';
+import { ShortcutModal } from './components/ShortcutModal';
+import { SettingsModal } from './components/SettingsModal';
+import { DocsViewer } from './components/DocsViewer';
+import { HistoryPanel } from './components/HistoryPanel';
+import { loadFontForFamily } from './utils/fonts';
+import { StepsPanel } from './components/StepsPanel';
+import { GraphPanel } from './components/GraphPanel';
+import { PluginPanel } from './components/PluginPanel';
+import { ContextMenu } from './components/ContextMenu';
+import { AutocompletePopup } from './components/AutocompletePopup';
+import type { ContextMenuItem } from './types';
+import { buildLineResults } from './utils/format';
+import { installGlobalShortcuts, toggleFullscreen } from './utils/shortcuts';
+import { escapeHtml } from './utils/html';
+import { toast, Toast } from './utils/toast';
 import * as serviceBindings from '../wailsjs/go/service/AppService';
 
-const BUILTIN_THEMES = ['dark', 'light', 'neon', 'red', 'obsidian', 'plasma', 'blood', 'midnight', 'aurora', 'mono', 'frost', 'prism', 'lavender', 'sage', 'warm-light'];
+const BUILTIN_THEMES = [
+  'dark',
+  'light',
+  'neon',
+  'red',
+  'obsidian',
+  'plasma',
+  'blood',
+  'midnight',
+  'aurora',
+  'mono',
+  'frost',
+  'prism',
+  'lavender',
+  'sage',
+  'warm-light',
+];
 let pluginThemeStyle: HTMLStyleElement | null = null;
 let pluginThemeIds: string[] = [];
 
 const STYLES = [
-  {id: 'default',   label: 'Default',   desc: 'Flat, clean, minimal'},
-  {id: 'nothing',   label: 'Nothing',   desc: 'Monochrome, industrial, Swiss'},
-  {id: 'glass',     label: 'Liquid Glass', desc: 'Frosted glass, translucent'},
-  {id: 'material',  label: 'Material 3', desc: 'Rounded, tinted, elevation'},
-  {id: 'alivated',  label: 'Alivated',  desc: 'Soft, warm, neumorphic'},
-  {id: 'neon',      label: 'Neon',      desc: 'Cyberpunk, glowing borders'},
-  {id: 'claude',    label: 'Claude Code', desc: 'Clean, warm, Anthropic-inspired'},
+  { id: 'default', label: 'Default', desc: 'Flat, clean, minimal' },
+  { id: 'nothing', label: 'Nothing', desc: 'Monochrome, industrial, Swiss' },
+  { id: 'glass', label: 'Liquid Glass', desc: 'Frosted glass, translucent' },
+  { id: 'material', label: 'Material 3', desc: 'Rounded, tinted, elevation' },
+  { id: 'alivated', label: 'Alivated', desc: 'Soft, warm, neumorphic' },
+  { id: 'neon', label: 'Neon', desc: 'Cyberpunk, glowing borders' },
+  { id: 'claude', label: 'Claude Code', desc: 'Clean, warm, Anthropic-inspired' },
 ];
 
 let currentStyle = 'default';
 
 function applyUiStyle(style: string): void {
-  const valid = STYLES.some(s => s.id === style);
+  const valid = STYLES.some((s) => s.id === style);
   currentStyle = valid ? style : 'default';
   document.documentElement.classList.remove(
-    'style-default', 'style-nothing', 'style-glass',
-    'style-material', 'style-alivated', 'style-neon',
+    'style-default',
+    'style-nothing',
+    'style-glass',
+    'style-material',
+    'style-alivated',
+    'style-neon',
   );
   document.documentElement.classList.add('style-' + currentStyle);
   // Force WebKit to recalculate styles and repaint immediately
-  void(document.documentElement.offsetHeight);
+  void document.documentElement.offsetHeight;
 }
 
 function applyTheme(theme: string): void {
@@ -67,10 +87,12 @@ function applyTheme(theme: string): void {
     document.documentElement.classList.add('theme-dark');
   }
   // Force WebKit to recalculate styles and repaint immediately
-  void(document.documentElement.offsetHeight);
+  void document.documentElement.offsetHeight;
 }
 
-function injectPluginThemes(themes: Array<{id: string; label: string; colors: Record<string, string>}>): void {
+function injectPluginThemes(
+  themes: Array<{ id: string; label: string; colors: Record<string, string> }>,
+): void {
   if (pluginThemeStyle) {
     pluginThemeStyle.remove();
   }
@@ -205,7 +227,9 @@ export function renderApp(root: HTMLElement): void {
         if (noteId === notesMgr.getActiveId()) {
           notesPanel.setDirty(noteId, false);
         }
-      } catch (e) { console.error('Note save failed:', e); }
+      } catch {
+        toast.show('Note save failed', 'error');
+      }
     }, 500);
   }
 
@@ -217,7 +241,9 @@ export function renderApp(root: HTMLElement): void {
       store.setVariables(v);
       varsPanel.render(v);
       scheduleKeywordRefresh();
-    } catch { /* runtime not ready */ }
+    } catch {
+      /* runtime not ready */
+    }
   }
 
   let loadingTimeout: number | null = null;
@@ -239,7 +265,10 @@ export function renderApp(root: HTMLElement): void {
 
     // Defer loading state — only show if eval takes > 60ms (avoids "..." flicker for fast evals)
     const visualInfo = input.getLineVisualInfo();
-    if (loadingTimeout) { clearTimeout(loadingTimeout); loadingTimeout = null; }
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      loadingTimeout = null;
+    }
     loadingTimeout = window.setTimeout(() => {
       if (version !== evalVersion) return;
       store.setEvalState('loading');
@@ -249,7 +278,10 @@ export function renderApp(root: HTMLElement): void {
     try {
       const res = await serviceBindings.EvaluateAll(text);
       if (version !== evalVersion) return;
-      if (loadingTimeout) { clearTimeout(loadingTimeout); loadingTimeout = null; }
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+      }
 
       store.setEvalState('idle');
       store.setResults(res);
@@ -257,7 +289,7 @@ export function renderApp(root: HTMLElement): void {
       results.setResults(buildLineResults(lines, res, false, visualInfo));
 
       for (const r of res) {
-        if (r) store.pushHistory({input: text, output: r});
+        if (r) store.pushHistory({ input: text, output: r });
       }
 
       // Fetch steps for the last evaluated expression
@@ -273,7 +305,9 @@ export function renderApp(root: HTMLElement): void {
         try {
           const detail = await serviceBindings.GetSteps(lastExpr);
           stepsPanel.render(detail.steps, detail.result);
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
 
       // Auto-detect graph expressions ("plot x^2", "graph sin(x)", "y = x^2")
@@ -283,11 +317,16 @@ export function renderApp(root: HTMLElement): void {
           if (graphResult && graphResult.points && graphResult.points.length > 0) {
             graphPanel.render(graphResult.points, graphResult.expression);
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
     } catch {
       if (version !== evalVersion) return;
-      if (loadingTimeout) { clearTimeout(loadingTimeout); loadingTimeout = null; }
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+      }
       store.setEvalState('error');
       store.setError('Connection error');
       toast.show('Connection error — backend may be restarting', 'error');
@@ -313,19 +352,27 @@ export function renderApp(root: HTMLElement): void {
   async function clearAndEval(): Promise<void> {
     try {
       await serviceBindings.ClearVariables();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     evaluateAll();
   }
 
   function refreshNotesUI(): void {
-    notesPanel.render(notesMgr.getNotes(), notesMgr.getActiveId(), notesMgr.getSortField(), notesMgr.getSortDir());
+    notesPanel.render(
+      notesMgr.getNotes(),
+      notesMgr.getActiveId(),
+      notesMgr.getSortField(),
+      notesMgr.getSortDir(),
+    );
   }
 
   // --- Note operations ---
 
   let notesLoaded = false;
 
-  const WELCOME_CONTENT = '# Type your calculations here...\n# Examples:\n2 + 2\n25 * 37\n200 with 25% discount';
+  const WELCOME_CONTENT =
+    '# Type your calculations here...\n# Examples:\n2 + 2\n25 * 37\n200 with 25% discount';
   const LS_ACTIVE_KEY = 'linesolv_active_note';
 
   async function loadNotes(): Promise<void> {
@@ -341,14 +388,16 @@ export function renderApp(root: HTMLElement): void {
       } else {
         // Restore last active note from localStorage, fallback to first note
         const savedId = localStorage.getItem(LS_ACTIVE_KEY);
-        const activeId = savedId && notes.some(n => n.id === savedId) ? savedId : notes[0].id;
+        const activeId = savedId && notes.some((n) => n.id === savedId) ? savedId : notes[0].id;
         notesMgr.load(notes, activeId);
         const content = notesMgr.activeNote().content;
         input.text = content || WELCOME_CONTENT;
       }
       notesLoaded = true;
       refreshNotesUI();
-    } catch { /* runtime not ready — will use fallback */ }
+    } catch {
+      /* runtime not ready — will use fallback */
+    }
   }
 
   /** Create a local in-memory fallback note when backend is unavailable. */
@@ -383,7 +432,9 @@ export function renderApp(root: HTMLElement): void {
         notesMgr.load([note], note.id);
         localStorage.setItem(LS_ACTIVE_KEY, note.id);
         refreshNotesUI();
-      } catch { /* backend still not ready, keep in-memory fallback */ }
+      } catch {
+        /* backend still not ready, keep in-memory fallback */
+      }
     })();
   }
 
@@ -421,7 +472,9 @@ export function renderApp(root: HTMLElement): void {
     let skip = false;
     try {
       skip = await serviceBindings.GetDeleteWithoutConfirm();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     if (skip) {
       doDelete(id);
       return;
@@ -433,7 +486,11 @@ export function renderApp(root: HTMLElement): void {
       async (result) => {
         if (result.confirmed) {
           if (result.remember) {
-            try { await serviceBindings.SetDeleteWithoutConfirm(true); } catch { toast.show('Failed to save preference', 'error'); }
+            try {
+              await serviceBindings.SetDeleteWithoutConfirm(true);
+            } catch {
+              toast.show('Failed to save preference', 'error');
+            }
           }
           doDelete(id);
         }
@@ -489,7 +546,7 @@ export function renderApp(root: HTMLElement): void {
   }
 
   function handleShareNote(id: string): void {
-    const note = notesMgr.getNotes().find(n => n.id === id);
+    const note = notesMgr.getNotes().find((n) => n.id === id);
     if (!note) return;
     const text = `${note.name}\n---\n${note.content}`;
     navigator.clipboard.writeText(text).then(
@@ -624,7 +681,11 @@ export function renderApp(root: HTMLElement): void {
       const lines = text.split('\n');
       const state = store.getState();
       const noteName = notesMgr.activeNote()?.name || '';
-      const today = new Date().toLocaleDateString(undefined, {year:'numeric',month:'short',day:'numeric'});
+      const today = new Date().toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
 
       let rows = '';
       for (let i = 0; i < lines.length; i++) {
@@ -684,7 +745,8 @@ export function renderApp(root: HTMLElement): void {
 </body></html>`;
 
       const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:1px;height:1px;border:none';
+      iframe.style.cssText =
+        'position:absolute;top:-9999px;left:-9999px;width:1px;height:1px;border:none';
       document.body.appendChild(iframe);
       const idoc = iframe.contentDocument || iframe.contentWindow!.document;
       idoc.open();
@@ -820,22 +882,23 @@ export function renderApp(root: HTMLElement): void {
       try {
         allKeywords = await serviceBindings.GetAutocompleteKeywords();
         autocomplete.setItems(allKeywords as import('./types').AutocompleteItem[]);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }, 500);
   }
 
   const loadingSpinner = document.createElement('div');
   loadingSpinner.id = 'loading-spinner';
-  loadingSpinner.style.cssText = 'display:none;position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:50;';
-  loadingSpinner.innerHTML = '<div style="width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;"></div>';
+  loadingSpinner.style.cssText =
+    'display:none;position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:50;';
+  loadingSpinner.innerHTML =
+    '<div style="width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;"></div>';
   notepad.appendChild(loadingSpinner);
 
   const shortcutModal = new ShortcutModal();
 
-  const settingsModal = new SettingsModal(
-    'dark',
-    settingsStore,
-  );
+  const settingsModal = new SettingsModal('dark', settingsStore);
 
   const historyPanel = new HistoryPanel((inputText) => {
     input.text = inputText;
@@ -894,25 +957,29 @@ export function renderApp(root: HTMLElement): void {
   installGlobalShortcuts(input.textarea, shortcuts);
 
   // --- Autocomplete keyboard handling ---
-  input.textarea.addEventListener('keydown', (e) => {
-    if (!settingsStore.getState().autocomplete_enabled) return;
-    if (!autocomplete.isVisible()) return;
+  input.textarea.addEventListener(
+    'keydown',
+    (e) => {
+      if (!settingsStore.getState().autocomplete_enabled) return;
+      if (!autocomplete.isVisible()) return;
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      autocomplete.moveSelection(1);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      autocomplete.moveSelection(-1);
-    } else if (e.key === 'Enter' || e.key === 'Tab') {
-      e.preventDefault();
-      autocomplete.selectCurrent();
-      if (autocompleteThrottleTimer) {
-        clearTimeout(autocompleteThrottleTimer);
-        autocompleteThrottleTimer = null;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        autocomplete.moveSelection(1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        autocomplete.moveSelection(-1);
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        autocomplete.selectCurrent();
+        if (autocompleteThrottleTimer) {
+          clearTimeout(autocompleteThrottleTimer);
+          autocompleteThrottleTimer = null;
+        }
       }
-    }
-  }, true);
+    },
+    true,
+  );
 
   // Dismiss autocomplete on blur (with small delay for click handling)
   input.textarea.addEventListener('blur', () => {
@@ -933,57 +1000,132 @@ export function renderApp(root: HTMLElement): void {
     const notes = notesMgr.getNotes();
 
     const items: ContextMenuItem[] = [
-      {label: 'Cut', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>', shortcut: mod + '+X', action: () => {
-        const ta = input.textarea;
-        const start = ta.selectionStart;
-        const end = ta.selectionEnd;
-        if (start === end) return;
-        const selected = ta.value.substring(start, end);
-        navigator.clipboard.writeText(selected).then(() => {
-          ta.setRangeText('', start, end, 'end');
-          ta.dispatchEvent(new Event('input', {bubbles: true}));
-        });
-      }, disabled: !hasSelection},
-      {label: 'Copy', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', shortcut: mod + '+C', action: () => {
-        const ta = input.textarea;
-        const selected = ta.value.substring(ta.selectionStart, ta.selectionEnd);
-        if (selected) navigator.clipboard.writeText(selected);
-      }, disabled: !hasSelection},
-      {label: 'Paste', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>', shortcut: mod + '+V', action: () => {
-        navigator.clipboard.readText().then(text => {
+      {
+        label: 'Cut',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>',
+        shortcut: mod + '+X',
+        action: () => {
           const ta = input.textarea;
           const start = ta.selectionStart;
-          ta.setRangeText(text, start, ta.selectionEnd, 'end');
-          ta.dispatchEvent(new Event('input', {bubbles: true}));
-        }).catch(() => {});
-      }},
-      {label: 'Select All', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>', shortcut: mod + '+A', action: () => { input.textarea.select(); }},
-      {separator: true},
-      {label: 'Format Expression', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>', shortcut: mod + '+F', action: () => scheduleEval(), disabled: !hasText},
-      {label: 'Clear Line', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>', action: () => { input.text = ''; forceEval(); }, disabled: !hasText},
-      {separator: true},
-      {label: 'New Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>', shortcut: mod + '+N', action: handleNewNote},
+          const end = ta.selectionEnd;
+          if (start === end) return;
+          const selected = ta.value.substring(start, end);
+          navigator.clipboard.writeText(selected).then(() => {
+            ta.setRangeText('', start, end, 'end');
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+          });
+        },
+        disabled: !hasSelection,
+      },
+      {
+        label: 'Copy',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+        shortcut: mod + '+C',
+        action: () => {
+          const ta = input.textarea;
+          const selected = ta.value.substring(ta.selectionStart, ta.selectionEnd);
+          if (selected) navigator.clipboard.writeText(selected);
+        },
+        disabled: !hasSelection,
+      },
+      {
+        label: 'Paste',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>',
+        shortcut: mod + '+V',
+        action: () => {
+          navigator.clipboard
+            .readText()
+            .then((text) => {
+              const ta = input.textarea;
+              const start = ta.selectionStart;
+              ta.setRangeText(text, start, ta.selectionEnd, 'end');
+              ta.dispatchEvent(new Event('input', { bubbles: true }));
+            })
+            .catch(() => {});
+        },
+      },
+      {
+        label: 'Select All',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+        shortcut: mod + '+A',
+        action: () => {
+          input.textarea.select();
+        },
+      },
+      { separator: true },
+      {
+        label: 'Format Expression',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+        shortcut: mod + '+F',
+        action: () => scheduleEval(),
+        disabled: !hasText,
+      },
+      {
+        label: 'Clear Line',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+        action: () => {
+          input.text = '';
+          forceEval();
+        },
+        disabled: !hasText,
+      },
+      { separator: true },
+      {
+        label: 'New Note',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
+        shortcut: mod + '+N',
+        action: handleNewNote,
+      },
     ];
 
     if (notes.length > 1) {
       const activeId = notesMgr.getActiveId();
-      const switchChildren: ContextMenuItem[] = notes.map(n => ({
+      const switchChildren: ContextMenuItem[] = notes.map((n) => ({
         label: n.name || 'Untitled',
-        icon: n.id === activeId ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : undefined,
+        icon:
+          n.id === activeId
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+            : undefined,
         action: () => switchNote(n.id),
       }));
-      items.push({label: 'Switch Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>', children: switchChildren});
+      items.push({
+        label: 'Switch Note',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+        children: switchChildren,
+      });
     }
 
     items.push(
-      {separator: true},
-      {label: 'Panels', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>', children: [
-        {label: 'Docs', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>', action: shortcuts.onToggleDocs},
-        {label: 'Plugins', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/><circle cx="12" cy="12" r="3"/></svg>', action: shortcuts.onTogglePlugins},
-        {label: 'Settings', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>', action: shortcuts.onToggleSettings},
-      ]},
-      {separator: true},
-      {label: 'About LineSolv', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>', action: () => { settingsModal.open('About'); }},
+      { separator: true },
+      {
+        label: 'Panels',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
+        children: [
+          {
+            label: 'Docs',
+            icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+            action: shortcuts.onToggleDocs,
+          },
+          {
+            label: 'Plugins',
+            icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/><circle cx="12" cy="12" r="3"/></svg>',
+            action: shortcuts.onTogglePlugins,
+          },
+          {
+            label: 'Settings',
+            icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+            action: shortcuts.onToggleSettings,
+          },
+        ],
+      },
+      { separator: true },
+      {
+        label: 'About LineSolv',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+        action: () => {
+          settingsModal.open('About');
+        },
+      },
     );
 
     ctxMenu.show(items, e.clientX, e.clientY);
@@ -997,37 +1139,68 @@ export function renderApp(root: HTMLElement): void {
     const activeId = notesMgr.getActiveId();
 
     const items: ContextMenuItem[] = [
-      {label: 'Select All', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>', shortcut: mod + '+A', action: () => {
-        const range = document.createRange();
-        range.selectNodeContents(docsViewer.contentEl);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-      }},
-      {separator: true},
-      {label: 'New Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>', shortcut: mod + '+N', action: handleNewNote},
+      {
+        label: 'Select All',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+        shortcut: mod + '+A',
+        action: () => {
+          const range = document.createRange();
+          range.selectNodeContents(docsViewer.contentEl);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        },
+      },
+      { separator: true },
+      {
+        label: 'New Note',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
+        shortcut: mod + '+N',
+        action: handleNewNote,
+      },
     ];
 
     if (notes.length > 1) {
-      const switchChildren: ContextMenuItem[] = notes.map(n => ({
+      const switchChildren: ContextMenuItem[] = notes.map((n) => ({
         label: n.name || 'Untitled',
-        icon: n.id === activeId ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : undefined,
+        icon:
+          n.id === activeId
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+            : undefined,
         action: () => switchNote(n.id),
       }));
-      items.push({label: 'Switch Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>', children: switchChildren});
+      items.push({
+        label: 'Switch Note',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+        children: switchChildren,
+      });
     }
 
     items.push(
-      {separator: true},
-      {label: 'Panels', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>', children: [
-          {label: 'Docs', action: shortcuts.onToggleDocs},
-          {label: 'Plugins', action: shortcuts.onTogglePlugins},
-          {label: 'Settings', action: shortcuts.onToggleSettings},
-        ]},
-      {separator: true},
-      {label: 'About LineSolv', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>', action: () => { settingsModal.open('About'); }},
-      {separator: true},
-      {label: 'Select text, then press ' + mod + '+C to copy', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', disabled: true},
+      { separator: true },
+      {
+        label: 'Panels',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
+        children: [
+          { label: 'Docs', action: shortcuts.onToggleDocs },
+          { label: 'Plugins', action: shortcuts.onTogglePlugins },
+          { label: 'Settings', action: shortcuts.onToggleSettings },
+        ],
+      },
+      { separator: true },
+      {
+        label: 'About LineSolv',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+        action: () => {
+          settingsModal.open('About');
+        },
+      },
+      { separator: true },
+      {
+        label: 'Select text, then press ' + mod + '+C to copy',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        disabled: true,
+      },
     );
 
     ctxMenu.show(items, e.clientX, e.clientY);
@@ -1041,37 +1214,68 @@ export function renderApp(root: HTMLElement): void {
     const activeId = notesMgr.getActiveId();
 
     const items: ContextMenuItem[] = [
-      {label: 'Select All', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>', shortcut: mod + '+A', action: () => {
-        const range = document.createRange();
-        range.selectNodeContents(pluginPanel.detailContent);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-      }},
-      {separator: true},
-      {label: 'New Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>', shortcut: mod + '+N', action: handleNewNote},
+      {
+        label: 'Select All',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+        shortcut: mod + '+A',
+        action: () => {
+          const range = document.createRange();
+          range.selectNodeContents(pluginPanel.detailContent);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        },
+      },
+      { separator: true },
+      {
+        label: 'New Note',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
+        shortcut: mod + '+N',
+        action: handleNewNote,
+      },
     ];
 
     if (notes.length > 1) {
-      const switchChildren: ContextMenuItem[] = notes.map(n => ({
+      const switchChildren: ContextMenuItem[] = notes.map((n) => ({
         label: n.name || 'Untitled',
-        icon: n.id === activeId ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : undefined,
+        icon:
+          n.id === activeId
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+            : undefined,
         action: () => switchNote(n.id),
       }));
-      items.push({label: 'Switch Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>', children: switchChildren});
+      items.push({
+        label: 'Switch Note',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+        children: switchChildren,
+      });
     }
 
     items.push(
-      {separator: true},
-      {label: 'Panels', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>', children: [
-          {label: 'Docs', action: shortcuts.onToggleDocs},
-          {label: 'Plugins', action: shortcuts.onTogglePlugins},
-          {label: 'Settings', action: shortcuts.onToggleSettings},
-        ]},
-      {separator: true},
-      {label: 'About LineSolv', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>', action: () => { settingsModal.open('About'); }},
-      {separator: true},
-      {label: 'Select text, then press ' + mod + '+C to copy', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', disabled: true},
+      { separator: true },
+      {
+        label: 'Panels',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
+        children: [
+          { label: 'Docs', action: shortcuts.onToggleDocs },
+          { label: 'Plugins', action: shortcuts.onTogglePlugins },
+          { label: 'Settings', action: shortcuts.onToggleSettings },
+        ],
+      },
+      { separator: true },
+      {
+        label: 'About LineSolv',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+        action: () => {
+          settingsModal.open('About');
+        },
+      },
+      { separator: true },
+      {
+        label: 'Select text, then press ' + mod + '+C to copy',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        disabled: true,
+      },
     );
 
     ctxMenu.show(items, e.clientX, e.clientY);
@@ -1099,7 +1303,7 @@ export function renderApp(root: HTMLElement): void {
         await loadNotes();
         break;
       } catch {
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise((r) => setTimeout(r, 100));
       }
     }
     // If notes didn't load from backend, create a local fallback
@@ -1107,19 +1311,28 @@ export function renderApp(root: HTMLElement): void {
     try {
       const pluginThemes = await serviceBindings.GetPluginThemes();
       if (pluginThemes && pluginThemes.length > 0) {
-        injectPluginThemes(pluginThemes as Array<{id: string; label: string; colors: Record<string, string>}>);
+        injectPluginThemes(
+          pluginThemes as Array<{ id: string; label: string; colors: Record<string, string> }>,
+        );
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     try {
       const state = await settingsStore.load();
       applySettingsState(state);
       input.setLineNumbersVisible(state.line_numbers_enabled);
       results.el.style.display = state.result_panel_enabled ? '' : 'none';
       input.setLineWrap(state.line_wrap_enabled);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     // Reveal app — fade out splash screen
     splash.style.opacity = '0';
-    setTimeout(() => { splash.remove(); splashStyle.remove(); }, 450);
+    setTimeout(() => {
+      splash.remove();
+      splashStyle.remove();
+    }, 450);
     settingsStore.onChanged((s) => {
       applySettingsState(s);
       if (!s.autocomplete_enabled) autocomplete.hide();
@@ -1131,7 +1344,9 @@ export function renderApp(root: HTMLElement): void {
     try {
       allKeywords = await serviceBindings.GetAutocompleteKeywords();
       autocomplete.setItems(allKeywords as import('./types').AutocompleteItem[]);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     evaluateAll();
   })();
 }

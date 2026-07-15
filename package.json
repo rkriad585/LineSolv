@@ -1,0 +1,24 @@
+{
+  "name": "linesolv",
+  "private": true,
+  "version": "0.14.1",
+  "type": "module",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "cd frontend && npm run lint",
+    "lint:fix": "cd frontend && npm run lint:fix",
+    "typecheck": "cd frontend && npm run typecheck",
+    "format": "cd frontend && npm run format",
+    "format:check": "cd frontend && npm run format:check",
+    "test": "cd frontend && npm run test",
+    "build": "cd frontend && npm run build",
+    "golangci-lint": "go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest run"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.5.0"
+  }
+}

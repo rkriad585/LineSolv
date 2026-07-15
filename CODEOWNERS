@@ -1,0 +1,21 @@
+# Code Owners — defines code review responsibility
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @rkriad585
+
+# Frontend
+/frontend/ @rkriad585
+
+# Go backend
+/app/ @rkriad585
+/main.go @rkriad585
+
+# Build & CI
+/.github/ @rkriad585
+/build/ @rkriad585
+/Dockerfile @rkriad585
+
+# Documentation
+/docs/ @rkriad585
+*.md @rkriad585
