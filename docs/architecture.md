@@ -38,9 +38,11 @@ LineSolv is a cross-platform desktop application built with the **Wails v2** fra
 │  │  ├─ App.ts               — orchestrator (≈720 lines)         │ │
 │  │  ├─ stores/                                                 │ │
 │  │  │   ├─ calculator.ts    — subscriber-pattern reactive store │ │
+│  │  │   ├─ settings.ts      — SettingsStore (50ms auto-save)    │ │
 │  │  │   └─ notes.ts         — NotesManager (sort, active track) │ │
 │  │  ├─ components/ (15 components)                              │ │
-│  │  │   ├─ TitleBar.ts, CalculatorInput.ts, ResultDisplay.ts   │ │
+│  │  │   ├─ TitleBar.ts (menu dropdown + closeMenu)              │ │
+│  │  │   ├─ CalculatorInput.ts, ResultDisplay.ts                │ │
 │  │  │   ├─ NotesPanel.ts, VariableExplorer.ts, HistoryPanel.ts  │ │
 │  │  │   ├─ StepsPanel.ts, GraphPanel.ts, PluginPanel.ts        │ │
 │  │  │   ├─ ContextMenu.ts, ConfirmDialog.ts                     │ │
@@ -117,7 +119,7 @@ Persistent storage layer with four modules:
 
 - **`db.go`** — SQLite database with WAL mode, single-connection limit. Tables: `notes` (id, name, content, created_at, updated_at, position) and `currency_cache` (rates JSON, updated_at). Composite index `idx_notes_sort` on `(position, updated_at)` optimizes note listing and reordering. CRUD: `CreateNote`, `CreateNoteWithContent`, `CreateNoteWithContentAndDates` (preserves timestamps on import), `GetAllNotes` (ordered by position, then updated_at), `ReorderNotes` (transactional position update), `RenameNote`, `DeleteNote`, `SaveNoteContent`. Currency: `SaveCurrencyRates`, `GetCachedCurrencyRates`.
 
-- **`config.go`** — TOML config with sections: `[app]` (theme, version), `[notes]` (last_active, sort_by), `[behavior]` (delete_without_confirm), `[settings]` (font_size, font_family, shortcut_overrides). Manual TOML parser (no external dependency). Defaults: dark theme, font size 16, system font family.
+- **`config.go`** — TOML config with sections: `[app]` (theme, version), `[notes]` (last_active, sort_by), `[behavior]` (delete_without_confirm), `[settings]` (font_size, font_family, shortcut_overrides, result_panel_enabled, line_wrap_enabled). Manual TOML parser (no external dependency). Defaults: dark theme, font size 16, system font family, result panel enabled, line wrap enabled.
 
 - **`exporter.go`** — Export to 6 formats: `.lv` (raw content), `.txt` (title + created date + content), `.md` (Markdown with header + code block), `.json` (full metadata + content), `.toml` (key-value with name/content), `.pdf` (using `gofpdf`). Import from `.json` (preserves timestamps), `.toml`, `.lv`/`.txt`/`.md` (raw content), `.pdf` (text extraction via `ledongthuc/pdf`). `ExportNoteBytes` returns raw bytes for binary-safe PDF export.
 
@@ -127,7 +129,7 @@ Persistent storage layer with four modules:
 
 ### Entry Point
 
-`frontend/src/main.ts` — Minimal bootstrap: imports `style.css` (Tailwind v4), calls `renderApp(document.body)` from `App.ts`.
+`frontend/src/main.ts` — Minimal bootstrap: imports `style.css` (Tailwind v4), calls `renderApp(document.body)` from `App.ts`. On startup, `App.ts` appends a `#splash-screen` div to `document.body` containing the logo SVG, app name, and an animated loading bar (`#splash-bar`). The splash screen is removed after initialization completes with an opacity fade transition.
 
 ### App Orchestrator (`App.ts`)
 
@@ -139,13 +141,14 @@ Persistent storage layer with four modules:
 4. Manages note operations (create, rename, delete, export, import, share, reorder)
 5. Handles debounced evaluation, loading spinner visibility, and history navigation
 6. Manages plugin themes (injected as `<style>` elements with CSS custom properties)
-7. Loads and applies all settings on startup: theme, font, opacity, line numbers, autocomplete, animations, toast
+7. Loads and applies all settings on startup: theme, font, opacity, line numbers, autocomplete, animations, toast, result panel visibility, line wrap
+8. Coordinates panel cross-closing — `switchNote()`, `onToggleNotes`, `onToggleDocs`, `onTogglePlugins`, `handleNewNote` all close conflicting panels before opening the target panel
 
 **Debounced evaluation**: Input changes trigger `scheduleEval()` which debounces at 150ms. A deferred loading state shows `…` only if evaluation takes >60ms (prevents flicker for fast evals).
 
 **Stale-result detection**: An `evalVersion` counter is incremented on each evaluation. If a new evaluation starts before the previous completes, the old result is discarded (`if (version !== evalVersion) return`).
 
-**Startup retry loop**: On mount, `init()` retries `EvaluateAll` up to 20 times (100ms apart) waiting for the Wails runtime to become ready. Falls back to an in-memory note if backend is unavailable.
+**Startup retry loop**: On mount, `init()` retries `EvaluateAll` up to 20 times (100ms apart) waiting for the Wails runtime to become ready. Falls back to an in-memory note if backend is unavailable. The splash screen (`#splash-screen`) is appended to `document.body` before init and removed with an opacity fade once initialization completes.
 
 **Note auto-save**: Content changes are debounced at 500ms via `scheduleSaveContent`. A dirty-state indicator is shown on unsaved notes.
 
@@ -169,7 +172,7 @@ interface StoreState {
 
 Subscribers receive the full state on every change. Components subscribe via `store.subscribe(fn)` and receive an unsubscribe function. State updates use immutable spread (`{ ...state, field: newVal }`).
 
-`SettingsStore` (`stores/settings.ts`) is a separate reactive store for application settings. It manages theme, font, opacity, line numbers, autocomplete, animations, and toast preferences. Changes are debounced (50ms) and auto-saved to the backend. Subscribers are notified on every state change.
+`SettingsStore` (`stores/settings.ts`) is a separate reactive store for application settings. It manages theme, font, opacity, line numbers, autocomplete, animations, toast, `result_panel_enabled`, and `line_wrap_enabled` preferences. Changes are debounced (50ms) and auto-saved to the backend via `SaveSettings`. Subscribers are notified on every state change.
 
 `NotesManager` (`stores/notes.ts`) manages note CRUD, active-note tracking, and sort state (by name, created, or updated — ascending or descending).
 
@@ -205,6 +208,8 @@ Subscribers receive the full state on every change. Components subscribe via `st
 | `Ctrl/Cmd + ↓` | Navigate history forward |
 | `Ctrl/Cmd + /` | Show keyboard shortcut reference |
 | `Ctrl/Cmd + F` | Focus notes search input |
+| `Ctrl/Cmd + J` | Toggle documentation viewer |
+| `Ctrl/Cmd + `` ` | Toggle settings |
 
 All shortcuts are rebindable via the Settings modal. Custom overrides are persisted in `config.toml` as `shortcut_overrides`.
 
@@ -212,9 +217,9 @@ All shortcuts are rebindable via the Settings modal. Custom overrides are persis
 
 All 15 components are class-based, using imperative DOM manipulation (no framework). Each creates a root `el: HTMLElement` property that App.ts mounts into the DOM tree.
 
-- **TitleBar** — Frameless drag region (`--wails-draggable:drag`) with app title, window controls (close/minimize/maximize), and action buttons (notes, variables, history, steps, plugins, docs, print, settings). Double-click toggles fullscreen. All buttons use `--wails-draggable:no-drag`. Print button builds a self-contained HTML document in a hidden iframe with watermark.
+- **TitleBar** — Frameless drag region (`--wails-draggable:drag`) with app title, window controls (close/minimize/maximize), and action buttons (notes, variables, history, steps, plugins, docs, print, settings). Includes a `menuEl` dropdown menu with Documentation, Print, Plugins, and Settings items. `closeMenu()` dismisses the dropdown. Double-click toggles fullscreen. All buttons use `--wails-draggable:no-drag`. Print button builds a self-contained HTML document in a hidden iframe with watermark.
 
-- **CalculatorInput** — Textarea (`#input-area`) with synchronized virtualized line-number gutter (`#gutter`). Gutter renders only visible lines (viewport + 5-line overscan) using `DocumentFragment` + `replaceChildren()`. Word-wrap is handled by a hidden measurement element that computes visual line counts. `requestAnimationFrame` throttles gutter rebuilds. Enforces 10,000 character `maxLength`.
+- **CalculatorInput** — Textarea (`#input-area`) with synchronized virtualized line-number gutter (`#gutter`). Gutter renders only visible lines (viewport + 5-line overscan) using `DocumentFragment` + `replaceChildren()`. Word-wrap is handled by a hidden measurement element that computes visual line counts. `requestAnimationFrame` throttles gutter rebuilds. Enforces 10,000 character `maxLength`. `setLineWrap(enabled)` method toggles textarea wrapping by setting `textarea.wrap` and `white-space`/`overflow-x` CSS properties.
 
 - **ResultDisplay** — Right-aligned results column (`#results-column`) synced with textarea scroll. Supports three states: loading (`…` per line), empty (non-breaking space), and result (color-coded variable names in `--text-muted`, values in `--accent`).
 
@@ -230,13 +235,13 @@ All 15 components are class-based, using imperative DOM manipulation (no framewo
 
 - **PluginPanel** — Full-screen overlay for plugin marketplace and management. Features: local/remote tabs, search, install from GitHub (`rkriad585/linesolv-plugins`), enable/disable toggle, remove, README rendering, function/variable/theme listing. Fetches plugin index from remote repository.
 
-- **ContextMenu** — Reusable right-click menu with submenu support. Renders at cursor position, closes on outside click. Submenus use 100ms show / 200ms hide hover delays. Items have optional SVG icons. All labels escaped via `escapeHtml()`.
+- **ContextMenu** — Reusable right-click menu with submenu support. Renders at cursor position, closes on outside click. Submenus use 100ms show / 200ms hide hover delays. Items have optional SVG icons. Switch Note items show a checkmark icon for the active note. All labels escaped via `escapeHtml()`.
 
 - **ConfirmDialog** — Modal for destructive actions (delete note). Shows title, message, Cancel and Confirm buttons. Optional "Don't ask again" checkbox (stored in `config.toml`). Supports async callbacks.
 
 - **ShortcutModal** — Keyboard shortcut reference overlay. Shows table of all shortcuts with key bindings and descriptions. Triggered by `Ctrl/Cmd+/`. Closes on Escape or backdrop click.
 
-- **SettingsModal** — 5-tab settings panel: General (font family, font size, opacity slider, line numbers toggle, autocomplete toggle, animations toggle, toast toggle with live preview), Theme (15 built-in + plugin themes with color swatch thumbnails), UI Style (6 styles: Default, Nothing, Glass, Material, Alivated, Neon), Keyboard Shortcuts (view and rebind all shortcuts), About (version info, author, repo links, check for updates). Settings auto-save on every change and apply immediately (real-time).
+- **SettingsModal** — 5-tab settings panel: General (font family, font size, opacity slider, line numbers toggle, autocomplete toggle, animations toggle, toast toggle, result panel toggle, line wrap toggle with live preview), Theme (15 built-in + plugin themes with color swatch thumbnails), UI Style (6 styles: Default, Nothing, Glass, Material, Alivated, Neon), Keyboard Shortcuts (view and rebind all shortcuts), About (version info, author, repo links, check for updates). Settings auto-save on every change with 50ms debounce and apply immediately (real-time).
 
 - **DocsViewer** — Full-screen documentation viewer with sidebar tab navigation. Left sidebar lists all embedded docs. Content area renders markdown via a built-in inline renderer (headers, tables, code blocks, links, lists, blockquotes, horizontal rules). Async loading from Go backend. In-memory cache for instant re-opening. All docs embedded in the Go binary (offline). User Guide opens by default. Logo header with LineSolv SVG.
 

@@ -6,6 +6,19 @@ The frontend is a vanilla TypeScript application served in a Wails WebView. It u
 
 `frontend/src/main.ts` — Minimal bootstrap that imports `style.css` and calls `renderApp(document.body)` from `App.ts`.
 
+### Splash Screen
+
+On startup, `App.ts` appends a `#splash-screen` div to `document.body` before any components are created. DOM structure:
+
+```
+#splash-screen
+  ├─ <svg> (logo)
+  ├─ <span> (app name "LineSolv")
+  └─ #splash-bar (animated loading bar)
+```
+
+The splash screen is removed from the DOM after initialization completes, using an opacity fade transition (opacity 0 → remove).
+
 ## App Orchestrator (`App.ts`)
 
 `App.ts` (≈720 lines) is the central controller. It:
@@ -16,9 +29,10 @@ The frontend is a vanilla TypeScript application served in a Wails WebView. It u
 4. Handles keyboard shortcuts (global and textarea-specific)
 5. Runs a retry loop on startup (20 attempts, 100ms apart) waiting for the Wails runtime
 6. Detects stale results via an `evalVersion` counter — if a new evaluation starts before the previous completes, the old result is discarded
-7. Loads settings (theme, font, opacity, line numbers, autocomplete, animations, toast, plugin themes) on startup and applies them
+7. Loads settings (theme, font, opacity, line numbers, autocomplete, animations, toast, plugin themes, result panel visibility, line wrap) on startup and applies them
 8. Manages note CRUD, auto-save (500ms debounce), dirty-state tracking, and import/export
 9. Manages plugin themes by injecting CSS custom properties at runtime
+10. Coordinates panel cross-closing — `switchNote()`, `onToggleNotes`, `onToggleDocs`, `onTogglePlugins`, `handleNewNote` all close conflicting panels before opening the target panel
 
 ### Evaluation Flow
 
@@ -44,6 +58,8 @@ The deferred loading state (60ms threshold) prevents the `…` loading indicator
 
 ```
 renderApp()
+  ├─ append splash screen (#splash-screen) to document.body
+  │   └─ contains: logo SVG, app name, animated loading bar (#splash-bar)
   ├─ create CalculatorStore, NotesManager
   ├─ create all components
   ├─ build DOM tree and mount
@@ -55,7 +71,10 @@ renderApp()
        ├─ initFallbackNote() if backend unavailable
        ├─ injectPluginThemes() from enabled plugins
        ├─ applyTheme() + applyFontSettings() from config
+       ├─ apply result_panel_enabled → results.el.style.display
+       ├─ apply line_wrap_enabled → CalculatorInput.setLineWrap()
        └─ evaluateAll()
+       └─ remove splash screen with opacity fade
 ```
 
 ## State Management
@@ -76,7 +95,7 @@ interface StoreState {
 
 State updates use immutable spread (`{ ...state, field: newVal }`). All subscribers receive the full state on every change. `pushHistory` appends an entry and resets `historyIndex`. `navigateHistory` walks the history array in reverse order (most recent first).
 
-`SettingsStore` (`stores/settings.ts`) is a separate reactive store for application settings. It manages theme, font, opacity, line numbers, autocomplete, animations, and toast preferences. Changes are debounced (50ms) and auto-saved to the backend. Subscribers are notified on every state change.
+`SettingsStore` (`stores/settings.ts`) is a separate reactive store for application settings. It manages theme, font, opacity, line numbers, autocomplete, animations, toast, `result_panel_enabled`, and `line_wrap_enabled` preferences. Changes are debounced (50ms) and auto-saved to the backend. Subscribers are notified on every state change.
 
 `NotesManager` (`stores/notes.ts`) manages multiple notes in memory with active-note tracking, sort state (field: name/created/updated, direction: asc/desc), and CRUD operations.
 
@@ -112,6 +131,8 @@ State updates use immutable spread (`{ ...state, field: newVal }`). All subscrib
 | `Ctrl/Cmd + ↓` | Navigate history forward |
 | `Ctrl/Cmd + /` | Show keyboard shortcut reference |
 | `Ctrl/Cmd + F` | Focus notes search input |
+| `Ctrl/Cmd + J` | Toggle documentation viewer |
+| `Ctrl/Cmd + `` ` | Toggle settings |
 
 All shortcuts are rebindable via the Settings modal. Custom overrides are persisted in `config.toml` as a JSON string in the `shortcut_overrides` field.
 
@@ -130,9 +151,12 @@ Frameless drag region at the top of the window. Contains:
 - **Documentation** button (book SVG, opens documentation viewer)
 - **Print** button (printer SVG, opens native print dialog for the current note)
 - **Settings** button (gear SVG, opens settings)
+- **Menu dropdown** (`menuEl`) — dropdown containing Documentation, Print, Plugins, and Settings items
 - **Double-click** on the drag region toggles fullscreen
 
 The `<header>` element carries `--wails-draggable:drag` for frameless window dragging; all buttons and their container divs override with `--wails-draggable:no-drag` so clicks on them pass through without initiating a drag.
+
+**`closeMenu()`** — Dismisses the menu dropdown. Called automatically on outside click, Escape key, or after a menu item is selected.
 
 ### CalculatorInput
 
@@ -142,11 +166,13 @@ The main input area consisting of:
 
 Wrapped in a flex row container (`#notepad`). The textarea emits `input` events that trigger `scheduleEval()`.
 
+**`setLineWrap(enabled)`** — Toggles word wrapping on the textarea. When enabled, sets `textarea.wrap = "soft"` and applies `white-space: pre-wrap` / `overflow-x: hidden` CSS. When disabled, sets `textarea.wrap = "off"` and applies `white-space: pre` / `overflow-x: auto`. The gutter measurement element recalculates visual line counts after the wrap mode changes.
+
 **Gutter virtualization**: The gutter only creates DOM elements for lines visible in the viewport (with 5-line overscan) rather than for every line in the input. Uses a hidden measurement element to compute visual line counts for word-wrapped lines. Continuation lines (wrapped lines) show a middle dot (`·`) instead of a line number. `DocumentFragment` + `replaceChildren()` is used for atomic DOM updates (no empty-gutter flash). `requestAnimationFrame` throttles viewport updates. An early return guard (`clientHeight === 0`) avoids unnecessary rebuilds when the gutter is not visible.
 
 ### ResultDisplay
 
-A `<div>` column to the right of the textarea. Results are rendered as HTML with color-coded variable names (`--text-muted`) and values (`--accent`). The column scroll is synced with the textarea's scroll. Supports three display states:
+A `<div>` column to the right of the textarea. Results are rendered as HTML with color-coded variable names (`--text-muted`) and values (`--accent`). The column scroll is synced with the textarea's scroll. Visibility is toggled via the `result_panel_enabled` setting, which sets `results.el.style.display` to show or hide the `#results-column` element. Supports three display states:
 
 - **Loading** — shows `…` for each line during evaluation (pulsing disabled)
 - **Empty** — shows non-breaking space for blank/comment lines
@@ -219,7 +245,17 @@ Reusable right-click context menu with submenu support:
 - Renders at cursor position, closes on outside click or right-click
 - Submenus use 100ms show / 200ms hide hover delays
 - Items can have optional SVG icons rendered via `innerHTML` in a `.ctx-icon` span
+- Switch Note items in the main context menu show a checkmark icon (`✓`) for the currently active note
 - All label text is escaped via `escapeHtml()`
+
+### Panel Cross-Closing
+
+Opening any sidebar or panel automatically closes conflicting panels to avoid overlap:
+- `switchNote()` closes notes panel if it was triggered from context menu
+- `onToggleNotes` closes docs, plugins, and settings panels
+- `onToggleDocs` closes notes, plugins, and settings panels
+- `onTogglePlugins` closes notes, docs, and settings panels
+- `handleNewNote` closes conflicting panels and creates a new note
 
 ### ConfirmDialog
 
@@ -252,12 +288,12 @@ Full-screen documentation viewer with sidebar tab navigation:
 ### SettingsModal
 
 5-tab settings panel:
-- **General** — font family (dropdown), font size (slider/input), opacity (slider 30%-100%), line numbers toggle, autocomplete toggle, animations toggle, toast notifications toggle, with live preview
+- **General** — font family (dropdown), font size (slider/input), opacity (slider 30%-100%), line numbers toggle, autocomplete toggle, animations toggle, toast notifications toggle, result panel toggle, line wrap toggle, with live preview
 - **Theme** — 15 built-in color themes + plugin themes with color swatch thumbnails (surface, accent, text colors)
 - **Keyboard Shortcuts** — view and rebind all shortcuts; reset to defaults button
 - **About** — version info, author, repo links, check for updates
 
-Opened via `Ctrl/Cmd+,` or the gear icon in the title bar. Settings auto-save on every change and apply immediately (real-time).
+Opened via `Ctrl/Cmd+,`, `` Ctrl/Cmd+` ``, or the gear icon in the title bar. Settings auto-save on every change with 50ms debounce and apply immediately (real-time).
 
 ## Printing
 

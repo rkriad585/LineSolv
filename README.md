@@ -213,10 +213,13 @@ Auto-detect plot/graph expressions and render live charts:
 | **Configurable Font** | 17 font options (Sans-Serif, Serif, Monospace) with live preview |
 | **Window Opacity** | Adjustable opacity slider (30%–100%, default 95%) for full-window transparency |
 | **Line Numbers Toggle** | Show or hide line number gutter in the calculator editor |
+| **Result Panel Toggle** | Show or hide the results column on the right side |
+| **Line Wrap Toggle** | Toggle word wrapping in the editor (horizontal scroll when off) |
 | **Customizable Shortcuts** | Rebind any keyboard shortcut |
 | **PDF Export** | Export notes as formatted A4 PDFs |
 | **Print** | Print with A4 formatting, watermark, and date |
 | **Undo/Redo** | 200-entry custom stack |
+| **Splash Loading Screen** | Animated logo and loading bar during startup |
 | **Toast Notifications** | Non-modal feedback for actions (toggleable) |
 | **Dirty-State Indicator** | Accent dot shows unsaved changes |
 | **Delete Confirmation** | Optional "Don't ask again" preference |
@@ -248,7 +251,8 @@ See the [LineSolv Plugins](https://github.com/rkriad585/linesolv-plugins) reposi
 | Toggle variables panel | `Ctrl/Cmd + I` |
 | Toggle history panel | `Ctrl/Cmd + H` |
 | Toggle steps panel | `Ctrl/Cmd + S` |
-| Open settings | `Ctrl/Cmd + ,` |
+| Toggle documentation | `Ctrl/Cmd + J` |
+| Open settings | `Ctrl/Cmd + ,` or `Ctrl/Cmd + `` |
 | Create new note | `Ctrl/Cmd + N` |
 | Search notes | `Ctrl/Cmd + F` |
 | Print current note | `Ctrl/Cmd + P` |

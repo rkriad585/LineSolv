@@ -47,7 +47,7 @@ The directory name is used as the internal identifier but the `name` field in `p
 
 ## 3. Plugin Marketplace
 
-The Plugin Marketplace is accessible via the puzzle-piece button in the title bar.
+The Plugin Marketplace is accessible via the **"..." menu** in the title bar, or by pressing `Ctrl+U`. Note that opening Plugins closes the Docs panel and vice versa (panel cross-closing behavior).
 
 ### Browsing
 
@@ -399,6 +399,16 @@ Plugin variables appear in the **Variables Explorer** panel alongside user-defin
 
 ## 8. Managing Plugins
 
+### Keyboard Shortcuts
+
+| Panel | Shortcut |
+|-------|----------|
+| Plugins | `Ctrl+U` |
+| Docs | `Ctrl+J` |
+| Settings | `Ctrl+` `` |
+
+Opening any panel (Plugins, Docs) closes the other — only one side panel is open at a time.
+
 ### Via UI
 
 The Plugin Marketplace provides a complete management interface:
@@ -411,6 +421,7 @@ The Plugin Marketplace provides a complete management interface:
 | **Remove** | Click "Remove" and confirm in the dialog |
 | **Enable/Disable** | Toggle the switch on an installed plugin |
 | **View Details** | Click a plugin card to see functions, themes, variables, and README |
+| **Context Menu** | Right-click a plugin card to access "Switch Note" (with checkmark indicator for the active note) |
 | **Refresh** | Click the refresh button in the marketplace header |
 
 ### Via Code
@@ -852,7 +863,7 @@ Returns the area of an ellipse: π × a × b
 **Step 4: Test it**
 
 1. Open LineSolv
-2. Open the Plugin Marketplace (puzzle icon)
+2. Open the Plugin Marketplace (via the "..." menu or `Ctrl+U`)
 3. The plugin should appear in your local plugins list
 4. Try `circle_area(5)` — should return `78.5398`
 

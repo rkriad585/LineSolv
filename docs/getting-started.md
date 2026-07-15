@@ -36,9 +36,9 @@ Run the NSIS installer (`.exe`). LineSolv will be available from the Start menu 
 
 ## First Launch
 
-When you open LineSolv for the first time you see a blank notepad — a clean, dark-themed notepad with a blinking cursor. The right side shows a results column. There are no toolbars, menus, or buttons cluttering the workspace. Everything is keyboard-driven.
+When you open LineSolv for the first time you'll see a splash screen with the LineSolv logo and a loading progress bar. Once initialization completes, a blank notepad appears — a clean, dark-themed notepad with a blinking cursor. The right side shows a results column. There are no toolbars, menus, or buttons cluttering the workspace. Everything is keyboard-driven.
 
-The title bar is draggable (double-click to maximize). A sidebar, panels, and settings are all accessible via keyboard shortcuts — press `?` to see them all.
+The title bar is draggable (double-click to maximize). Panels and settings are accessible via keyboard shortcuts — press `?` to see them all. Documentation and Settings can also be reached from the `...` dropdown menu in the title bar (`Ctrl/Cmd + J` for Docs, `` Ctrl/Cmd + ` `` for Settings).
 
 ## Your First Calculation
 

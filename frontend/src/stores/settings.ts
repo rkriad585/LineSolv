@@ -13,6 +13,8 @@ export interface SettingsState {
   toast_enabled: boolean;
   opacity: number;
   line_numbers_enabled: boolean;
+  result_panel_enabled: boolean;
+  line_wrap_enabled: boolean;
   theme_manually_set: boolean;
 }
 
@@ -29,6 +31,8 @@ const DEFAULTS: SettingsState = {
   toast_enabled: true,
   opacity: 0.95,
   line_numbers_enabled: true,
+  result_panel_enabled: true,
+  line_wrap_enabled: true,
   theme_manually_set: false,
 };
 
@@ -55,6 +59,8 @@ function fromStore(s: SettingsState): SettingsData {
     toast_enabled: String(s.toast_enabled),
     opacity: String(s.opacity),
     line_numbers_enabled: String(s.line_numbers_enabled),
+    result_panel_enabled: String(s.result_panel_enabled),
+    line_wrap_enabled: String(s.line_wrap_enabled),
     theme_manually_set: String(s.theme_manually_set),
   };
 }
@@ -71,6 +77,8 @@ function toStore(d: SettingsData): SettingsState {
     toast_enabled: toBool(d.toast_enabled, true),
     opacity: toFloat(d.opacity, 0.95),
     line_numbers_enabled: toBool(d.line_numbers_enabled, true),
+    result_panel_enabled: toBool(d.result_panel_enabled, true),
+    line_wrap_enabled: toBool(d.line_wrap_enabled, true),
     theme_manually_set: toBool(d.theme_manually_set, false),
   };
 }

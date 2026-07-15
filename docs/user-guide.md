@@ -8,7 +8,7 @@ A comprehensive guide to using LineSolv, the natural-language desktop calculator
 
 ### First Open
 
-When you launch LineSolv for the first time, you'll see a clean, dark-themed window with a single input area. There is no sign-up, no telemetry, and no internet connection required. Everything runs locally on your machine.
+When you launch LineSolv for the first time, you'll see a splash screen with the LineSolv logo and a progress bar while the app loads. Once ready, a clean, dark-themed window with a single input area appears. There is no sign-up, no telemetry, and no internet connection required. Everything runs locally on your machine.
 
 ### Typing Your First Expression
 
@@ -59,10 +59,12 @@ LineSolv uses a frameless window with a custom title bar. The main layout is:
 | Variables Explorer | `Ctrl/Cmd + I` | View and manage assigned variables |
 | History | `Ctrl/Cmd + H` | Searchable list of past calculations |
 | Steps | `Ctrl/Cmd + S` | Step-by-step evaluation breakdown |
-| Documentation | Docs button in title bar | Built-in docs viewer |
-| Plugin Marketplace | Plugin button in title bar | Browse and install plugins |
-| Settings | `Ctrl/Cmd + ,` | General, Theme, Shortcuts, About |
+| Documentation | `Ctrl/Cmd + J` | Built-in docs viewer |
+| Plugin Marketplace | "..." menu in title bar | Browse and install plugins |
+| Settings | `Ctrl/Cmd + `` | General, Theme, Shortcuts, About |
 | Graph | Auto-activates on plot expressions | Chart.js function plotting |
+
+> **Note:** Opening Docs or Plugins automatically closes the Notes panel, and vice versa (panel cross-closing). The active note in the context menu shows a checkmark in the Switch Note submenu.
 
 ---
 
@@ -96,10 +98,16 @@ A row of icon buttons on the right side of the title bar:
 | Variables | Crosshair arrows | Toggle variable explorer | `Ctrl/Cmd + I` |
 | History | Clock | Toggle history panel | `Ctrl/Cmd + H` |
 | Steps | Pulse line | Toggle step-by-step panel | `Ctrl/Cmd + S` |
-| Documentation | Document | Open documentation viewer | -- |
-| Print | Printer | Print current note | `Ctrl/Cmd + P` |
-| Plugins | Puzzle piece | Open plugin marketplace | -- |
-| Settings | Gear | Open settings | `Ctrl/Cmd + ,` |
+| More (`...`) | Ellipsis | Dropdown: Documentation, Print, Plugins, Settings | -- |
+
+The `...` dropdown menu consolidates less frequently used actions:
+
+| Menu Item | Action | Shortcut |
+|-----------|--------|----------|
+| Documentation | Open documentation viewer | `Ctrl/Cmd + J` |
+| Print | Print current note | `Ctrl/Cmd + P` |
+| Plugins | Open plugin marketplace | -- |
+| Settings | Open settings | `Ctrl/Cmd + `` |
 
 All buttons have `aria-label` attributes for screen reader accessibility and respond to hover with a subtle background highlight.
 
@@ -111,7 +119,7 @@ The built-in documentation viewer opens as a full-screen overlay with a sidebar 
 
 ### Opening
 
-- Click the **Documentation** button (document icon) in the title bar.
+- Press `Ctrl/Cmd + J` or select **Documentation** from the `...` dropdown menu in the title bar.
 - The viewer opens with the User Guide selected by default.
 
 ### Layout
@@ -173,7 +181,7 @@ The Plugin Marketplace lets you browse, install, enable, disable, and remove plu
 
 ### Opening
 
-- Click the **Plugins** button (puzzle piece icon) in the title bar.
+- Select **Plugins** from the `...` dropdown menu in the title bar.
 - The marketplace opens as a full-screen overlay.
 
 ### Browsing Plugins
@@ -936,7 +944,8 @@ Click and drag any note in the sidebar to reorder them. The new order is persist
 | `Ctrl/Cmd + I` | Toggle variables panel |
 | `Ctrl/Cmd + H` | Toggle history panel |
 | `Ctrl/Cmd + S` | Toggle step-by-step panel |
-| `Ctrl/Cmd + ,` | Open settings |
+| `Ctrl/Cmd + J` | Open documentation |
+| `Ctrl/Cmd + `` | Open settings |
 | `Ctrl/Cmd + K` | Clear all (input, history, variables) |
 | `Ctrl/Cmd + N` | Create new note |
 | `?` or `Cmd + /` | Show shortcuts reference |
@@ -966,7 +975,7 @@ The print function generates A4-formatted output with:
 
 ### How to Print
 
-- Press `Ctrl/Cmd + P` or click the **Print** button (printer icon) in the title bar.
+- Press `Ctrl/Cmd + P` or select **Print** from the `...` dropdown menu in the title bar.
 - The system print dialog opens with the A4-formatted PDF.
 
 ### Watermark
@@ -1034,7 +1043,7 @@ Any valid expression can be plotted, including:
 
 ## 11. Settings
 
-Open Settings with `Ctrl/Cmd + ,` or the gear icon in the title bar. Settings has five tabs:
+Open Settings with `Ctrl/Cmd + `` or the gear icon in the `...` dropdown menu in the title bar. Settings has five tabs:
 
 ### General Tab
 
@@ -1047,6 +1056,8 @@ Open Settings with `Ctrl/Cmd + ,` or the gear icon in the title bar. Settings ha
 | **Autocomplete** | Toggle autocomplete suggestions | on/off |
 | **Animations** | Toggle UI animations (transitions, toast slide-ins) | on/off |
 | **Toast Notifications** | Toggle toast notifications for actions and errors | on/off |
+| **Result Panel** | Show or hide the results column | on/off (default: on) |
+| **Line Wrap** | Toggle word wrapping in the editor | on/off (default: on) |
 | **Preview** | Live preview showing "AaBbCc 123 -- The quick brown fox jumps over the lazy dog." | -- |
 
 ### Theme Tab

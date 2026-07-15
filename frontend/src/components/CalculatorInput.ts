@@ -220,6 +220,20 @@ export class CalculatorInput {
     this.gutter.style.display = visible ? '' : 'none';
   }
 
+  setLineWrap(enabled: boolean): void {
+    const ta = this.textarea;
+    if (enabled) {
+      ta.wrap = 'soft';
+      ta.style.whiteSpace = '';
+      ta.style.overflowX = '';
+    } else {
+      ta.wrap = 'off';
+      ta.style.whiteSpace = 'pre';
+      ta.style.overflowX = 'auto';
+    }
+    this.lineInfoCache = null;
+  }
+
   /** Get the word being typed at cursor position and its start/end indices. */
   getCursorWord(): { word: string; start: number; end: number } {
     const ta = this.textarea;

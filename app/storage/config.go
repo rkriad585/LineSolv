@@ -29,6 +29,8 @@ type Config struct {
 		ToastEnabled        string `toml:"toast_enabled"`
 		Opacity             string `toml:"opacity"`
 		LineNumbersEnabled  string `toml:"line_numbers_enabled"`
+		ResultPanelEnabled  string `toml:"result_panel_enabled"`
+		LineWrapEnabled     string `toml:"line_wrap_enabled"`
 		UIStyle             string `toml:"ui_style"`
 		ThemeManuallySet    string `toml:"theme_manually_set"`
 	} `toml:"settings"`
@@ -53,6 +55,8 @@ func DefaultConfig() *Config {
 	c.Settings.ToastEnabled = "true"
 	c.Settings.Opacity = "0.95"
 	c.Settings.LineNumbersEnabled = "true"
+	c.Settings.ResultPanelEnabled = "true"
+	c.Settings.LineWrapEnabled = "true"
 	c.Settings.UIStyle = "default"
 	c.Settings.ThemeManuallySet = "false"
 	return c
@@ -114,6 +118,8 @@ func SaveConfig(cfg *Config) error {
 	buf.WriteString(fmt.Sprintf("toast_enabled = %q\n", cfg.Settings.ToastEnabled))
 	buf.WriteString(fmt.Sprintf("opacity = %q\n", cfg.Settings.Opacity))
 	buf.WriteString(fmt.Sprintf("line_numbers_enabled = %q\n", cfg.Settings.LineNumbersEnabled))
+	buf.WriteString(fmt.Sprintf("result_panel_enabled = %q\n", cfg.Settings.ResultPanelEnabled))
+	buf.WriteString(fmt.Sprintf("line_wrap_enabled = %q\n", cfg.Settings.LineWrapEnabled))
 	buf.WriteString(fmt.Sprintf("ui_style = %q\n", cfg.Settings.UIStyle))
 	buf.WriteString(fmt.Sprintf("theme_manually_set = %q\n", cfg.Settings.ThemeManuallySet))
 
@@ -210,6 +216,10 @@ func parseConfigTOML(data string, cfg *Config) {
 				cfg.Settings.Opacity = val
 			case "line_numbers_enabled":
 				cfg.Settings.LineNumbersEnabled = val
+			case "result_panel_enabled":
+				cfg.Settings.ResultPanelEnabled = val
+			case "line_wrap_enabled":
+				cfg.Settings.LineWrapEnabled = val
 			case "ui_style":
 				cfg.Settings.UIStyle = val
 			case "theme_manually_set":

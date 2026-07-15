@@ -168,6 +168,7 @@ export function installGlobalShortcuts(
     if (mod && e.key === 'h') { e.preventDefault(); cmds.onToggleHistory(); }
     if (mod && e.key === 's') { e.preventDefault(); cmds.onToggleSteps(); }
     if (mod && e.key === 'u') { e.preventDefault(); cmds.onTogglePlugins(); }
+    if (mod && e.key === 'j') { e.preventDefault(); cmds.onToggleDocs(); }
     if (mod && e.key === 'k') { e.preventDefault(); cmds.onClearAll(); }
     if (mod && e.key === 'n') { e.preventDefault(); cmds.onNewNote(); }
 
@@ -194,6 +195,11 @@ export function installGlobalShortcuts(
     }
 
     if (e.key === ',' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      cmds.onToggleSettings();
+    }
+
+    if (e.key === '`' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       cmds.onToggleSettings();
     }

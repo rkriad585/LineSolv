@@ -13,7 +13,7 @@ export class ConfirmDialog {
     this.el = document.createElement('div');
     this.el.className = 'lsv-modal-overlay';
     this.el.style.cssText =
-      'position:fixed;inset:0;z-index:10000;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+      'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
     this.el.addEventListener('mousedown', (e) => {
       if (e.target === this.el) this.close();
     });

@@ -218,7 +218,7 @@ Yes. Drag and drop notes in the sidebar to reorder them. The order is persisted 
 ## Printing
 
 ### How do I print my calculations?
-Click the printer icon in the title bar or press `Ctrl/Cmd+P`. This opens your operating system's native print dialog with a formatted document.
+Open the **...** menu in the title bar and select **Print**, or press `Ctrl/Cmd+P`. This opens your operating system's native print dialog with a formatted document.
 
 ### What is included in the print output?
 - All input lines and their results as a clean A4-formatted table
@@ -259,10 +259,16 @@ LineSolv comes with 15 color themes:
 Plugins can add additional themes — see the [Plugin System](#plugin-system) section.
 
 ### How do I change the theme?
-Press `Ctrl/Cmd+,` or click the gear icon in the title bar, then go to the **Theme** tab to select a color theme, or the **UI Style** tab to select a visual style. Click a theme thumbnail to apply it instantly — no Save button needed.
+Press `Ctrl/Cmd+,` or open the **...** menu in the title bar and select **Settings**, then go to the **Theme** tab to select a color theme, or the **UI Style** tab to select a visual style. Click a theme thumbnail to apply it instantly — no Save button needed.
 
 ### My theme preference isn't persisting across restarts
 The theme is stored in `~/.config/neostore/linesolv/config.toml` under `[app] -> theme`. If the config file is deleted or corrupted, the app falls back to the Dark theme.
+
+### How do I toggle the result panel?
+Open **Settings > General** and use the **Result Panel** toggle under the *Behavior* section. When off, the right-side results column is hidden and only input lines are shown. You can also toggle it via `config.toml` under `[settings] -> result_panel_enabled` (`"true"` or `"false"`).
+
+### How do I toggle line wrapping?
+Open **Settings > General** and use the **Line Wrap** toggle under the *Behavior* section. When off, long lines extend horizontally instead of wrapping. You can also toggle it via `config.toml` under `[settings] -> line_wrap_enabled` (`"true"` or `"false"`).
 
 ---
 
@@ -285,7 +291,7 @@ Plugins extend LineSolv with **custom functions**, **custom themes**, and **cust
 LineSolv ships with 12 built-in plugins: Finance, Statistics, Geometry, Physics, Date/Time, Health, Arrays, Hex, Color, Base-N, Matrix, and Random.
 
 ### How do I install a plugin?
-1. Open the **Plugins** panel from the title bar
+1. Open the **Plugins** panel from the **...** menu in the title bar
 2. Browse or search the marketplace (fetches from the [linesolv-plugins repository](https://github.com/rkriad585/linesolv-plugins))
 3. Click **Install** on a plugin card, or open the detail view and click **Install**
 4. The plugin is downloaded, written to the plugins directory, and activated
@@ -321,7 +327,7 @@ The plugin marketplace fetches a plugin index from `https://raw.githubuserconten
 ## Documentation Viewer
 
 ### How do I open the documentation viewer?
-Click the **book icon** in the title bar. The documentation viewer opens as a full-screen overlay.
+Press `Ctrl+J` or open the **...** menu in the title bar and select **Documentation**. The documentation viewer opens as a full-screen overlay.
 
 ### What docs are available?
 All documentation files are embedded in the application binary at build time. Available docs include:
@@ -373,6 +379,8 @@ Documents are cached in memory after the first load. The viewer defaults to open
 | `Ctrl/Cmd + H` | Toggle history panel |
 | `Ctrl/Cmd + S` | Toggle step-by-step panel |
 | `Ctrl/Cmd + ,` | Open settings |
+| `Ctrl + `` ` | Open settings (alternate) |
+| `Ctrl + J` | Open documentation viewer |
 | `Ctrl/Cmd + K` | Clear all (input, history, variables) |
 | `Ctrl/Cmd + N` | Create new note |
 | `?` or `Cmd + /` | Show keyboard shortcuts reference |
@@ -391,14 +399,15 @@ Yes. Open **Settings > Keyboard Shortcuts** to view all shortcuts and customize 
 ## Settings
 
 ### How do I open Settings?
-Press `Ctrl/Cmd+,` or click the gear icon in the title bar.
+Press `Ctrl/Cmd+,` or `Ctrl+`` or open the **...** menu in the title bar and select **Settings**.
 
 ### What settings can I change?
 
 | Tab | Settings |
 |-----|----------|
-| **General** | Font family (17 options), font size (10px–32px slider), autocomplete toggle, opacity slider (30%–100%, default 95%), animations toggle, line numbers toggle, toast toggle, live preview |
+| **General** | Sections: *Calculator* (font family, font size, autocomplete), *Appearance* (opacity, animations), *Behavior* (line numbers, result panel, line wrap, toast notifications), and *Preview* |
 | **Theme** | Choose from 15 built-in color themes (+ plugin themes) — applies instantly |
+| **UI Style** | Choose from 6 visual styles (Default, Nothing, Liquid Glass, Material 3, Alivated, Neon) — applies instantly |
 | **Keyboard Shortcuts** | View and rebind all shortcuts — auto-saves on change |
 | **About** | Version info, author links, check for updates |
 
@@ -412,7 +421,7 @@ All settings are stored in `~/.config/neostore/linesolv/config.toml`. The file h
 | `[app]` | `theme`, `version` | Active theme and app version |
 | `[notes]` | `last_active`, `sort_by` | Last active note ID and sort order |
 | `[behavior]` | `delete_without_confirm` | Delete confirmation preference (`"true"` / `"false"`) |
-| `[settings]` | `font_size`, `font_family`, `shortcut_overrides`, `opacity`, `line_numbers_enabled`, `autocomplete_enabled`, `animations_enabled`, `toast_enabled` | Font, shortcut, and display configuration |
+| `[settings]` | `font_size`, `font_family`, `shortcut_overrides`, `opacity`, `line_numbers_enabled`, `result_panel_enabled`, `line_wrap_enabled`, `autocomplete_enabled`, `animations_enabled`, `toast_enabled`, `ui_style`, `theme_manually_set` | Font, shortcut, and display configuration |
 
 ### Can I reset settings to defaults?
 Click **Reset** in the settings header bar to reset all settings to defaults. Alternatively, delete `~/.config/neostore/linesolv/config.toml` and restart the app. Defaults: Dark theme, 95% opacity, 16px system font, line numbers on, autocomplete on, animations on, toast on.

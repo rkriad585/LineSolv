@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **Result Panel Toggle** — new setting in Settings → General → "Result Panel" (default: on). Toggles the results column visibility on the right side. Persists to `config.toml` as `result_panel_enabled`.
+- **Line Wrap Toggle** — new setting in Settings → General → "Line Wrap" (default: on). Toggles word wrapping in the editor textarea. When off, horizontal scroll is used. Persists as `line_wrap_enabled`.
+- **Splash Loading Screen** — app now shows a splash screen with the LineSolv logo and animated loading bar during startup instead of hiding the UI. Fades out when loading completes.
+- **`Ctrl+J` keyboard shortcut** — toggles the Documentation panel.
+- **`Ctrl+`` (backtick) keyboard shortcut** — toggles the Settings panel (additional shortcut alongside `Ctrl+,`).
+- **Context Menu Active Note Indicator** — the main app context menu's "Switch Note" submenu now shows a checkmark icon next to the currently active note, matching the Docs/Plugins context menus.
+
+### Changed
+- **Title Bar Menu Consolidation** — Documentation, Print, Plugins, and Settings buttons are now grouped into a single "..." (vertical ellipsis) menu button in the title bar. Clicking it opens a dropdown with all four items plus their shortcut labels. The title bar now shows: New Note, Notes, Variables, History, Steps, and the "..." menu.
+- **Panel Cross-Closing** — switching between Notes, Docs, and Plugins now automatically closes the other panel. Opening Docs closes the Notes panel, and switching notes closes Docs/Plugins. This also applies when using the context menu to switch notes.
+
 ## [0.14.1] — 2026-07-15
 
 ### Fixed

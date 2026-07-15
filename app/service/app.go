@@ -456,6 +456,8 @@ type SettingsData struct {
 	ToastEnabled        string `json:"toast_enabled"`
 	Opacity             string `json:"opacity"`
 	LineNumbersEnabled  string `json:"line_numbers_enabled"`
+	ResultPanelEnabled  string `json:"result_panel_enabled"`
+	LineWrapEnabled     string `json:"line_wrap_enabled"`
 	UIStyle             string `json:"ui_style"`
 	ThemeManuallySet    string `json:"theme_manually_set"`
 }
@@ -482,6 +484,8 @@ func (s *AppService) GetSettings() (*SettingsData, error) {
 		ToastEnabled:        cfg.Settings.ToastEnabled,
 		Opacity:             cfg.Settings.Opacity,
 		LineNumbersEnabled:  cfg.Settings.LineNumbersEnabled,
+		ResultPanelEnabled:  cfg.Settings.ResultPanelEnabled,
+		LineWrapEnabled:     cfg.Settings.LineWrapEnabled,
 		UIStyle:             cfg.Settings.UIStyle,
 		ThemeManuallySet:    cfg.Settings.ThemeManuallySet,
 	}, nil
@@ -501,6 +505,8 @@ func (s *AppService) SaveSettings(settings *SettingsData) error {
 	cfg.Settings.ToastEnabled = settings.ToastEnabled
 	cfg.Settings.Opacity = settings.Opacity
 	cfg.Settings.LineNumbersEnabled = settings.LineNumbersEnabled
+	cfg.Settings.ResultPanelEnabled = settings.ResultPanelEnabled
+	cfg.Settings.LineWrapEnabled = settings.LineWrapEnabled
 	cfg.Settings.UIStyle = settings.UIStyle
 	cfg.Settings.ThemeManuallySet = settings.ThemeManuallySet
 	return storage.SaveConfig(cfg)

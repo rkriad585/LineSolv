@@ -158,8 +158,27 @@ function applySettingsState(s: {
 
 /** Mount the LineSolv application into a root element. */
 export function renderApp(root: HTMLElement): void {
-  // Hide page until settings are loaded and applied to prevent flash of defaults
-  document.documentElement.style.visibility = 'hidden';
+  // Splash screen: shown while app loads, fades out when ready
+  const splash = document.createElement('div');
+  splash.id = 'splash-screen';
+  splash.style.cssText =
+    'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+    'background:var(--surface);transition:opacity 0.4s ease-out;';
+  splash.innerHTML =
+    `<svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">` +
+    `<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/>` +
+    `<line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/>` +
+    `<line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>` +
+    `<div style="margin-top:16px;font-size:18px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted)">LineSolv</div>` +
+    `<div style="margin-top:20px;width:220px;height:4px;border-radius:2px;background:var(--border);overflow:hidden;">` +
+    `<div id="splash-bar" style="width:40%;height:100%;border-radius:2px;background:var(--accent);animation:splash-slide 1.2s ease-in-out infinite;"></div>` +
+    `</div>`;
+  document.body.appendChild(splash);
+
+  // Inject splash animation keyframes
+  const splashStyle = document.createElement('style');
+  splashStyle.textContent = `@keyframes splash-slide { 0%{transform:translateX(-100%)} 50%{transform:translateX(150%)} 100%{transform:translateX(-100%)} }`;
+  document.head.appendChild(splashStyle);
 
   const store = new CalculatorStore();
   const notesMgr = new NotesManager();
@@ -368,6 +387,8 @@ export function renderApp(root: HTMLElement): void {
   }
 
   async function handleNewNote(): Promise<void> {
+    if (docsViewer.isOpen()) docsViewer.close();
+    if (pluginPanel.isOpen()) pluginPanel.close();
     try {
       const note = await serviceBindings.CreateNote();
       notesMgr.addNote(note);
@@ -483,6 +504,8 @@ export function renderApp(root: HTMLElement): void {
       if (notesPanel.isOpen()) {
         notesPanel.close();
       } else {
+        if (docsViewer.isOpen()) docsViewer.close();
+        if (pluginPanel.isOpen()) pluginPanel.close();
         refreshNotesUI();
         notesPanel.open();
       }
@@ -574,6 +597,7 @@ export function renderApp(root: HTMLElement): void {
       if (pluginPanel.isOpen()) {
         pluginPanel.close();
       } else {
+        if (notesPanel.isOpen()) notesPanel.close();
         pluginPanel.open();
       }
     },
@@ -588,6 +612,7 @@ export function renderApp(root: HTMLElement): void {
       if (docsViewer.isOpen()) {
         docsViewer.close();
       } else {
+        if (notesPanel.isOpen()) notesPanel.close();
         docsViewer.open();
       }
     },
@@ -673,6 +698,8 @@ export function renderApp(root: HTMLElement): void {
   // --- Callbacks for components ---
 
   const switchNote = (id: string) => {
+    if (docsViewer.isOpen()) docsViewer.close();
+    if (pluginPanel.isOpen()) pluginPanel.close();
     // Flush pending save for old note before switching
     if (saveContentTimer) {
       clearTimeout(saveContentTimer);
@@ -938,8 +965,10 @@ export function renderApp(root: HTMLElement): void {
     ];
 
     if (notes.length > 1) {
+      const activeId = notesMgr.getActiveId();
       const switchChildren: ContextMenuItem[] = notes.map(n => ({
         label: n.name || 'Untitled',
+        icon: n.id === activeId ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : undefined,
         action: () => switchNote(n.id),
       }));
       items.push({label: 'Switch Note', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>', children: switchChildren});
@@ -1084,13 +1113,18 @@ export function renderApp(root: HTMLElement): void {
       const state = await settingsStore.load();
       applySettingsState(state);
       input.setLineNumbersVisible(state.line_numbers_enabled);
+      results.el.style.display = state.result_panel_enabled ? '' : 'none';
+      input.setLineWrap(state.line_wrap_enabled);
     } catch { /* ignore */ }
-    // Reveal page now that settings (theme, style, font) are applied
-    document.documentElement.style.visibility = '';
+    // Reveal app — fade out splash screen
+    splash.style.opacity = '0';
+    setTimeout(() => { splash.remove(); splashStyle.remove(); }, 450);
     settingsStore.onChanged((s) => {
       applySettingsState(s);
       if (!s.autocomplete_enabled) autocomplete.hide();
       input.setLineNumbersVisible(s.line_numbers_enabled);
+      results.el.style.display = s.result_panel_enabled ? '' : 'none';
+      input.setLineWrap(s.line_wrap_enabled);
       forceEval();
     });
     try {

@@ -274,6 +274,8 @@ export namespace service {
 	    toast_enabled: string;
 	    opacity: string;
 	    line_numbers_enabled: string;
+	    result_panel_enabled: string;
+	    line_wrap_enabled: string;
 	    ui_style: string;
 	    theme_manually_set: string;
 	
@@ -292,6 +294,8 @@ export namespace service {
 	        this.toast_enabled = source["toast_enabled"];
 	        this.opacity = source["opacity"];
 	        this.line_numbers_enabled = source["line_numbers_enabled"];
+	        this.result_panel_enabled = source["result_panel_enabled"];
+	        this.line_wrap_enabled = source["line_wrap_enabled"];
 	        this.ui_style = source["ui_style"];
 	        this.theme_manually_set = source["theme_manually_set"];
 	    }

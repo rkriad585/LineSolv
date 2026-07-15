@@ -44,6 +44,8 @@ export interface SettingsData {
   toast_enabled: string;
   opacity: string;
   line_numbers_enabled: string;
+  result_panel_enabled: string;
+  line_wrap_enabled: string;
   ui_style: string;
   theme_manually_set: string;
 }

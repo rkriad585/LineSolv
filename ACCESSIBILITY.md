@@ -30,12 +30,16 @@ LineSolv is committed to making its calculator accessible to all users, includin
 | `F11` | Toggle fullscreen |
 | `Ctrl/Cmd + F` | Search notes |
 | `Ctrl/Cmd + P` | Print |
+| `Ctrl/Cmd + J` | Open docs panel |
 | `Ctrl/Cmd + /` | Show shortcuts reference |
 | `Ctrl/Cmd + ,` | Open settings |
+| `Ctrl/Cmd + `` ` | Open settings (alternate) |
 
 ### Component Keyboard Patterns
 
 - **Sidebar toggles**: Tab to reach title bar buttons, Enter/Space activates
+- **Title bar "..." menu**: Tab to reach, Enter/Space opens dropdown; Escape closes
+- **Splash screen**: Displayed on startup; contains no interactive elements
 - **Textarea**: Standard textarea keyboard behavior with line-based navigation
 - **Window controls**: Tab to reach, Enter to activate
 - **Theme/Style cards**: Tab to focus, Enter/Space to select
@@ -47,7 +51,8 @@ LineSolv is committed to making its calculator accessible to all users, includin
 ### ARIA Implementation
 
 - `aria-label` attributes on title bar buttons (9 buttons), graph close button, sidebar search inputs
-- `role="menu"` on context menu container
+- `role="menu"` on context menu container and title bar "..." dropdown menu
+- `aria-haspopup="menu"` on title bar "..." button
 - `<aside>` elements for sidebar panels (implicit `complementary` role)
 - `<header>` element for title bar (implicit `banner` role)
 
@@ -97,7 +102,7 @@ The `forced-colors` media query is not yet implemented. Custom toggle switches, 
 | Issue | Status |
 |-------|--------|
 | Tab key inserts spaces in textarea, preventing standard focus navigation out of the editor | Known limitation |
-| Custom toggle switches (Autocomplete, Animations, Toast, Line Numbers) use `display:none` checkboxes — not keyboard accessible | Planned |
+| Custom toggle switches (Autocomplete, Animations, Toast, Line Numbers, Result Panel, Line Wrap) use `display:none` checkboxes — not keyboard accessible | Planned |
 | No `role="dialog"` or focus trapping in Settings, Shortcuts, or Confirm modals | Planned |
 | No ARIA tab pattern on settings modal tabs | Planned |
 | Autocomplete popup lacks ARIA combobox pattern (`role="listbox"`, `role="option"`) | Planned |
@@ -128,5 +133,6 @@ We aim to respond to accessibility reports within 5 business days.
 
 | Date | Version | Changes |
 |------|---------|---------|
+| 2026-07-15 | 1.2 | Added Ctrl+J, Ctrl+` shortcuts; documented "..." dropdown menu ARIA, splash screen, new toggle switches |
 | 2026-07-15 | 1.1 | Updated to match actual implementation; added known limitations |
 | 2026-07-12 | 1.0 | Initial accessibility statement |

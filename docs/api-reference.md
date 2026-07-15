@@ -294,6 +294,8 @@ interface SettingsData {
   autocomplete_enabled: string; // "true" or "false"
   animations_enabled: string;   // "true" or "false"
   toast_enabled: string;        // "true" or "false"
+  result_panel_enabled: string; // "true" or "false"
+  line_wrap_enabled: string;    // "true" or "false"
 }
 
 function GetSettings(): Promise<SettingsData>
@@ -302,7 +304,7 @@ function GetSettings(): Promise<SettingsData>
 Returns the current application settings loaded from `config.toml`.
 
 **Returns:**
-- `SettingsData` with theme name, font size, font family, shortcut overrides as a JSON string, opacity, line numbers toggle, autocomplete toggle, animations toggle, and toast toggle.
+- `SettingsData` with theme name, font size, font family, shortcut overrides as a JSON string, opacity, line numbers toggle, autocomplete toggle, animations toggle, toast toggle, result panel toggle, and line wrap toggle.
 
 ---
 
@@ -312,7 +314,7 @@ Returns the current application settings loaded from `config.toml`.
 function SaveSettings(settings: SettingsData): Promise<void>
 ```
 
-Saves application settings to `config.toml`. In the frontend, settings auto-save on every change (real-time pattern).
+Saves application settings to `config.toml`. In the frontend, settings auto-save on every change with a 50ms debounce and apply immediately (real-time pattern).
 
 **Parameters:**
 - `settings` — `SettingsData` object with the values to persist
@@ -580,6 +582,9 @@ await svc.RemovePlugin(pluginsDir, "my-plugin");
 // Settings
 const settings = await svc.GetSettings();
 await svc.SaveSettings({ ...settings, theme: "neon" });
+
+// Toggle result panel and line wrap
+await svc.SaveSettings({ ...settings, result_panel_enabled: "false", line_wrap_enabled: "true" });
 
 // Data directory
 const dir = await svc.GetDataDir();

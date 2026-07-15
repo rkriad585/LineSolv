@@ -113,6 +113,12 @@ export class SettingsModal {
   private lineNumbersToggle!: HTMLInputElement;
   private lineNumbersTrack!: HTMLDivElement;
   private lineNumbersThumb!: HTMLDivElement;
+  private resultPanelToggle!: HTMLInputElement;
+  private resultPanelTrack!: HTMLDivElement;
+  private resultPanelThumb!: HTMLDivElement;
+  private lineWrapToggle!: HTMLInputElement;
+  private lineWrapTrack!: HTMLDivElement;
+  private lineWrapThumb!: HTMLDivElement;
   private themeCards: Map<string, HTMLDivElement> = new Map();
   private styleCards: Map<string, HTMLDivElement> = new Map();
 
@@ -667,6 +673,24 @@ export class SettingsModal {
     this.lineNumbersTrack = lineNumbersRow.track;
     this.lineNumbersThumb = lineNumbersRow.thumb;
 
+    const resultPanelRow = this.toggleRow(
+      'Result Panel',
+      'Show the results column on the right side',
+      true,
+    );
+    this.resultPanelToggle = resultPanelRow.toggle;
+    this.resultPanelTrack = resultPanelRow.track;
+    this.resultPanelThumb = resultPanelRow.thumb;
+
+    const lineWrapRow = this.toggleRow(
+      'Line Wrap',
+      'Wrap long lines in the editor',
+      true,
+    );
+    this.lineWrapToggle = lineWrapRow.toggle;
+    this.lineWrapTrack = lineWrapRow.track;
+    this.lineWrapThumb = lineWrapRow.thumb;
+
     const toastRow = this.toggleRow(
       'Toast Notifications',
       'Show success and error messages',
@@ -676,7 +700,7 @@ export class SettingsModal {
     this.toastTrack = toastRow.track;
     this.toastThumb = toastRow.thumb;
 
-    panel.append(lineNumbersRow.el, toastRow.el);
+    panel.append(lineNumbersRow.el, resultPanelRow.el, lineWrapRow.el, toastRow.el);
 
     // --- Preview ---
     const previewSection = document.createElement('div');
@@ -698,6 +722,8 @@ export class SettingsModal {
     // --- Real-time apply: wire all controls ---
     this.autocompleteToggle.addEventListener('change', () => this.applyAll());
     this.lineNumbersToggle.addEventListener('change', () => this.applyAll());
+    this.resultPanelToggle.addEventListener('change', () => this.applyAll());
+    this.lineWrapToggle.addEventListener('change', () => this.applyAll());
     this.toastToggle.addEventListener('change', () => this.applyAll());
     this.animationsToggle.addEventListener('change', () => this.applyAll());
     this.opacityInput.addEventListener('input', () => this.applyAll());
@@ -1156,10 +1182,13 @@ export class SettingsModal {
     this.toastToggle.checked = true;
     this.autocompleteToggle.checked = true;
     this.lineNumbersToggle.checked = true;
+    this.resultPanelToggle.checked = true;
+    this.lineWrapToggle.checked = true;
     this.updateToggleVisual(this.animationsToggle, this.animationsTrack, this.animationsThumb);
     this.updateToggleVisual(this.toastToggle, this.toastTrack, this.toastThumb);
     this.updateToggleVisual(this.autocompleteToggle, this.autocompleteTrack, this.autocompleteThumb);
     this.updateToggleVisual(this.lineNumbersToggle, this.lineNumbersTrack, this.lineNumbersThumb);
+    this.updateToggleVisual(this.resultPanelToggle, this.resultPanelTrack, this.resultPanelThumb);
     this.overrides = {};
     this.updatePreview();
     this.settingsStore.update({ theme_manually_set: false });
@@ -1189,6 +1218,8 @@ export class SettingsModal {
       toast_enabled: this.toastToggle.checked,
       opacity: parseFloat(this.opacityInput.value) || 0.95,
       line_numbers_enabled: this.lineNumbersToggle.checked,
+      result_panel_enabled: this.resultPanelToggle.checked,
+      line_wrap_enabled: this.lineWrapToggle.checked,
     });
   }
 
@@ -1225,10 +1256,15 @@ export class SettingsModal {
       this.toastToggle.checked = state.toast_enabled;
       this.autocompleteToggle.checked = state.autocomplete_enabled;
       this.lineNumbersToggle.checked = state.line_numbers_enabled;
+      this.resultPanelToggle.checked = state.result_panel_enabled;
+      this.lineWrapToggle.checked = state.line_wrap_enabled;
       this.updateToggleVisual(this.animationsToggle, this.animationsTrack, this.animationsThumb);
       this.updateToggleVisual(this.toastToggle, this.toastTrack, this.toastThumb);
       this.updateToggleVisual(this.autocompleteToggle, this.autocompleteTrack, this.autocompleteThumb);
       this.updateToggleVisual(this.lineNumbersToggle, this.lineNumbersTrack, this.lineNumbersThumb);
+    this.updateToggleVisual(this.resultPanelToggle, this.resultPanelTrack, this.resultPanelThumb);
+    this.updateToggleVisual(this.lineWrapToggle, this.lineWrapTrack, this.lineWrapThumb);
+      this.updateToggleVisual(this.lineWrapToggle, this.lineWrapTrack, this.lineWrapThumb);
 
       this.highlightThemeCard(this.selectedTheme);
       this.highlightStyleCard(this.selectedStyle);
