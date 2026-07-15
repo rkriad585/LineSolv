@@ -596,7 +596,6 @@ func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
 	tmpFile.Close()
-	os.Remove(tmpFile.Name()) // CreateTemp creates the file; selfupdate.UpdateTo will recreate it
 
 	if err := selfupdate.UpdateTo(latest.AssetURL, tmpFile.Name()); err != nil {
 		os.Remove(tmpFile.Name())
