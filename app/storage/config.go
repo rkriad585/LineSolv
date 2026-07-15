@@ -102,26 +102,26 @@ func SaveConfig(cfg *Config) error {
 	var buf strings.Builder
 	buf.WriteString("# LineSolv Configuration\n\n")
 	buf.WriteString("[app]\n")
-	buf.WriteString(fmt.Sprintf("theme = %q\n", cfg.App.Theme))
-	buf.WriteString(fmt.Sprintf("version = %q\n", cfg.App.Version))
+	fmt.Fprintf(&buf, "theme = %q\n", cfg.App.Theme)
+	fmt.Fprintf(&buf, "version = %q\n", cfg.App.Version)
 	buf.WriteString("\n[notes]\n")
-	buf.WriteString(fmt.Sprintf("last_active = %q\n", cfg.Notes.LastActive))
-	buf.WriteString(fmt.Sprintf("sort_by = %q\n", cfg.Notes.SortBy))
+	fmt.Fprintf(&buf, "last_active = %q\n", cfg.Notes.LastActive)
+	fmt.Fprintf(&buf, "sort_by = %q\n", cfg.Notes.SortBy)
 	buf.WriteString("\n[behavior]\n")
-	buf.WriteString(fmt.Sprintf("delete_without_confirm = %q\n", cfg.Behavior.DeleteWithoutConfirm))
+	fmt.Fprintf(&buf, "delete_without_confirm = %q\n", cfg.Behavior.DeleteWithoutConfirm)
 	buf.WriteString("\n[settings]\n")
-	buf.WriteString(fmt.Sprintf("font_size = %q\n", cfg.Settings.FontSize))
-	buf.WriteString(fmt.Sprintf("font_family = %q\n", cfg.Settings.FontFamily))
-	buf.WriteString(fmt.Sprintf("shortcut_overrides = %q\n", cfg.Settings.ShortcutOverrides))
-	buf.WriteString(fmt.Sprintf("autocomplete_enabled = %q\n", cfg.Settings.AutocompleteEnabled))
-	buf.WriteString(fmt.Sprintf("animations_enabled = %q\n", cfg.Settings.AnimationsEnabled))
-	buf.WriteString(fmt.Sprintf("toast_enabled = %q\n", cfg.Settings.ToastEnabled))
-	buf.WriteString(fmt.Sprintf("opacity = %q\n", cfg.Settings.Opacity))
-	buf.WriteString(fmt.Sprintf("line_numbers_enabled = %q\n", cfg.Settings.LineNumbersEnabled))
-	buf.WriteString(fmt.Sprintf("result_panel_enabled = %q\n", cfg.Settings.ResultPanelEnabled))
-	buf.WriteString(fmt.Sprintf("line_wrap_enabled = %q\n", cfg.Settings.LineWrapEnabled))
-	buf.WriteString(fmt.Sprintf("ui_style = %q\n", cfg.Settings.UIStyle))
-	buf.WriteString(fmt.Sprintf("theme_manually_set = %q\n", cfg.Settings.ThemeManuallySet))
+	fmt.Fprintf(&buf, "font_size = %q\n", cfg.Settings.FontSize)
+	fmt.Fprintf(&buf, "font_family = %q\n", cfg.Settings.FontFamily)
+	fmt.Fprintf(&buf, "shortcut_overrides = %q\n", cfg.Settings.ShortcutOverrides)
+	fmt.Fprintf(&buf, "autocomplete_enabled = %q\n", cfg.Settings.AutocompleteEnabled)
+	fmt.Fprintf(&buf, "animations_enabled = %q\n", cfg.Settings.AnimationsEnabled)
+	fmt.Fprintf(&buf, "toast_enabled = %q\n", cfg.Settings.ToastEnabled)
+	fmt.Fprintf(&buf, "opacity = %q\n", cfg.Settings.Opacity)
+	fmt.Fprintf(&buf, "line_numbers_enabled = %q\n", cfg.Settings.LineNumbersEnabled)
+	fmt.Fprintf(&buf, "result_panel_enabled = %q\n", cfg.Settings.ResultPanelEnabled)
+	fmt.Fprintf(&buf, "line_wrap_enabled = %q\n", cfg.Settings.LineWrapEnabled)
+	fmt.Fprintf(&buf, "ui_style = %q\n", cfg.Settings.UIStyle)
+	fmt.Fprintf(&buf, "theme_manually_set = %q\n", cfg.Settings.ThemeManuallySet)
 
 	// Atomic write: write to temp file, then rename
 	tmp := dir + ".tmp"
@@ -151,7 +151,9 @@ func FlushPendingSave() {
 	cfg := cachedConfig
 	configMu.Unlock()
 	if cfg != nil {
-		_ = SaveConfig(cfg)
+		if err := SaveConfig(cfg); err != nil {
+			fmt.Fprintf(os.Stderr, "flush pending save: %v\n", err)
+		}
 	}
 }
 

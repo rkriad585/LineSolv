@@ -236,7 +236,7 @@ The print output includes all lines currently in the input area. Clear or commen
 ## Themes
 
 ### What themes are available?
-LineSolv comes with 15 color themes:
+LineSolv comes with 17 color themes:
 
 | Theme | Description |
 |-------|-------------|
@@ -255,6 +255,8 @@ LineSolv comes with 15 color themes:
 | **Lavender** | Soft purple with lavender accents |
 | **Sage** | Deep green with mint accents |
 | **Warm Light** | Warm cream with amber accents |
+| **Claude Dark** | Warm charcoal with terracotta accents |
+| **Claude Light** | Parchment with terracotta accents |
 
 Plugins can add additional themes — see the [Plugin System](#plugin-system) section.
 
@@ -406,8 +408,8 @@ Press `Ctrl/Cmd+,` or `Ctrl+`` or open the **...** menu in the title bar and sel
 | Tab | Settings |
 |-----|----------|
 | **General** | Sections: *Calculator* (font family, font size, autocomplete), *Appearance* (opacity, animations), *Behavior* (line numbers, result panel, line wrap, toast notifications), and *Preview* |
-| **Theme** | Choose from 15 built-in color themes (+ plugin themes) — applies instantly |
-| **UI Style** | Choose from 6 visual styles (Default, Nothing, Liquid Glass, Material 3, Alivated, Neon) — applies instantly |
+| **Theme** | Choose from 17 built-in color themes (+ plugin themes) — applies instantly |
+| **UI Style** | Choose from 7 visual styles (Default, Nothing, Liquid Glass, Material 3, Alivated, Neon, Claude) — applies instantly |
 | **Keyboard Shortcuts** | View and rebind all shortcuts — auto-saves on change |
 | **About** | Version info, author links, check for updates |
 

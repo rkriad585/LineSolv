@@ -21,8 +21,8 @@ export class ShortcutModal {
     const box = document.createElement('div');
     box.style.cssText = `
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 24px; min-width: 400px; max-height: 80vh; overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      border-radius: var(--ui-radius-lg); padding: 24px; min-width: 400px; max-height: 80vh; overflow-y: auto;
+      box-shadow: var(--ui-shadow-lg);
     `;
 
     const title = document.createElement('h2');

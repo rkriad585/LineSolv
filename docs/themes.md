@@ -2,7 +2,7 @@
 
 ## Built-in Themes
 
-LineSolv ships with 15 themes. All themes define the same 14 CSS custom properties, so plugins can contribute additional themes that integrate seamlessly.
+LineSolv ships with 17 themes. All themes define the same 14 CSS custom properties, so plugins can contribute additional themes that integrate seamlessly.
 
 ### Dark (default)
 
@@ -64,9 +64,17 @@ A dark theme with deep green surfaces and mint accents (`#34d399`). Nature-inspi
 
 A light theme with warm cream surfaces and amber accents (`#f59e0b`). Comfortable for extended reading.
 
+### Claude Dark
+
+A warm dark theme with charcoal surfaces (`#141413`) and terracotta accents (`#c96442`). Olive-tinted dark tones throughout. Inspired by Anthropic's design language.
+
+### Claude Light
+
+A warm light theme with parchment surfaces (`#f5f4ed`) and terracotta accents (`#c96442`). Cream and ivory tones throughout. Inspired by Anthropic's design language.
+
 ## UI Styles
 
-In addition to themes, LineSolv offers 6 UI styles that control shape, depth, and motion:
+In addition to themes, LineSolv offers 7 UI styles that control shape, depth, and motion:
 
 | Style | Description |
 |-------|-------------|
@@ -76,8 +84,9 @@ In addition to themes, LineSolv offers 6 UI styles that control shape, depth, an
 | **Material 3** | Rounded, tinted, elevation |
 | **Alivated** | Soft, warm, neumorphic |
 | **Neon** | Cyberpunk, glowing borders |
+| **Claude** | Warm, minimal, Anthropic-inspired |
 
-Each style defines CSS tokens for border-radius (`--ui-radius-*`), shadows (`--ui-shadow-*`), blur, and transitions. Styles are applied via CSS class on the root element and can be combined with any theme.
+Each style defines CSS tokens for border-radius (`--ui-radius-*`), shadows (`--ui-shadow-*`), font display (`--ui-font-display`), blur, and transitions. Styles are applied via CSS class on the root element and can be combined with any theme.
 
 ## Changing Themes
 

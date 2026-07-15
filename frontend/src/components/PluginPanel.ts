@@ -184,7 +184,7 @@ export class PluginPanel {
     this.searchInput.type = 'text';
     this.searchInput.placeholder = 'Search plugins...';
     this.searchInput.style.cssText =
-      'width:250px;padding:6px 10px 6px 30px;border:1px solid var(--border);border-radius:6px;' +
+      'width:250px;padding:6px 10px 6px 30px;border:1px solid var(--border);border-radius:var(--ui-radius-sm);' +
       'background:var(--surface);color:var(--text);font-size:13px;outline:none;';
     this.searchInput.addEventListener('input', () => this.filterPlugins());
 
@@ -415,7 +415,7 @@ export class PluginPanel {
 
     // Hero section
     const hero = document.createElement('div');
-    hero.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;';
+    hero.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:var(--ui-radius-lg);padding:24px;margin-bottom:20px;';
 
     const nameRow = document.createElement('div');
     nameRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;';
@@ -466,7 +466,7 @@ export class PluginPanel {
       const track = document.createElement('div');
       track.style.cssText = `position:absolute;inset:0;border-radius:11px;transition:background 0.2s;${local.enabled ? 'background:var(--accent);' : 'background:var(--text-subtle);'}`;
       const thumb = document.createElement('div');
-      thumb.style.cssText = `position:absolute;top:2px;left:${local.enabled ? '20px' : '2px'};width:18px;height:18px;border-radius:50%;background:white;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.3);`;
+      thumb.style.cssText = `position:absolute;top:2px;left:${local.enabled ? '20px' : '2px'};width:18px;height:18px;border-radius:50%;background:white;transition:left 0.2s;box-shadow:var(--ui-shadow-sm);`;
       toggle.append(track, thumb);
       actionsDiv.appendChild(toggle);
     }
@@ -623,7 +623,7 @@ export class PluginPanel {
 
   private createSection(title: string): HTMLElement {
     const section = document.createElement('div');
-    section.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:16px;';
+    section.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:var(--ui-radius-lg);padding:20px;margin-top:16px;';
     const titleEl = document.createElement('div');
     titleEl.style.cssText = 'font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:6px;';
     titleEl.textContent = title;
@@ -749,7 +749,7 @@ export class PluginPanel {
     const card = document.createElement('div');
     card.className = 'plugin-card';
     card.dataset.plugin = plugin.name;
-    card.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;cursor:pointer;transition:border-color 0.15s;';
+    card.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:var(--ui-radius-md);padding:16px;display:flex;flex-direction:column;gap:12px;cursor:pointer;transition:border-color 0.15s;';
     card.addEventListener('mouseenter', () => { card.style.borderColor = 'var(--accent)'; });
     card.addEventListener('mouseleave', () => { card.style.borderColor = 'var(--border)'; });
 
@@ -811,7 +811,7 @@ export class PluginPanel {
       track.style.cssText = `position:absolute;inset:0;border-radius:11px;transition:background 0.2s;${local.enabled ? 'background:var(--accent);' : 'background:var(--text-subtle);'}`;
       const thumb = document.createElement('div');
       const thumbLeft = local.enabled ? '20px' : '2px';
-      thumb.style.cssText = `position:absolute;top:2px;left:${thumbLeft};width:18px;height:18px;border-radius:50%;background:white;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.3);`;
+      thumb.style.cssText = `position:absolute;top:2px;left:${thumbLeft};width:18px;height:18px;border-radius:50%;background:white;transition:left 0.2s;box-shadow:var(--ui-shadow-sm);`;
       toggle.append(track, thumb);
       headerRow.appendChild(toggle);
     }

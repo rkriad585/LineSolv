@@ -342,16 +342,28 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 /* ═══════════════════════════════════════════
    UI Style: Nothing
    Monochrome, industrial, Swiss typography.
+   OLED-optimized pure black, Nothing Red accent.
    ═══════════════════════════════════════════ */
 :root.style-nothing {
+  --surface: #000000;
+  --surface-secondary: #111111;
+  --surface-hover: #1a1a1a;
+  --border: #222222;
+  --text: #e8e8e8;
+  --text-muted: #999999;
+  --accent: #d71921;
+  --note-bg: #111111;
+  --note-hover: #1a1a1a;
+  --note-text: #cccccc;
+
   --ui-radius-sm: 2px;
-  --ui-radius-md: 4px;
-  --ui-radius-lg: 6px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 16px;
   --ui-shadow-sm: none;
   --ui-shadow-md: none;
-  --ui-shadow-lg: 0 0 0 1px rgba(255,255,255,0.06);
+  --ui-shadow-lg: 0 0 0 1px rgba(255,255,255,0.12);
   --ui-blur: 0px;
-  --ui-transition: cubic-bezier(0.2, 0, 0, 1);
+  --ui-transition: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ui-font-display: 'Space Grotesk', 'Inter', sans-serif;
 }
 
@@ -366,30 +378,54 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
   display: flex; border: 1px solid var(--border); border-radius: var(--ui-radius-sm); overflow: hidden;
 }
 .style-nothing .nothing-segmented > * {
-  flex: 1; padding: 4px 8px; font-size: 11px; text-align: center; color: var(--text-muted);
+  flex: 1; padding: 4px 8px; font-size: 10px; text-align: center; color: var(--text-muted);
   border-right: 1px solid var(--border); cursor: pointer; transition: background 0.15s var(--ui-transition);
+  font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em;
 }
 .style-nothing .nothing-segmented > *:last-child { border-right: none; }
 .style-nothing .nothing-segmented > *.active { background: var(--accent); color: var(--surface); font-weight: 600; }
-/* Nothing + Light: use dark shadow border instead of white */
+
+/* Nothing dot-grid background pattern */
+.style-nothing body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* Nothing + Light mode */
 .theme-light.style-nothing {
-  --ui-shadow-lg: 0 0 0 1px rgba(0,0,0,0.1);
+  --surface: #f5f5f5;
+  --surface-secondary: #ffffff;
+  --surface-hover: #f0f0f0;
+  --border: #e8e8e8;
+  --text: #1a1a1a;
+  --text-muted: #666666;
+  --accent: #d71921;
+  --note-bg: #ffffff;
+  --note-hover: #f0f0f0;
+  --note-text: #333333;
+  --ui-shadow-lg: 0 0 0 1px rgba(0,0,0,0.15);
+}
+.theme-light.style-nothing body::before {
+  background: radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 16px 16px;
 }
 
 /* ═══════════════════════════════════════════
    UI Style: Liquid Glass
-   Apple-inspired glassmorphism.
+   Apple's WWDC 2025 glassmorphism.
+   Saturate, specular highlights, adaptive blur.
    ═══════════════════════════════════════════ */
 :root.style-glass {
   --ui-radius-sm: 8px;
   --ui-radius-md: 16px;
-  --ui-radius-lg: 20px;
+  --ui-radius-lg: 24px;
   --ui-shadow-sm: 0 1px 2px rgba(0,0,0,0.1);
   --ui-shadow-md: 0 4px 16px rgba(0,0,0,0.15);
-  --ui-shadow-lg: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+  --ui-shadow-lg: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
   --ui-blur: 20px;
   --ui-transition: cubic-bezier(0.4, 0, 0.2, 1);
-  --ui-font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  --ui-font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .style-glass #settings-modal,
@@ -397,8 +433,8 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 .style-glass .lsv-modal-overlay,
 .style-glass .context-menu-item,
 .style-glass .autocomplete-popup {
-  backdrop-filter: blur(var(--ui-blur));
-  -webkit-backdrop-filter: blur(var(--ui-blur));
+  backdrop-filter: blur(var(--ui-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--ui-blur)) saturate(150%);
 }
 .style-glass aside,
 .style-glass #notes-sidebar,
@@ -406,15 +442,16 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 .style-glass #steps-panel,
 .style-glass #history-panel,
 .style-glass #graph-panel {
-  backdrop-filter: blur(var(--ui-blur));
-  -webkit-backdrop-filter: blur(var(--ui-blur));
+  backdrop-filter: blur(var(--ui-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--ui-blur)) saturate(150%);
 }
 .style-glass .glass-specular {
   position: relative; overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
 }
 .style-glass .glass-specular::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 50%);
   border-radius: inherit; z-index: 1;
 }
 .style-glass input[type="text"],
@@ -423,13 +460,16 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 .style-glass #input-area,
 .style-glass #notepad,
 .style-glass #results-column {
-  background: rgba(255,255,255,0.06) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.12) !important;
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
 }
-/* Glass + Light: invert tint from white to dark */
+/* Glass + Light: invert tint */
 .theme-light.style-glass .glass-specular::before {
-  background: linear-gradient(135deg, rgba(0,0,0,0.05) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(0,0,0,0.08) 0%, transparent 50%);
+}
+.theme-light.style-glass .glass-specular {
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.08);
 }
 .theme-light.style-glass input[type="text"],
 .theme-light.style-glass input[type="search"],
@@ -437,76 +477,199 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 .theme-light.style-glass #input-area,
 .theme-light.style-glass #notepad,
 .theme-light.style-glass #results-column {
-  background: rgba(0,0,0,0.04) !important;
+  background: rgba(0,0,0,0.08) !important;
+}
+
+/* Glass headings — Apple tight letter-spacing */
+.style-glass #settings-modal h2,
+.style-glass #settings-modal h3 {
+  letter-spacing: -0.015em;
 }
 
 /* ═══════════════════════════════════════════
    UI Style: Material 3
    Google's Material Design 3 language.
+   Tonal elevation, M3 color tokens, state layers.
    ═══════════════════════════════════════════ */
 :root.style-material {
+  /* M3 Baseline Dark palette */
+  --md-primary: #d0bcff;
+  --md-on-primary: #381e72;
+  --md-primary-container: #4f378b;
+  --md-on-primary-container: #eaddff;
+  --md-secondary: #ccc2dc;
+  --md-on-secondary: #332d41;
+  --md-secondary-container: #4a4458;
+  --md-on-secondary-container: #e8def8;
+  --md-tertiary: #efb8c8;
+  --md-surface-dim: #141218;
+  --md-surface-container: #211f26;
+  --md-surface-container-high: #2b2930;
+  --md-surface-container-highest: #36343b;
+  --md-on-surface: #e6e1e5;
+  --md-on-surface-variant: #cac4d0;
+  --md-outline: #938f99;
+  --md-outline-variant: #49454f;
+  --md-error: #f2b8b5;
+
+  /* Map M3 tokens to app variables */
+  --surface: var(--md-surface-dim);
+  --surface-secondary: var(--md-surface-container);
+  --surface-hover: var(--md-surface-container-high);
+  --border: var(--md-outline-variant);
+  --text: var(--md-on-surface);
+  --text-muted: var(--md-on-surface-variant);
+  --accent: var(--md-primary);
+  --note-bg: var(--md-surface-container);
+  --note-hover: var(--md-surface-container-high);
+  --note-text: var(--md-on-surface-variant);
+
   --ui-radius-sm: 8px;
   --ui-radius-md: 12px;
   --ui-radius-lg: 28px;
-  --ui-shadow-sm: 0 1px 2px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.1);
-  --ui-shadow-md: 0 2px 6px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1);
-  --ui-shadow-lg: 0 4px 8px rgba(0,0,0,0.15), 0 8px 16px rgba(0,0,0,0.1);
+  --ui-radius-xs: 4px;
+  --ui-radius-full: 9999px;
+  --ui-shadow-sm: none;
+  --ui-shadow-md: none;
+  --ui-shadow-lg: none;
   --ui-blur: 0px;
   --ui-transition: cubic-bezier(0.2, 0, 0, 1);
-  --ui-font-display: 'Google Sans', 'Inter', sans-serif;
+  --ui-font-display: 'Google Sans', 'Roboto', 'Inter', sans-serif;
 }
 
+/* M3 Tonal elevation — primary tint overlay on surfaces */
+.style-material aside,
+.style-material #vars-panel,
+.style-material #steps-panel,
+.style-material #history-panel,
+.style-material #graph-panel {
+  box-shadow: none;
+  position: relative;
+}
+.style-material aside::before,
+.style-material #vars-panel::before,
+.style-material #steps-panel::before,
+.style-material #history-panel::before,
+.style-material #graph-panel::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: color-mix(in srgb, var(--md-primary) 5%, transparent);
+  border-radius: inherit; z-index: 0;
+}
+
+/* M3 State layers — hover/focus/press */
+.style-material button:hover,
+.style-material .note-item:hover {
+  background: color-mix(in srgb, var(--md-on-surface) 8%, var(--surface));
+}
+.style-material button:focus-visible {
+  background: color-mix(in srgb, var(--md-on-surface) 10%, var(--surface));
+}
+.style-material button:active {
+  background: color-mix(in srgb, var(--md-on-surface) 10%, var(--surface));
+}
+
+/* M3 Tint overlay */
 .style-material .material-tint {
   position: relative;
 }
 .style-material .material-tint::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: color-mix(in srgb, var(--accent) 5%, var(--surface-secondary));
+  background: color-mix(in srgb, var(--md-primary) 5%, var(--md-surface-container));
   border-radius: inherit; z-index: 0;
 }
+
+/* M3 Chips — 32dp height, secondary-container color */
 .style-material .material-chip {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 12px; border-radius: var(--ui-radius-sm); font-size: 12px; font-weight: 500;
-  background: color-mix(in srgb, var(--accent) 12%, var(--surface-secondary));
-  color: var(--accent); border: none; cursor: pointer; transition: background 0.2s var(--ui-transition);
+  height: 32px; padding: 0 12px; border-radius: 8px; font-size: 14px; font-weight: 500;
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container); border: none; cursor: pointer;
+  transition: background 0.2s var(--ui-transition);
 }
 .style-material .material-chip:hover {
-  background: color-mix(in srgb, var(--accent) 20%, var(--surface-secondary));
+  background: color-mix(in srgb, var(--md-secondary-container) 92%, var(--md-on-secondary-container));
 }
-/* Material + Light: increase tint intensity */
-.theme-light.style-material .material-tint::before {
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface-secondary));
-}
-.theme-light.style-material .material-chip {
-  background: color-mix(in srgb, var(--accent) 16%, var(--surface-secondary));
-}
-.theme-light.style-material .material-chip:hover {
-  background: color-mix(in srgb, var(--accent) 24%, var(--surface-secondary));
-}
+
+/* M3 FAB — 56dp, 16dp radius, primary-container */
 .style-material .material-fab {
-  width: 40px; height: 40px; border-radius: var(--ui-radius-md);
-  background: var(--accent); color: var(--text); border: none;
+  width: 56px; height: 56px; border-radius: 16px;
+  background: var(--md-primary-container); color: var(--md-on-primary-container); border: none;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: var(--ui-shadow-md); cursor: pointer;
+  box-shadow: 0 6px 10px rgba(0,0,0,0.15), 0 2px 3px rgba(0,0,0,0.1);
+  cursor: pointer;
   transition: box-shadow 0.2s var(--ui-transition), transform 0.15s var(--ui-transition);
 }
 .style-material .material-fab:hover {
-  box-shadow: var(--ui-shadow-lg);
+  box-shadow: 0 8px 12px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1);
   transform: scale(1.05);
+}
+
+/* Material + Light mode */
+.theme-light.style-material {
+  --md-primary: #6750a4;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #eaddff;
+  --md-on-primary-container: #21005d;
+  --md-secondary: #625b71;
+  --md-on-secondary: #ffffff;
+  --md-secondary-container: #e8def8;
+  --md-on-secondary-container: #1d192b;
+  --md-tertiary: #7d5260;
+  --md-surface-dim: #DED8E1;
+  --md-surface: #FEF7FF;
+  --md-surface-container: #F3EDF7;
+  --md-surface-container-high: #ECE6F0;
+  --md-surface-container-highest: #E6E0E9;
+  --md-on-surface: #1D1B20;
+  --md-on-surface-variant: #49454F;
+  --md-outline: #79747E;
+  --md-outline-variant: #CAC4D0;
+  --md-error: #B3261E;
+
+  --surface: var(--md-surface);
+  --surface-secondary: var(--md-surface-container);
+  --surface-hover: var(--md-surface-container-high);
+  --border: var(--md-outline-variant);
+  --text: var(--md-on-surface);
+  --text-muted: var(--md-on-surface-variant);
+  --accent: var(--md-primary);
+  --note-bg: var(--md-surface-container);
+  --note-hover: var(--md-surface-container-high);
+  --note-text: var(--md-on-surface-variant);
+}
+.theme-light.style-material .material-tint::before {
+  background: color-mix(in srgb, var(--md-primary) 8%, var(--md-surface-container));
+}
+.theme-light.style-material .material-chip {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+.theme-light.style-material .material-chip:hover {
+  background: color-mix(in srgb, var(--md-secondary-container) 92%, var(--md-on-secondary-container));
 }
 
 /* ═══════════════════════════════════════════
    UI Style: Alivated
-   Soft, warm, neumorphic-lite.
+   Neumorphism / Soft UI.
+   Mid-tone backgrounds, bg-derived dual shadows.
    ═══════════════════════════════════════════ */
 :root.style-alivated {
+  /* Mid-tone backgrounds required for neumorphism */
+  --surface: #2d3239;
+  --surface-secondary: #353a42;
+  --surface-hover: #3a3f48;
+  --border: #3a3f48;
+  --note-bg: #353a42;
+  --note-hover: #3a3f48;
+  --note-text: #b0b5bd;
+
   --ui-radius-sm: 8px;
   --ui-radius-md: 16px;
   --ui-radius-lg: 20px;
-  --ui-shadow-sm: 2px 2px 6px rgba(0,0,0,0.12), -2px -2px 6px rgba(255,255,255,0.04);
-  --ui-shadow-md: 4px 4px 12px rgba(0,0,0,0.15), -4px -4px 12px rgba(255,255,255,0.04);
-  --ui-shadow-lg: 6px 6px 20px rgba(0,0,0,0.18), -6px -6px 20px rgba(255,255,255,0.04);
-  --ui-blur: 0px;
+  /* Dark mode: bg #2d3239 → light shadow #3a3f48, dark shadow #1a1e23 */
+  --ui-shadow-sm: -2px -2px 6px rgba(58,63,72,0.5), 2px 2px 6px rgba(26,30,35,0.6);
+  --ui-shadow-md: -4px -4px 12px rgba(58,63,72,0.5), 4px 4px 12px rgba(26,30,35,0.6);
+  --ui-shadow-lg: -6px -6px 20px rgba(58,63,72,0.5), 6px 6px 20px rgba(26,30,35,0.6);
   --ui-transition: cubic-bezier(0.4, 0, 0.2, 1);
   --ui-font-display: 'Overpass', 'Inter', sans-serif;
 }
@@ -532,72 +695,89 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 }
 .style-alivated button:active,
 .style-alivated .note-item:active {
-  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.15), inset -2px -2px 5px rgba(255,255,255,0.04);
+  box-shadow: inset 2px 2px 5px rgba(26,30,35,0.6), inset -2px -2px 5px rgba(58,63,72,0.5);
 }
 .style-alivated .alivated-soft-border {
   border: 1px solid rgba(255,255,255,0.06);
   box-shadow: var(--ui-shadow-sm);
 }
-/* Alivated + Light: invert neumorphic shadows for visibility */
+
+/* Alivated + Light mode */
+.theme-light.style-alivated {
+  --surface: #e0e5ec;
+  --surface-secondary: #e8ecf1;
+  --surface-hover: #d5dbe3;
+  --border: #d5dbe3;
+  --note-bg: #e8ecf1;
+  --note-hover: #d5dbe3;
+  --note-text: #5a6070;
+  /* Light mode: bg #e0e5ec → light shadow #ffffff, dark shadow #a3b1c6 */
+  --ui-shadow-sm: -2px -2px 6px #ffffff, 2px 2px 6px #a3b1c6;
+  --ui-shadow-md: -4px -4px 12px #ffffff, 4px 4px 12px #a3b1c6;
+  --ui-shadow-lg: -6px -6px 20px #ffffff, 6px 6px 20px #a3b1c6;
+}
 .theme-light.style-alivated aside,
 .theme-light.style-alivated #notes-sidebar,
 .theme-light.style-alivated #vars-panel,
 .theme-light.style-alivated #steps-panel,
 .theme-light.style-alivated #history-panel,
 .theme-light.style-alivated #graph-panel {
-  box-shadow: 4px 4px 12px rgba(0,0,0,0.1), -4px -4px 12px rgba(0,0,0,0.04);
+  box-shadow: var(--ui-shadow-md);
 }
 .theme-light.style-alivated button:active,
 .theme-light.style-alivated .note-item:active {
-  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(0,0,0,0.04);
+  box-shadow: inset 2px 2px 5px #a3b1c6, inset -2px -2px 5px #ffffff;
 }
 .theme-light.style-alivated .alivated-soft-border {
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(255,255,255,0.5);
 }
 
 /* ═══════════════════════════════════════════
    UI Style: Neon
-   Cyberpunk aesthetic. Glowing borders.
+   Cyberpunk / Sci-Fi aesthetic.
+   Multi-layer glow, scanlines, cut-corners, grid.
    ═══════════════════════════════════════════ */
 :root.style-neon {
   --ui-radius-sm: 2px;
   --ui-radius-md: 4px;
   --ui-radius-lg: 6px;
   --ui-shadow-sm: none;
-  --ui-shadow-md: 0 0 8px var(--accent), 0 0 2px var(--accent);
-  --ui-shadow-lg: 0 0 16px var(--accent), 0 0 4px var(--accent), 0 0 32px color-mix(in srgb, var(--accent) 15%, transparent);
+  --ui-shadow-md: 0 0 5px var(--accent), 0 0 10px var(--accent), 0 0 20px var(--accent), 0 0 40px color-mix(in srgb, var(--accent) 30%, transparent);
+  --ui-shadow-lg: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--accent), 0 0 40px var(--accent), 0 0 80px color-mix(in srgb, var(--accent) 25%, transparent);
   --ui-blur: 0px;
   --ui-transition: ease;
   --ui-font-display: 'Fira Code', 'JetBrains Mono', monospace;
 }
 
+/* Neon panels — multi-layer glow + cut-corners */
 .style-neon aside,
 .style-neon #notes-sidebar,
 .style-neon #vars-panel,
 .style-neon #steps-panel,
 .style-neon #history-panel,
 .style-neon #graph-panel {
-  box-shadow: 0 0 8px var(--accent), inset 0 0 4px color-mix(in srgb, var(--accent) 5%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px var(--accent), 0 0 20px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 0 8px color-mix(in srgb, var(--accent) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
 }
 .style-neon button:hover,
 .style-neon .note-item:hover {
-  box-shadow: 0 0 10px var(--accent), 0 0 2px var(--accent);
+  box-shadow: 0 0 5px #fff, 0 0 10px var(--accent), 0 0 20px var(--accent), 0 0 40px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 .style-neon button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent), 0 0 30px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 .style-neon #settings-modal,
 .style-neon #shortcut-modal,
 .style-neon .lsv-modal-overlay {
-  box-shadow: 0 0 16px var(--accent), 0 0 4px var(--accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 0 5px #fff, 0 0 10px var(--accent), 0 0 30px var(--accent), 0 0 60px color-mix(in srgb, var(--accent) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .style-neon .autocomplete-popup,
 .style-neon .context-menu-item {
-  box-shadow: 0 0 8px var(--accent), 0 0 2px var(--accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 0 5px var(--accent), 0 0 15px color-mix(in srgb, var(--accent) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
 }
 @keyframes neon-border-pulse {
   0%, 100% { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
@@ -606,29 +786,276 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel {
 .style-neon .neon-pulse {
   animation: neon-border-pulse 2s ease-in-out infinite;
 }
+
+/* Neon scanlines — visible multiply blend */
 .style-neon::before {
   content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 99998;
   background: repeating-linear-gradient(
     0deg,
     transparent,
-    transparent 2px,
-    color-mix(in srgb, var(--text) 3%, transparent) 2px,
-    color-mix(in srgb, var(--text) 3%, transparent) 4px
+    transparent 1px,
+    rgba(0,0,0,0.15) 1px,
+    rgba(0,0,0,0.15) 2px
   );
-  mix-blend-mode: overlay;
+  mix-blend-mode: multiply;
 }
-/* Neon + Light: increase glow intensity for visibility on white */
+
+/* Neon text glow — the signature effect */
+.style-neon h1,
+.style-neon h2,
+.style-neon h3,
+.style-neon .calc-result {
+  text-shadow: 0 0 7px var(--accent), 0 0 20px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* Neon grid background */
+.style-neon body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    linear-gradient(color-mix(in srgb, var(--accent) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 3%, transparent) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Neon labels — uppercase, wide tracking */
+.style-neon label,
+.style-neon .section-title {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+}
+
+/* Neon + Light mode */
 .theme-light.style-neon aside,
 .theme-light.style-neon #notes-sidebar,
 .theme-light.style-neon #vars-panel,
 .theme-light.style-neon #steps-panel,
 .theme-light.style-neon #history-panel,
 .theme-light.style-neon #graph-panel {
-  box-shadow: 0 0 12px var(--accent), inset 0 0 6px color-mix(in srgb, var(--accent) 8%, transparent);
+  box-shadow: 0 0 5px rgba(0,0,0,0.1), 0 0 12px var(--accent), 0 0 25px color-mix(in srgb, var(--accent) 15%, transparent), inset 0 0 6px color-mix(in srgb, var(--accent) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .theme-light.style-neon::before {
   mix-blend-mode: multiply;
+}
+
+/* ═══════════════════════════════════════════
+   Theme: Claude Dark — warm charcoal, terracotta accent
+   Based on Anthropic's brand palette
+   ═══════════════════════════════════════════ */
+:root.theme-claude-dark {
+  --surface: #141413;
+  --surface-secondary: #1e1e1c;
+  --surface-hover: #30302e;
+  --border: #30302e;
+  --text: #f4f3ee;
+  --text-muted: #87867f;
+  --text-subtle: #5e5d59;
+  --accent: #c96442;
+  --error: #b53333;
+  --success: #6a9e5c;
+  --note-bg: #1e1e1c;
+  --note-hover: #30302e;
+  --note-text: #b0aea5;
+  --calc-font-color: #f4f3ee;
+}
+
+/* ═══════════════════════════════════════════
+   Theme: Claude Light — parchment canvas, terracotta accent
+   ═══════════════════════════════════════════ */
+:root.theme-claude-light {
+  --surface: #f5f4ed;
+  --surface-secondary: #faf9f5;
+  --surface-hover: #e8e6dc;
+  --border: #e8e6dc;
+  --text: #141413;
+  --text-muted: #5e5d59;
+  --text-subtle: #87867f;
+  --accent: #c96442;
+  --error: #b53333;
+  --success: #4a7a3a;
+  --note-bg: #e8e6dc;
+  --note-hover: #d9d7cd;
+  --note-text: #4d4c48;
+  --calc-font-color: #141413;
+}
+
+/* ═══════════════════════════════════════════
+   UI Style: Claude
+   Anthropic's warm editorial design language.
+   Ring-shadow depth, terracotta accent, organic warmth.
+   ═══════════════════════════════════════════ */
+:root.style-claude {
+  --ui-radius-sm: 6px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 12px;
+  --ui-shadow-sm: none;
+  --ui-shadow-md: 0 0 0 1px rgba(255,255,255,0.06);
+  --ui-shadow-lg: 0 0 0 1px rgba(255,255,255,0.08), 0 4px 24px rgba(0,0,0,0.12);
+  --ui-blur: 0px;
+  --ui-transition: cubic-bezier(0.2, 0, 0, 1);
+  --ui-font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Claude typography */
+.style-claude #settings-modal { font-family: var(--ui-font-display); }
+
+/* Ring-shadow depth on panels */
+.style-claude aside,
+.style-claude #notes-sidebar,
+.style-claude #vars-panel,
+.style-claude #steps-panel,
+.style-claude #history-panel,
+.style-claude #graph-panel {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+}
+.style-claude #settings-modal,
+.style-claude #shortcut-modal,
+.style-claude .lsv-modal-overlay {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 4px 24px rgba(0,0,0,0.12);
+  border-radius: var(--ui-radius-lg);
+}
+.style-claude .autocomplete-popup,
+.style-claude .context-menu-item {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+  border-radius: var(--ui-radius-md);
+}
+
+/* Hover lift — whisper-soft */
+.style-claude aside:hover,
+.style-claude #vars-panel:hover,
+.style-claude #history-panel:hover {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 4px 24px rgba(0,0,0,0.05);
+}
+
+/* Button warmth */
+.style-claude button {
+  border-radius: var(--ui-radius-sm);
+  transition: background 0.15s var(--ui-transition), box-shadow 0.15s var(--ui-transition);
+}
+
+/* Focus ring in terracotta */
+.style-claude button:focus-visible,
+.style-claude select:focus-visible,
+.style-claude input:focus-visible,
+.style-claude textarea:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+/* Claude + Light mode */
+.theme-claude-light.style-claude aside,
+.theme-claude-light.style-claude #notes-sidebar,
+.theme-claude-light.style-claude #vars-panel,
+.theme-claude-light.style-claude #steps-panel,
+.theme-claude-light.style-claude #history-panel,
+.theme-claude-light.style-claude #graph-panel {
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
+}
+.theme-claude-light.style-claude #settings-modal,
+.theme-claude-light.style-claude #shortcut-modal,
+.theme-claude-light.style-claude .lsv-modal-overlay {
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.08), 0 4px 24px rgba(0,0,0,0.08);
+}
+.theme-claude-light.style-claude .autocomplete-popup,
+.theme-claude-light.style-claude .context-menu-item {
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+}
+.theme-claude-light.style-claude .note-item:hover,
+.theme-claude-light.style-claude aside:hover {
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.04);
+}
+
+/* ═══════════════════════════════════════════
+   Style-specific: Toast notifications
+   ═══════════════════════════════════════════ */
+.style-nothing .toast-item {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  border-radius: var(--ui-radius-sm);
+}
+.style-glass .toast-item {
+  backdrop-filter: blur(var(--ui-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--ui-blur)) saturate(150%);
+}
+.style-material .toast-item {
+  border-radius: var(--ui-radius-sm);
+}
+.style-alivated .toast-item {
+  box-shadow: var(--ui-shadow-sm);
+}
+.style-neon .toast-item {
+  box-shadow: 0 0 5px var(--accent), 0 0 15px color-mix(in srgb, var(--accent) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.style-claude .toast-item {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+/* ═══════════════════════════════════════════
+   Style-specific: Plugin panel (#plugin-viewer)
+   ═══════════════════════════════════════════ */
+.style-glass #plugin-viewer {
+  backdrop-filter: blur(var(--ui-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--ui-blur)) saturate(150%);
+}
+.style-glass .plugin-card {
+  background: rgba(255,255,255,0.06) !important;
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+.theme-light.style-glass .plugin-card {
+  background: rgba(0,0,0,0.04) !important;
+}
+.style-material #plugin-viewer .plugin-card {
+  border-radius: var(--ui-radius-md);
+  background: var(--md-surface-container-highest, var(--surface-secondary)) !important;
+}
+.style-alivated .plugin-card {
+  box-shadow: var(--ui-shadow-sm);
+  border-radius: var(--ui-radius-md);
+}
+.style-neon .plugin-card {
+  box-shadow: 0 0 5px var(--accent), 0 0 10px color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.style-claude .plugin-card {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+  border-radius: var(--ui-radius-md);
+}
+
+/* ═══════════════════════════════════════════
+   Style-specific: Confirm dialog
+   ═══════════════════════════════════════════ */
+.style-glass #confirm-dialog {
+  backdrop-filter: blur(var(--ui-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--ui-blur)) saturate(150%);
+}
+.style-alivated #confirm-dialog .confirm-box {
+  box-shadow: var(--ui-shadow-lg);
+}
+.style-neon #confirm-dialog .confirm-box {
+  box-shadow: 0 0 5px #fff, 0 0 10px var(--accent), 0 0 30px var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* ═══════════════════════════════════════════
+   Style-specific: Toggle switches
+   ═══════════════════════════════════════════ */
+.style-material .toggle-track {
+  background: color-mix(in srgb, var(--md-on-surface) 12%, var(--md-surface-container-high)) !important;
+}
+.style-material .toggle-thumb {
+  background: var(--md-outline) !important;
+}
+.style-material .toggle-input:checked ~ .toggle-track {
+  background: var(--md-primary) !important;
+}
+.style-material .toggle-input:checked ~ .toggle-thumb {
+  background: var(--md-on-primary) !important;
+}
+.style-claude .toggle-track {
+  border-radius: 9999px;
 }
 
 html {
@@ -860,5 +1287,5 @@ textarea:focus-visible, [tabindex]:focus-visible, a:focus-visible {
 
 /* Autocomplete popup */
 .autocomplete-popup {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--ui-font-display, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
 }

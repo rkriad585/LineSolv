@@ -24,8 +24,8 @@ Built with **Wails v2** (Go + WebView), **Vite**, **TypeScript**, and **CSS cust
 - **Real-Time Settings** — Every setting (theme, font, opacity, line numbers, autocomplete) applies instantly with no Save button
 - **Line Number Toggle** — Show or hide line numbers in the calculator editor
 - **Autocomplete Popup** — Type-aware keyword suggestions that can be toggled on/off
-- **15 Color Themes** — Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light with instant switching
-- **6 UI Styles** — Default, Nothing, Liquid Glass, Material 3, Alivated, Neon with configurable radius, shadows, and blur
+- **17 Color Themes** — Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light, Claude Dark, Claude Light with instant switching
+- **7 UI Styles** — Default, Nothing, Liquid Glass, Material 3, Alivated, Neon, and Claude Code — all rewritten to match their real-world design systems with authentic colors, typography, shadows, and component styling
 - **17 Font Options** — Sans-Serif, Serif, and Monospace fonts including JetBrains Mono, Fira Code, and more
 - **40+ Unit Conversions** — Length, mass, volume, temperature, time, and 30+ live currencies
 - **Function Graphing** — Auto-detect plot expressions and render live charts
@@ -201,7 +201,7 @@ Auto-detect plot/graph expressions and render live charts:
 
 | Feature | Description |
 |---------|-------------|
-| **15 Color Themes** | Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light |
+| **17 Color Themes** | Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light, Claude Dark, Claude Light |
 | **Multiple Notes** | Create, rename, delete, export, import calculation notebooks |
 | **Notes Sidebar** | Drag-and-drop reorder, search, PDF export |
 | **History Panel** | Searchable calculation history with timestamps |
@@ -209,7 +209,7 @@ Auto-detect plot/graph expressions and render live charts:
 | **Steps Panel** | Step-by-step evaluation with intermediate results |
 | **Documentation Viewer** | Built-in docs with offline caching |
 | **Plugin Marketplace** | Browse, install, enable/disable plugins |
-| **Settings** | General, Theme, UI Style, Keyboard Shortcuts, About tabs — all real-time, no Save button |
+| **Settings** | General, Theme, UI Style (7 styles with authentic design system styling), Keyboard Shortcuts, About tabs — all real-time, no Save button |
 | **Configurable Font** | 17 font options (Sans-Serif, Serif, Monospace) with live preview |
 | **Window Opacity** | Adjustable opacity slider (30%–100%, default 95%) for full-window transparency |
 | **Line Numbers Toggle** | Show or hide line number gutter in the calculator editor |

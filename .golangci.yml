@@ -26,6 +26,7 @@ linters:
       - linters:
           - errcheck
           - gosec
+          - govet
         path: frontend/node_modules/
     paths:
       - third_party$

@@ -289,7 +289,7 @@ Full-screen documentation viewer with sidebar tab navigation:
 
 5-tab settings panel:
 - **General** — font family (dropdown), font size (slider/input), opacity (slider 30%-100%), line numbers toggle, autocomplete toggle, animations toggle, toast notifications toggle, result panel toggle, line wrap toggle, with live preview
-- **Theme** — 15 built-in color themes + plugin themes with color swatch thumbnails (surface, accent, text colors)
+- **Theme** — 17 built-in color themes + plugin themes with color swatch thumbnails (surface, accent, text colors)
 - **Keyboard Shortcuts** — view and rebind all shortcuts; reset to defaults button
 - **About** — version info, author, repo links, check for updates
 
@@ -372,7 +372,52 @@ All theme colors are defined as CSS custom properties in `style.css`. The `:root
 
 The active theme is set by adding a `theme-{name}` class to `<html>`. Font settings (`--calc-font-size`, `--calc-font-family`, `--calc-font-color`) are applied as inline style properties on `<html>`.
 
-**15 built-in themes**: dark, light, neon, red, obsidian, plasma, blood, midnight, aurora, mono, frost, prism, lavender, sage, warm-light. Plugin themes are injected at runtime as additional CSS custom properties, making them selectable in Settings alongside built-in themes.
+**17 built-in themes**: dark, light, neon, red, obsidian, plasma, blood, midnight, aurora, mono, frost, prism, lavender, sage, warm-light, claude-dark, claude-light. Plugin themes are injected at runtime as additional CSS custom properties, making them selectable in Settings alongside built-in themes.
+
+### CSS Custom Properties Across Components
+
+All 26 previously hardcoded values (border-radius, box-shadow, font-family) across 11 component files have been replaced with CSS custom properties (`var(--ui-radius-*)`, `var(--ui-shadow-*)`, `var(--ui-font-display)`). This ensures every UI style applies consistently to all components — toast notifications, plugin cards, confirm dialogs, toggle switches, and all other UI elements respond to the active style without per-component overrides.
+
+### Material 3 UI Tokens
+
+When the Material 3 (Material) UI style is active, the following tokens are available:
+
+**Typography:**
+- `--ui-font-display: 'Inter', sans-serif`
+
+**Radius tokens:**
+- `--ui-radius-xs: 4px`
+- `--ui-radius-sm: 6px`
+- `--ui-radius-md: 8px`
+- `--ui-radius-lg: 12px`
+- `--ui-radius-xl: 16px`
+- `--ui-radius-full: 9999px`
+
+**Material 3 color tokens:**
+- `--md-primary` / `--md-on-primary` / `--md-primary-container` / `--md-on-primary-container`
+- `--md-secondary` / `--md-on-secondary` / `--md-secondary-container` / `--md-on-secondary-container`
+- `--md-tertiary` / `--md-on-tertiary` / `--md-tertiary-container` / `--md-on-tertiary-container`
+- `--md-surface` / `--md-on-surface` / `--md-surface-variant` / `--md-on-surface-variant`
+- `--md-outline` / `--md-outline-variant`
+
+**Material 3 elevation:** Tonal elevation is implemented via a `::before` overlay on elevated surfaces. State layers provide hover (8% opacity) and press (10% opacity) feedback. FAB uses 56dp sizing, and chips use 32dp height.
+
+### Style-Specific CSS Rules
+
+Each UI style can define component-specific overrides. The following components have dedicated style-specific rules:
+
+- **Toast notifications** (`.toast-item`) — style-specific border-radius, background, and shadow
+- **Plugin panel** (`#plugin-viewer`, `.plugin-card`) — style-specific card styling and panel chrome
+- **Confirm dialog** (`#confirm-dialog`) — style-specific dialog frame and button styling
+- **Toggle switches** (`.toggle-track`, `.toggle-thumb`) — style-specific track/thumb sizing and colors
+
+### UI Style: Claude
+
+The **Claude** style applies Anthropic-inspired design tokens:
+
+- `--ui-radius-sm: 6px`, `--ui-radius-md: 8px`, `--ui-radius-lg: 12px`
+- `--ui-font-display: Inter`
+- Clean, minimal aesthetic with muted tones and generous spacing
 
 ### Custom Scrollbar
 

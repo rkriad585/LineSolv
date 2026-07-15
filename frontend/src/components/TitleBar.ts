@@ -122,7 +122,7 @@ export class TitleBar {
     menu.style.cssText =
       'display:none;position:absolute;top:100%;right:4px;z-index:100;min-width:180px;' +
       'background:var(--surface);border:1px solid var(--border);border-radius:8px;' +
-      'box-shadow:0 8px 24px rgba(0,0,0,0.3);padding:4px 0;';
+      'box-shadow:var(--ui-shadow-md);padding:4px 0;';
     this.menuEl = menu;
 
     const menuItems = [

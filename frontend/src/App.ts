@@ -37,6 +37,7 @@ const STYLES = [
   {id: 'material',  label: 'Material 3', desc: 'Rounded, tinted, elevation'},
   {id: 'alivated',  label: 'Alivated',  desc: 'Soft, warm, neumorphic'},
   {id: 'neon',      label: 'Neon',      desc: 'Cyberpunk, glowing borders'},
+  {id: 'claude',    label: 'Claude Code', desc: 'Clean, warm, Anthropic-inspired'},
 ];
 
 let currentStyle = 'default';
@@ -863,7 +864,7 @@ export function renderApp(root: HTMLElement): void {
 
   const ui = document.createElement('div');
   ui.className = 'h-screen w-screen flex flex-col overflow-hidden select-none';
-  ui.style.borderRadius = '10px';
+  ui.style.borderRadius = 'var(--ui-radius-md)';
   ui.appendChild(titleBar.el);
   ui.appendChild(content);
   ui.appendChild(docsViewer.el);

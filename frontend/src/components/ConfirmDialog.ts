@@ -39,8 +39,8 @@ export class ConfirmDialog {
           Don't ask again
         </label>
         <div style="display:flex;gap:6px;justify-content:flex-end;padding:14px 20px 16px 20px;">
-          <button id="confirm-cancel" style="padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;cursor:default;outline:none;font-family:inherit;">Cancel</button>
-          <button id="confirm-ok" style="padding:5px 14px;border-radius:6px;border:none;background:var(--error);color:var(--text);font-size:12px;cursor:default;outline:none;font-weight:500;font-family:inherit;">${confirmLabel}</button>
+          <button id="confirm-cancel" style="padding:5px 14px;border-radius:var(--ui-radius-sm);border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;cursor:default;outline:none;font-family:inherit;">Cancel</button>
+          <button id="confirm-ok" style="padding:5px 14px;border-radius:var(--ui-radius-sm);border:none;background:var(--error);color:var(--text);font-size:12px;cursor:default;outline:none;font-weight:500;font-family:inherit;">${confirmLabel}</button>
         </div>
       </div>
     `;

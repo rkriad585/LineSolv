@@ -306,6 +306,14 @@ Returns the current application settings loaded from `config.toml`.
 **Returns:**
 - `SettingsData` with theme name, font size, font family, shortcut overrides as a JSON string, opacity, line numbers toggle, autocomplete toggle, animations toggle, toast toggle, result panel toggle, and line wrap toggle.
 
+**Valid theme values (17 built-in):**
+`dark`, `light`, `neon`, `red`, `obsidian`, `plasma`, `blood`, `midnight`, `aurora`, `mono`, `frost`, `prism`, `lavender`, `sage`, `warm-light`, `claude-dark`, `claude-light`
+
+Plugin themes are also valid — their IDs are defined in each plugin's `plugin.json` manifest.
+
+**Valid ui_style values (7 built-in):**
+`default`, `nothing`, `glass`, `material`, `alivated`, `neon`, `claude`
+
 ---
 
 ## `SaveSettings`

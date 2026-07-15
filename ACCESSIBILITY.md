@@ -70,7 +70,9 @@ LineSolv is committed to making its calculator accessible to all users, includin
 
 ### Theme Contrast Ratios
 
-Each of the 15 built-in themes is designed to meet WCAG 2.1 AA contrast requirements:
+LineSolv offers 7 UI styles (6 theme families plus Claude Code) and 17 built-in themes (including claude-dark and claude-light). The Claude Code style uses a terracotta accent (`#c96442`) which provides good contrast against both its dark surface (`#141413`) and light surface (`#f5f4ed`). The Material 3 style implements proper state layers with hover, focus, and press opacity feedback.
+
+Each of the 17 built-in themes is designed to meet WCAG 2.1 AA contrast requirements:
 
 | Content Type | Minimum Ratio |
 |-------------|---------------|

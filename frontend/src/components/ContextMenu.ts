@@ -17,7 +17,7 @@ export class ContextMenu {
     this.el.className = 'context-menu';
     this.el.setAttribute('role', 'menu');
     this.el.style.cssText =
-      'position:fixed;z-index:9999;min-width:180px;max-width:90vw;max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 0;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none;';
+      'position:fixed;z-index:9999;min-width:180px;max-width:90vw;max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--ui-radius-sm);padding:4px 0;box-shadow:var(--ui-shadow-sm);display:none;';
     document.body.appendChild(this.el);
 
     const close = (e: Event) => {
@@ -142,7 +142,7 @@ export class ContextMenu {
 
 const sub = document.createElement('div');
 sub.style.cssText =
-    'position:fixed;min-width:140px;max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 0;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none;z-index:10001;transition:opacity 150ms ease;';
+    'position:fixed;min-width:140px;max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--ui-radius-sm);padding:4px 0;box-shadow:var(--ui-shadow-sm);display:none;z-index:10001;transition:opacity 150ms ease;';
 
     for (const child of item.children!) {
       if ('separator' in child && child.separator) {

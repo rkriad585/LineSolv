@@ -21,13 +21,13 @@ export class Toast {
     const t = document.createElement('div');
     t.className = 'toast-item pointer-events-auto';
     t.style.cssText = `
-      padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;
+      padding:8px 16px;border-radius:var(--ui-radius-md);font-size:13px;font-weight:500;
       color:var(--text);background:${colors[type]};opacity:0.95;
-      box-shadow:0 4px 12px rgba(0,0,0,0.3);
+      box-shadow:var(--ui-shadow-sm);
       opacity:0;transform:translateX(100%);
       transition:opacity 0.25s ease,transform 0.25s ease;
       max-width:320px;word-break:break-word;
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+      font-family:var(--ui-font-display, -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif);
     `;
     t.textContent = message;
     this.el.appendChild(t);

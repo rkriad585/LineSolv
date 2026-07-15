@@ -154,6 +154,7 @@ LineSolv/
 - No unused exports
 - Inject dependencies via constructor (`NewEngine`, `NewAppService`)
 - Error paths must handle or propagate errors — no silent swallowing
+- All Go code passes `golangci-lint` clean
 
 ### TypeScript
 
@@ -201,12 +202,24 @@ npx tsc --noEmit
 npx vite build
 ```
 
+## Linting
+
+### Go — golangci-lint v2
+
+```bash
+golangci-lint run ./app/...
+```
+
+The `.golangci.yml` at the project root configures the linter. Notable exclusion:
+- `govet` is skipped for `frontend/node_modules/` to avoid false positives from third-party JS dependencies.
+
 ### Full Verification
 
-Run all checks in sequence:
+Run all checks in sequence (tests + lint + type check + build):
 
 ```bash
 go test ./app/... -v && \
+golangci-lint run ./app/... && \
 cd frontend && npx vitest run && npx tsc --noEmit && npx vite build
 ```
 

@@ -41,6 +41,7 @@ const STYLES = [
   {id: 'material',  label: 'Material 3', desc: 'Rounded, tinted, elevation', radius: '12px', shadow: '0 2px 6px rgba(0,0,0,0.15)'},
   {id: 'alivated',  label: 'Alivated',  desc: 'Soft, warm, neumorphic',      radius: '16px', shadow: '4px 4px 12px rgba(0,0,0,0.15), -4px -4px 12px rgba(255,255,255,0.04)'},
   {id: 'neon',      label: 'Neon',      desc: 'Cyberpunk, glowing borders',  radius: '4px',  shadow: '0 0 8px var(--accent)'},
+  {id: 'claude',    label: 'Claude Code', desc: 'Clean, warm, Anthropic-inspired', radius: '10px', shadow: '0 2px 8px rgba(0,0,0,0.1)'},
 ];
 
 const STYLE_THEME_DEFAULTS: Record<string, string> = {
@@ -50,6 +51,7 @@ const STYLE_THEME_DEFAULTS: Record<string, string> = {
   'material': 'midnight',
   'alivated': 'warm-light',
   'neon':     'neon',
+  'claude':   'claude-dark',
 };
 
 const EDIT_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
@@ -306,7 +308,7 @@ export class SettingsModal {
     panel.style.cssText =
       'display:none;position:absolute;top:100%;left:0;right:0;z-index:100;max-height:320px;overflow-y:auto;' +
       'margin-top:2px;border:1px solid var(--border);border-radius:6px;' +
-      'background:var(--surface);box-shadow:0 8px 24px rgba(0,0,0,0.3);';
+      'background:var(--surface);box-shadow:var(--ui-shadow-md);';
 
     let currentIndex = 0;
     const changeCallbacks: Array<() => void> = [];

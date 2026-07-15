@@ -102,7 +102,7 @@ export class HistoryPanel {
     const html = filtered.map((e) => {
       const shortInput = e.input.length > 40 ? e.input.slice(0, 40) + '...' : e.input;
       return `
-        <div data-history-input="${escapeHtml(e.input)}" class="history-item" tabindex="-1" style="padding:6px 8px;border-radius:6px;cursor:pointer;margin-bottom:2px;">
+        <div data-history-input="${escapeHtml(e.input)}" class="history-item" tabindex="-1" style="padding:6px 8px;border-radius:var(--ui-radius-sm);cursor:pointer;margin-bottom:2px;">
           <div style="font-size:12px;color:var(--text);white-space:pre;overflow:hidden;text-overflow:ellipsis;font-family:monospace">${escapeHtml(shortInput)}</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:pre">${escapeHtml(e.output)}</div>
         </div>`;

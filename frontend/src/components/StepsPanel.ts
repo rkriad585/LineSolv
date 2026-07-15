@@ -76,7 +76,7 @@ export class StepsPanel {
       const isParse = !['naturalize', 'convert', 'percent', 'date-math', 'age'].includes(s.operation);
       const exprStyle = 'font-size:12px;font-family:monospace;white-space:pre;overflow:hidden;text-overflow:ellipsis;' + extra;
       return `
-        <div class="step-item" style="padding:5px 8px;border-radius:6px;margin-bottom:3px;${isParse ? 'border-left:2px solid var(--accent);' : ''}">
+        <div class="step-item" style="padding:5px 8px;border-radius:var(--ui-radius-sm);margin-bottom:3px;${isParse ? 'border-left:2px solid var(--accent);' : ''}">
           <div style="font-size:10px;color:var(--text-subtle);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">${escapeHtml(label)}</div>
           <div style="${exprStyle}">${escapeHtml(s.expression)}</div>
           <div style="font-size:11px;color:var(--accent);margin-top:1px;font-family:monospace;">= ${escapeHtml(s.result)}</div>

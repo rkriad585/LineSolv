@@ -45,17 +45,17 @@ func exportLV(note Note) string {
 func exportTXT(note Note) string {
 	dt := time.UnixMilli(note.CreatedAt).Format("2006-01-02 15:04:05")
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("Title: %s\n", note.Name))
-	buf.WriteString(fmt.Sprintf("Created: %s\n", dt))
-	buf.WriteString(fmt.Sprintf("---\n%s\n", note.Content))
+	fmt.Fprintf(&buf, "Title: %s\n", note.Name)
+	fmt.Fprintf(&buf, "Created: %s\n", dt)
+	fmt.Fprintf(&buf, "---\n%s\n", note.Content)
 	return buf.String()
 }
 
 func exportMD(note Note) string {
 	dt := time.UnixMilli(note.CreatedAt).Format("2006-01-02 15:04:05")
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("# %s\n\n", note.Name))
-	buf.WriteString(fmt.Sprintf("*Created: %s*\n\n", dt))
+	fmt.Fprintf(&buf, "# %s\n\n", note.Name)
+	fmt.Fprintf(&buf, "*Created: %s*\n\n", dt)
 	buf.WriteString("---\n\n")
 	buf.WriteString(note.Content)
 	buf.WriteString("\n")
@@ -79,11 +79,11 @@ func exportTOML(note Note) string {
 	ut := time.UnixMilli(note.UpdatedAt).Format("2006-01-02T15:04:05-07:00")
 	var buf strings.Builder
 	buf.WriteString("[note]\n")
-	buf.WriteString(fmt.Sprintf("id = %q\n", note.ID))
-	buf.WriteString(fmt.Sprintf("name = %q\n", note.Name))
-	buf.WriteString(fmt.Sprintf("created_at = %q\n", dt))
-	buf.WriteString(fmt.Sprintf("updated_at = %q\n", ut))
-	buf.WriteString(fmt.Sprintf("content = %q\n", note.Content))
+	fmt.Fprintf(&buf, "id = %q\n", note.ID)
+	fmt.Fprintf(&buf, "name = %q\n", note.Name)
+	fmt.Fprintf(&buf, "created_at = %q\n", dt)
+	fmt.Fprintf(&buf, "updated_at = %q\n", ut)
+	fmt.Fprintf(&buf, "content = %q\n", note.Content)
 	return buf.String()
 }
 

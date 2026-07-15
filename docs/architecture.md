@@ -241,7 +241,7 @@ All 15 components are class-based, using imperative DOM manipulation (no framewo
 
 - **ShortcutModal** — Keyboard shortcut reference overlay. Shows table of all shortcuts with key bindings and descriptions. Triggered by `Ctrl/Cmd+/`. Closes on Escape or backdrop click.
 
-- **SettingsModal** — 5-tab settings panel: General (font family, font size, opacity slider, line numbers toggle, autocomplete toggle, animations toggle, toast toggle, result panel toggle, line wrap toggle with live preview), Theme (15 built-in + plugin themes with color swatch thumbnails), UI Style (6 styles: Default, Nothing, Glass, Material, Alivated, Neon), Keyboard Shortcuts (view and rebind all shortcuts), About (version info, author, repo links, check for updates). Settings auto-save on every change with 50ms debounce and apply immediately (real-time).
+- **SettingsModal** — 5-tab settings panel: General (font family, font size, opacity slider, line numbers toggle, autocomplete toggle, animations toggle, toast toggle, result panel toggle, line wrap toggle with live preview), Theme (17 built-in + plugin themes with color swatch thumbnails), UI Style (7 styles: Default, Nothing, Glass, Material, Alivated, Neon, Claude), Keyboard Shortcuts (view and rebind all shortcuts), About (version info, author, repo links, check for updates). Settings auto-save on every change with 50ms debounce and apply immediately (real-time).
 
 - **DocsViewer** — Full-screen documentation viewer with sidebar tab navigation. Left sidebar lists all embedded docs. Content area renders markdown via a built-in inline renderer (headers, tables, code blocks, links, lists, blockquotes, horizontal rules). Async loading from Go backend. In-memory cache for instant re-opening. All docs embedded in the Go binary (offline). User Guide opens by default. Logo header with LineSolv SVG.
 
@@ -264,7 +264,9 @@ Theme is driven by CSS custom properties defined per-theme in `style.css`. The `
 | `--note-bg` / `--note-hover` / `--note-text` | Note item colors |
 | `--calc-font-size` / `--calc-font-family` / `--calc-font-color` | Calculator font |
 
-**15 built-in themes**: dark, light, neon, red, obsidian, plasma, blood, midnight, aurora, mono, frost, prism, lavender, sage, warm-light. Plugin themes are injected as CSS custom properties at runtime, making them selectable in the Settings modal alongside built-in themes. The active theme is set by adding a `theme-{name}` class to `<html>`.
+**17 built-in themes**: dark, light, neon, red, obsidian, plasma, blood, midnight, aurora, mono, frost, prism, lavender, sage, warm-light, claude-dark, claude-light. Plugin themes are injected as CSS custom properties at runtime, making them selectable in the Settings modal alongside built-in themes. The active theme is set by adding a `theme-{name}` class to `<html>`.
+
+All 26 previously hardcoded values (border-radius, box-shadow, font-family) across 11 component files have been replaced with CSS custom properties (`var(--ui-radius-*)`, `var(--ui-shadow-*)`, `var(--ui-font-display)`), ensuring consistent styling across all UI styles. Style-specific CSS rules override components for individual UI styles: toast notifications (`.toast-item`), plugin panel (`#plugin-viewer`, `.plugin-card`), confirm dialog (`#confirm-dialog`), and toggle switches (`.toggle-track`, `.toggle-thumb`).
 
 No Tailwind `dark:` variants are used — all theming is CSS custom properties.
 

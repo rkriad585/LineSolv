@@ -40,7 +40,7 @@ export class AutocompletePopup {
     this.el.style.cssText = `
       display:none;position:fixed;z-index:9999;
       background:var(--surface-secondary);border:1px solid var(--border);
-      border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.4);
+      border-radius:var(--ui-radius-md);box-shadow:var(--ui-shadow-md);
       overflow:hidden;min-width:260px;max-width:420px;
     `;
 

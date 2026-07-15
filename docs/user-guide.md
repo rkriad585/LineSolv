@@ -1043,7 +1043,7 @@ Any valid expression can be plotted, including:
 
 ## 11. Settings
 
-Open Settings with `Ctrl/Cmd + `` or the gear icon in the `...` dropdown menu in the title bar. Settings has five tabs:
+Open Settings with `Ctrl/Cmd + `` or the gear icon in the `...` dropdown menu in the title bar. Settings has six tabs:
 
 ### General Tab
 
@@ -1062,7 +1062,7 @@ Open Settings with `Ctrl/Cmd + `` or the gear icon in the `...` dropdown menu in
 
 ### Theme Tab
 
-Select from 15 built-in themes plus any plugin-provided themes:
+Select from 17 built-in themes plus any plugin-provided themes:
 
 | Theme | Background | Accent | Text |
 |-------|-----------|--------|------|
@@ -1073,10 +1073,28 @@ Select from 15 built-in themes plus any plugin-provided themes:
 | **Obsidian** | `#0d0d0d` | `#d4a043` (gold) | `#d4c5a9` |
 | **Plasma** | `#0d0d1a` | `#bb86fc` (lavender) | `#e0dff0` |
 | **Blood** | `#0a0505` | `#b71c1c` (crimson) | `#e8d0d0` |
+| **Claude Dark** | `#1a1614` | `#c4713b` (terracotta) | `#e8ddd0` |
+| **Claude Light** | `#faf6f1` | `#c4713b` (terracotta) | `#2d2520` |
 
 Plugin themes appear below the built-in themes, labeled with a "Plugin" badge.
 
 Each theme card shows a color swatch with "Aa" in the accent color and "123" in the text color. Click a card to select it; theme changes apply instantly (no Save button).
+
+### UI Style Tab
+
+Select from 7 built-in UI styles that control the overall visual language of the interface:
+
+| Style | Description |
+|-------|-------------|
+| **Default** | Clean, modern baseline with subtle borders and standard spacing |
+| **Nothing** | Minimal, monochrome aesthetic inspired by Nothing OS — dot-matrix accents, stark contrast |
+| **Liquid Glass** | Frosted-glass translucency with layered blur effects and soft gradients |
+| **Material 3** | Google's Material Design 3 — rounded containers, tonal surfaces, dynamic color |
+| **Alivated** | Warm, elevation-focused design with depth shadows and soft rounded corners |
+| **Neon** | Cyberpunk-inspired — glowing borders, saturated accent pops, dark depth |
+| **Claude Code** | Anthropic's warm editorial design — terracotta accent, parchment/charcoal surfaces, ring-shadow depth |
+
+Click a style card to apply it. Style changes apply instantly alongside the current theme.
 
 ### Keyboard Shortcuts Tab
 
@@ -1112,7 +1130,11 @@ Shows:
 
 ### Theme
 
-Switch themes in **Settings > Theme**. The theme change applies instantly across the entire app via CSS custom properties. All 15 built-in themes and any plugin themes are available.
+Switch themes in **Settings > Theme**. The theme change applies instantly across the entire app via CSS custom properties. All 17 built-in themes and any plugin themes are available.
+
+### UI Style
+
+Switch UI styles in **Settings > UI Style**. The 7 built-in styles — Default, Nothing, Liquid Glass, Material 3, Alivated, Neon, and Claude Code — each redefine the visual language of buttons, panels, inputs, and surfaces. Style changes apply instantly alongside the current theme.
 
 ### Font
 

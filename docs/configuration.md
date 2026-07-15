@@ -53,7 +53,7 @@ Controls application-level preferences.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `theme` | string | `"dark"` | Active theme. Options: `dark`, `light`, `neon`, `red`, `obsidian`, `plasma`, `blood`, `midnight`, `aurora`, `mono`, `frost`, `prism`, `lavender`, `sage`, `warm-light`. Plugins may add more. |
+| `theme` | string | `"dark"` | Active theme. Options: `dark`, `light`, `neon`, `red`, `obsidian`, `plasma`, `blood`, `midnight`, `aurora`, `mono`, `frost`, `prism`, `lavender`, `sage`, `warm-light`, `claude-dark`, `claude-light`. Plugins may add more. |
 | `version` | string | — | Last-run LineSolv version. Managed automatically. |
 
 ### `[notes]`
@@ -89,7 +89,7 @@ Controls display and input preferences.
 | `autocomplete_enabled` | string | `"true"` | Enable variable/function autocomplete suggestions. |
 | `animations_enabled` | string | `"true"` | Enable UI animations (transitions, toast slide-ins). |
 | `toast_enabled` | string | `"true"` | Show toast notifications for actions and errors. |
-| `ui_style` | string | `"default"` | UI style. Options: `default`, `nothing`, `glass`, `material`, `alivated`, `neon`. |
+| `ui_style` | string | `"default"` | UI style. Options: `default`, `nothing`, `glass`, `material`, `alivated`, `neon`, `claude`. |
 | `theme_manually_set` | string | `"false"` | Whether the user manually selected a theme (vs. auto-selected by UI style). |
 
 ## Data Directory

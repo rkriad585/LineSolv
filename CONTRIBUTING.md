@@ -10,7 +10,7 @@ Contributions are welcome! Here's how you can help.
 | **Node.js** | 20+ | Required for frontend |
 | **npm** | 10+ | Required for frontend |
 | **Wails CLI** | v2.12.0+ | `go install github.com/wailsapp/wails/v2/cmd/wails@latest` |
-| **golangci-lint** | Latest | `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest` |
+| **golangci-lint** | v2+ | `go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest` |
 
 **Linux-only system dependencies:**
 
@@ -69,7 +69,7 @@ cd frontend && npm run lint
 cd frontend && npm run typecheck
 ```
 
-- **Go**: `gofmt` conventions enforced by golangci-lint
+- **Go**: `gofmt` conventions enforced by golangci-lint v2; the linter config excludes `govet` for `frontend/node_modules/`
 - **TypeScript**: strict mode (`noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`)
 - **CSS**: Tailwind v4 utility classes; prefer CSS custom properties for theme values
 

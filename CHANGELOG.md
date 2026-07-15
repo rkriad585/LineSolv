@@ -9,10 +9,22 @@
 - **`Ctrl+J` keyboard shortcut** — toggles the Documentation panel.
 - **`Ctrl+`` (backtick) keyboard shortcut** — toggles the Settings panel (additional shortcut alongside `Ctrl+,`).
 - **Context Menu Active Note Indicator** — the main app context menu's "Switch Note" submenu now shows a checkmark icon next to the currently active note, matching the Docs/Plugins context menus.
+- **Claude Code UI Style** — 7th UI style based on Anthropic's design language with ring-shadow depth, terracotta (#c96442) accent, warm editorial feel, Inter font, and 6/8/12px radii. Includes two new themes: `claude-dark` (#141413 warm charcoal) and `claude-light` (#f5f4ed parchment).
 
 ### Changed
 - **Title Bar Menu Consolidation** — Documentation, Print, Plugins, and Settings buttons are now grouped into a single "..." (vertical ellipsis) menu button in the title bar. Clicking it opens a dropdown with all four items plus their shortcut labels. The title bar now shows: New Note, Notes, Variables, History, Steps, and the "..." menu.
 - **Panel Cross-Closing** — switching between Notes, Docs, and Plugins now automatically closes the other panel. Opening Docs closes the Notes panel, and switching notes closes Docs/Plugins. This also applies when using the context menu to switch notes.
+- **UI Style Authenticity Overhaul** — All 6 existing UI styles completely rewritten to match their real-world design systems:
+  - **Nothing OS**: real color overrides (#000 OLED black, #D71921 Nothing Red accent), 16dp card radii, fixed easing curve, dot-grid background pattern, ALL CAPS mono labels on segmented controls, full light/dark palettes
+  - **Liquid Glass**: `saturate(150%)` on all blur elements, boosted specular highlights (0.08→0.18 opacity), inset box-shadow edge lighting, increased translucent bg (0.06→0.12), SF Pro font fallback chain, letter-spacing on headings
+  - **Material 3**: full M3 color tokens (20+ roles for dark + light), tonal elevation replacing shadow paradigm (5% primary tint overlay), fixed FAB (40→56dp, 12→16dp radius, primary-container color), fixed chips (32dp height, secondary-container color), state layers (8%/10% hover/press)
+  - **Alivated (Neumorphism)**: mid-tone neumorphic surface colors (#2d3239 dark / #e0e5ec light), shadow colors derived from background, fixed light mode inverted shadows, fixed pressed state
+  - **Neon (Cyberpunk)**: 5-layer bloom glow with white hot-core, fixed scanlines (multiply blend, 15% opacity), text-shadow glow, clip-path cut-corners on panels, subtle grid background, uppercase labels
+- **CSS Variable Consistency** — replaced 26 hardcoded `border-radius`, `box-shadow`, and `font-family` values across 11 component files with CSS custom properties (`--ui-radius-*`, `--ui-shadow-*`, `--ui-font-display`) to ensure all UI styles apply correctly.
+- **Style-Specific Component Rules** — added CSS rules for toast notifications, plugin panel cards, confirm dialog, and toggle switches for all 7 UI styles.
+
+### Fixed
+- **Golangci-lint compliance** — replaced `WriteString(fmt.Sprintf(...))` with `fmt.Fprintf(...)` in `config.go` and `exporter.go`, added error handling in `FlushPendingSave`.
 
 ## [0.14.1] — 2026-07-15
 
