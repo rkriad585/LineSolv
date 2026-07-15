@@ -29,7 +29,7 @@ const evalTimeout = 5 * time.Second
 var (
 	globalCtx  context.Context
 	ctxMu      sync.Mutex
-	appVersion = "0.13.0"
+	appVersion = "0.15.0"
 	versionMu  sync.RWMutex
 )
 
