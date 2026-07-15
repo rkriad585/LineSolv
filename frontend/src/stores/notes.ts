@@ -20,7 +20,7 @@ export class NotesManager {
   }
 
   getNotes(): Note[] {
-    return this.notes;
+    return [...this.notes];
   }
 
   getActiveId(): string {

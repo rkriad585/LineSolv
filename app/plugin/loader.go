@@ -8,10 +8,12 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 )
 
 // Manager handles plugin loading, validation, and lifecycle.
 type Manager struct {
+	mu         sync.RWMutex
 	pluginsDir string
 	plugins    map[string]*Plugin
 }
@@ -26,6 +28,14 @@ func NewManager(pluginsDir string) *Manager {
 
 // Scan discovers and loads all plugins from the plugins directory.
 func (m *Manager) Scan() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.scanUnlocked()
+}
+
+// scanUnlocked is the internal implementation of Scan without locking.
+// Caller must hold m.mu.
+func (m *Manager) scanUnlocked() error {
 	if err := os.MkdirAll(m.pluginsDir, 0755); err != nil {
 		return fmt.Errorf("failed to create plugins directory: %w", err)
 	}
@@ -60,7 +70,7 @@ func (m *Manager) Scan() error {
 		m.plugins[entry.Name()] = plugin
 	}
 
-	m.loadState()
+	m.loadStateUnlocked()
 
 	return nil
 }
@@ -169,12 +179,16 @@ func validateManifest(m *Manifest) error {
 
 // Get returns a plugin by name.
 func (m *Manager) Get(name string) (*Plugin, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	p, ok := m.plugins[name]
 	return p, ok
 }
 
 // All returns all loaded plugins sorted by name.
 func (m *Manager) All() []*Plugin {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	var result []*Plugin
 	for _, p := range m.plugins {
 		result = append(result, p)
@@ -194,6 +208,8 @@ func (m *Manager) All() []*Plugin {
 
 // Enabled returns only enabled plugins.
 func (m *Manager) Enabled() []*Plugin {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	var result []*Plugin
 	for _, p := range m.plugins {
 		if p.Enabled && p.Error == "" {
@@ -205,18 +221,22 @@ func (m *Manager) Enabled() []*Plugin {
 
 // SetEnabled enables or disables a plugin and persists the state.
 func (m *Manager) SetEnabled(name string, enabled bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	p, ok := m.plugins[name]
 	if !ok {
 		return fmt.Errorf("plugin not found: %s", name)
 	}
 	p.Enabled = enabled
-	m.saveState()
+	m.saveStateUnlocked()
 	return nil
 }
 
 // Reload rescans the plugins directory.
 func (m *Manager) Reload() error {
-	return m.Scan()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.scanUnlocked()
 }
 
 // GetPluginsDir returns the plugins directory path.
@@ -230,7 +250,7 @@ func (m *Manager) stateFile() string {
 }
 
 // loadState reads persisted enabled/disabled state from state.json.
-func (m *Manager) loadState() {
+func (m *Manager) loadStateUnlocked() {
 	data, err := os.ReadFile(m.stateFile())
 	if err != nil {
 		return
@@ -247,7 +267,7 @@ func (m *Manager) loadState() {
 }
 
 // saveState writes current enabled/disabled state to state.json.
-func (m *Manager) saveState() {
+func (m *Manager) saveStateUnlocked() {
 	state := make(map[string]bool)
 	for name, p := range m.plugins {
 		state[name] = p.Enabled

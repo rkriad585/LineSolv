@@ -25,17 +25,42 @@ import {escapeHtml} from './utils/html';
 import {toast, Toast} from './utils/toast';
 import * as serviceBindings from '../wailsjs/go/service/AppService';
 
-const BUILTIN_THEMES = ['dark', 'light', 'neon', 'red', 'obsidian', 'plasma', 'blood'];
+const BUILTIN_THEMES = ['dark', 'light', 'neon', 'red', 'obsidian', 'plasma', 'blood', 'midnight', 'aurora', 'mono', 'frost', 'prism', 'lavender', 'sage', 'warm-light'];
 let pluginThemeStyle: HTMLStyleElement | null = null;
 let pluginThemeIds: string[] = [];
 
+const STYLES = [
+  {id: 'default',   label: 'Default',   desc: 'Flat, clean, minimal'},
+  {id: 'nothing',   label: 'Nothing',   desc: 'Monochrome, industrial, Swiss'},
+  {id: 'glass',     label: 'Liquid Glass', desc: 'Frosted glass, translucent'},
+  {id: 'material',  label: 'Material 3', desc: 'Rounded, tinted, elevation'},
+  {id: 'alivated',  label: 'Alivated',  desc: 'Soft, warm, neumorphic'},
+  {id: 'neon',      label: 'Neon',      desc: 'Cyberpunk, glowing borders'},
+];
+
+let currentStyle = 'default';
+
+function applyUiStyle(style: string): void {
+  const valid = STYLES.some(s => s.id === style);
+  currentStyle = valid ? style : 'default';
+  document.documentElement.classList.remove(
+    'style-default', 'style-nothing', 'style-glass',
+    'style-material', 'style-alivated', 'style-neon',
+  );
+  document.documentElement.classList.add('style-' + currentStyle);
+}
+
 function applyTheme(theme: string): void {
-  if (BUILTIN_THEMES.includes(theme)) {
-    document.documentElement.className = 'theme-' + theme;
-  } else if (pluginThemeIds.includes(theme)) {
-    document.documentElement.className = 'theme-' + theme;
+  const allThemes = [...BUILTIN_THEMES, ...pluginThemeIds];
+  // Remove any existing theme-* classes
+  const classes = Array.from(document.documentElement.classList);
+  for (const cls of classes) {
+    if (cls.startsWith('theme-')) document.documentElement.classList.remove(cls);
+  }
+  if (allThemes.includes(theme)) {
+    document.documentElement.classList.add('theme-' + theme);
   } else {
-    document.documentElement.className = 'theme-dark';
+    document.documentElement.classList.add('theme-dark');
   }
 }
 
@@ -81,11 +106,19 @@ const THEME_ORIGINS: Record<string, Record<string, string>> = {
   obsidian: { '--surface': '#0d0d0d', '--surface-secondary': '#1a1a14', '--note-bg': '#1a1a14' },
   plasma: { '--surface': '#0d0d1a', '--surface-secondary': '#15152a', '--note-bg': '#15152a' },
   blood:  { '--surface': '#0a0505', '--surface-secondary': '#1a0808', '--note-bg': '#1a0808' },
+  midnight: { '--surface': '#0f172a', '--surface-secondary': '#1e293b', '--note-bg': '#1e293b' },
+  aurora: { '--surface': '#0c0a1a', '--surface-secondary': '#161230', '--note-bg': '#161230' },
+  mono:   { '--surface': '#000000', '--surface-secondary': '#0a0a0a', '--note-bg': '#0a0a0a' },
+  frost:  { '--surface': '#0a1628', '--surface-secondary': '#132038', '--note-bg': '#132038' },
+  prism:  { '--surface': '#1a0a28', '--surface-secondary': '#241438', '--note-bg': '#241438' },
+  lavender: { '--surface': '#1a1528', '--surface-secondary': '#241e38', '--note-bg': '#241e38' },
+  sage:   { '--surface': '#0f1a14', '--surface-secondary': '#182820', '--note-bg': '#182820' },
+  'warm-light': { '--surface': '#1a1510', '--surface-secondary': '#282018', '--note-bg': '#282018' },
 };
 
 function applySurfaceOpacity(opacity: number): void {
   const root = document.documentElement;
-  const themeClass = root.className.replace('theme-', '') || 'dark';
+  const themeClass = Array.from(root.classList).find(c => c.startsWith('theme-'))?.replace('theme-', '') || 'dark';
   const origins = THEME_ORIGINS[themeClass];
 
   // Get the base RGB for the body background
@@ -111,6 +144,7 @@ function applySurfaceOpacity(opacity: number): void {
 
 function applySettingsState(s: {
   theme: string;
+  ui_style: string;
   font_size: string;
   font_family: string;
   opacity: number;
@@ -119,6 +153,7 @@ function applySettingsState(s: {
   line_numbers_enabled: boolean;
 }): void {
   applyTheme(s.theme || 'dark');
+  applyUiStyle(s.ui_style || 'default');
   const size = s.font_size || '16';
   document.documentElement.style.setProperty('--calc-font-size', size + 'px');
   document.documentElement.style.setProperty('--calc-font-family', s.font_family || 'monospace');
@@ -158,7 +193,7 @@ export function renderApp(root: HTMLElement): void {
         if (noteId === notesMgr.getActiveId()) {
           notesPanel.setDirty(noteId, false);
         }
-      } catch { /* ignore */ }
+      } catch (e) { console.error('Note save failed:', e); }
     }, 500);
   }
 
@@ -192,6 +227,7 @@ export function renderApp(root: HTMLElement): void {
 
     // Defer loading state — only show if eval takes > 60ms (avoids "..." flicker for fast evals)
     const visualInfo = input.getLineVisualInfo();
+    if (loadingTimeout) { clearTimeout(loadingTimeout); loadingTimeout = null; }
     loadingTimeout = window.setTimeout(() => {
       if (version !== evalVersion) return;
       store.setEvalState('loading');
@@ -320,6 +356,15 @@ export function renderApp(root: HTMLElement): void {
     // Try to persist via backend so it survives restart
     (async () => {
       try {
+        // Check if backend already has notes before creating
+        const existing = await serviceBindings.GetAllNotes();
+        if (existing && existing.length > 0) {
+          notesMgr.load(existing, existing[0].id);
+          input.text = existing[0].content || '';
+          lastSavedContent = input.text;
+          refreshNotesUI();
+          return;
+        }
         const note = await serviceBindings.CreateNote();
         await serviceBindings.SaveNoteContent(note.id, WELCOME_CONTENT);
         note.content = WELCOME_CONTENT;
@@ -485,6 +530,7 @@ export function renderApp(root: HTMLElement): void {
       } else if (input.text.trim()) {
         input.text = '';
         if (notesMgr.activeNote()) notesMgr.activeNote().content = '';
+        lastSavedContent = '';
         forceEval();
       } else if (notesPanel.isOpen()) {
         notesPanel.close();
@@ -635,6 +681,16 @@ export function renderApp(root: HTMLElement): void {
   // --- Callbacks for components ---
 
   const switchNote = (id: string) => {
+    // Flush pending save for old note before switching
+    if (saveContentTimer) {
+      clearTimeout(saveContentTimer);
+      saveContentTimer = null;
+      const oldNote = notesMgr.activeNote();
+      if (oldNote && lastSavedContent !== input.text) {
+        serviceBindings.SaveNoteContent(oldNote.id, input.text).catch(() => {});
+        lastSavedContent = input.text;
+      }
+    }
     if (!notesMgr.switchNote(id)) return;
     const content = notesMgr.activeNote().content;
     input.text = content;

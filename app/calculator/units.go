@@ -183,6 +183,10 @@ func convertUnit(val float64, from, to string) string {
 	}
 	if f == "c" || f == "celsius" || t == "c" || t == "celsius" ||
 		f == "f" || f == "fahrenheit" || t == "f" || t == "fahrenheit" {
+		// Same unit — return unchanged
+		if f == t {
+			return fmt.Sprintf("%g %s", val, from)
+		}
 		if f == "c" || f == "celsius" {
 			if t == "f" || t == "fahrenheit" {
 				return fmt.Sprintf("%.1f \u00b0F", val*9/5+32)

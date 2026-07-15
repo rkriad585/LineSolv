@@ -52,6 +52,8 @@ func parseGraphInput(input string) (expr string, from, to float64, ok bool) {
 
 // EvaluateGraph evaluates a graph expression (e.g. "plot x^2") and returns points.
 func (e *Engine) EvaluateGraph(input string) *GraphResult {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	expr, from, to, ok := parseGraphInput(input)
 	if !ok {
 		return nil

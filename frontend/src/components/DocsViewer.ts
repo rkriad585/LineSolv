@@ -123,8 +123,14 @@ function inlineMd(s: string): string {
   // italic
   r = r.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
-  // links [text](url)
-  r = r.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // links [text](url) — only allow http/https protocols
+  r = r.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text: string, url: string) => {
+    const trimmed = url.trim();
+    if (/^https?:\/\//i.test(trimmed)) {
+      return `<a href="${trimmed}" target="_blank" rel="noopener">${text}</a>`;
+    }
+    return `[${text}](${url})`;
+  });
 
   return r;
 }

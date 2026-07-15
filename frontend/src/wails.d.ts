@@ -14,3 +14,7 @@ interface Window {
 interface ThemeCardElement extends HTMLDivElement {
   themeId?: string;
 }
+
+interface StyleCardElement extends HTMLDivElement {
+  styleId?: string;
+}

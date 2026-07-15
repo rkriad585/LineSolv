@@ -3,6 +3,7 @@ import * as serviceBindings from '../../wailsjs/go/service/AppService';
 
 export interface SettingsState {
   theme: string;
+  ui_style: string;
   font_size: string;
   font_family: string;
   shortcut_overrides: string;
@@ -17,6 +18,7 @@ type SettingsListener = (state: SettingsState) => void;
 
 const DEFAULTS: SettingsState = {
   theme: 'dark',
+  ui_style: 'default',
   font_size: '16',
   font_family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   shortcut_overrides: '{}',
@@ -41,6 +43,7 @@ function toFloat(v: string | undefined, def: number): number {
 function fromStore(s: SettingsState): SettingsData {
   return {
     theme: s.theme,
+    ui_style: s.ui_style,
     font_size: s.font_size,
     font_family: s.font_family,
     shortcut_overrides: s.shortcut_overrides,
@@ -55,6 +58,7 @@ function fromStore(s: SettingsState): SettingsData {
 function toStore(d: SettingsData): SettingsState {
   return {
     theme: d.theme || DEFAULTS.theme,
+    ui_style: d.ui_style || DEFAULTS.ui_style,
     font_size: d.font_size || DEFAULTS.font_size,
     font_family: d.font_family || DEFAULTS.font_family,
     shortcut_overrides: d.shortcut_overrides || DEFAULTS.shortcut_overrides,
@@ -98,7 +102,7 @@ export class SettingsStore {
   }
 
   update(partial: Partial<SettingsState>): void {
-    Object.assign(this.state, partial);
+    this.state = { ...this.state, ...partial };
     this.notify();
   }
 

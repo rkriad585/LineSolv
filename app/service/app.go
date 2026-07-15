@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -26,8 +27,10 @@ import (
 const evalTimeout = 5 * time.Second
 
 var (
-	globalCtx context.Context
-	ctxMu     sync.Mutex
+	globalCtx  context.Context
+	ctxMu      sync.Mutex
+	appVersion = "0.13.0"
+	versionMu  sync.RWMutex
 )
 
 func SetAppContext(ctx context.Context) {
@@ -52,6 +55,7 @@ type AutocompleteItem struct {
 type AppService struct {
 	engine       *calculator.Engine
 	storage      *storage.DB
+	mu           sync.RWMutex
 	docsContent  map[string]string
 	pluginMgr    *plugin.Manager
 	pluginThemes []plugin.ThemeDef
@@ -79,10 +83,14 @@ func (s *AppService) InitPlugins(pluginsDir string) {
 }
 
 func (s *AppService) SetDocs(docs map[string]string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.docsContent = docs
 }
 
 func (s *AppService) GetDocList() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	names := make([]string, 0, len(s.docsContent))
 	for name := range s.docsContent {
 		names = append(names, name)
@@ -92,6 +100,8 @@ func (s *AppService) GetDocList() []string {
 }
 
 func (s *AppService) GetDocContent(name string) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.docsContent[name]
 }
 
@@ -376,11 +386,11 @@ func (s *AppService) importPDF(filePath, name string) (*storage.Note, error) {
 	return s.storage.CreateNoteWithContent(name, content)
 }
 
-var appVersion = "0.13.0"
-
 // SetVersion sets the application version (called from main.go with ldflags value).
 func SetVersion(v string) {
 	if v != "" && v != "dev" {
+		versionMu.Lock()
+		defer versionMu.Unlock()
 		appVersion = strings.TrimPrefix(v, "v")
 	}
 }
@@ -404,7 +414,8 @@ func (s *AppService) GetCurrencyCacheInfo() *CurrencyCacheInfo {
 }
 
 func (s *AppService) UpdateCurrencyRates() (*CurrencyCacheInfo, error) {
-	resp, err := http.Get("https://api.exchangerate-api.com/v4/latest/USD")
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get("https://api.exchangerate-api.com/v4/latest/USD")
 	if err != nil {
 		cached, cerr := s.storage.GetCachedCurrencyRates()
 		if cerr == nil && cached != nil {
@@ -418,7 +429,7 @@ func (s *AppService) UpdateCurrencyRates() (*CurrencyCacheInfo, error) {
 	var result struct {
 		Rates map[string]float64 `json:"rates"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&result); err != nil {
 		return nil, err
 	}
 
@@ -439,6 +450,7 @@ type SettingsData struct {
 	ToastEnabled        string `json:"toast_enabled"`
 	Opacity             string `json:"opacity"`
 	LineNumbersEnabled  string `json:"line_numbers_enabled"`
+	UIStyle             string `json:"ui_style"`
 }
 
 type UpdateInfo struct {
@@ -463,6 +475,7 @@ func (s *AppService) GetSettings() (*SettingsData, error) {
 		ToastEnabled:        cfg.Settings.ToastEnabled,
 		Opacity:             cfg.Settings.Opacity,
 		LineNumbersEnabled:  cfg.Settings.LineNumbersEnabled,
+		UIStyle:             cfg.Settings.UIStyle,
 	}, nil
 }
 
@@ -480,30 +493,37 @@ func (s *AppService) SaveSettings(settings *SettingsData) error {
 	cfg.Settings.ToastEnabled = settings.ToastEnabled
 	cfg.Settings.Opacity = settings.Opacity
 	cfg.Settings.LineNumbersEnabled = settings.LineNumbersEnabled
+	cfg.Settings.UIStyle = settings.UIStyle
 	return storage.SaveConfig(cfg)
 }
 
 func (s *AppService) GetAppVersion() string {
+	versionMu.RLock()
+	defer versionMu.RUnlock()
 	return appVersion
 }
 
 func (s *AppService) CheckForUpdate() (*UpdateInfo, error) {
+	versionMu.RLock()
+	currentVersion := appVersion
+	versionMu.RUnlock()
+
 	latest, found, err := selfupdate.DetectLatest("rkriad585/LineSolv")
 	if err != nil {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, fmt.Errorf("failed to check for updates: %w", err)
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("failed to check for updates: %w", err)
 	}
 	if !found {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, nil
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, nil
 	}
 
-	current, err := semver.Make(appVersion)
+	current, err := semver.Make(currentVersion)
 	if err != nil {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, fmt.Errorf("invalid current version: %w", err)
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("invalid current version: %w", err)
 	}
 
 	return &UpdateInfo{
 		UpdateAvailable: latest.Version.GT(current),
-		CurrentVersion:  appVersion,
+		CurrentVersion:  currentVersion,
 		LatestVersion:   latest.Version.String(),
 		DownloadURL:     "https://github.com/rkriad585/LineSolv/releases/latest",
 	}, nil
@@ -512,6 +532,10 @@ func (s *AppService) CheckForUpdate() (*UpdateInfo, error) {
 func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 	ctx := getCtx()
 
+	versionMu.RLock()
+	currentVersion := appVersion
+	versionMu.RUnlock()
+
 	wailsruntime.EventsEmit(ctx, "update-progress", map[string]interface{}{
 		"status":  "checking",
 		"message": "Checking for updates...",
@@ -519,21 +543,21 @@ func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 
 	latest, found, err := selfupdate.DetectLatest("rkriad585/LineSolv")
 	if err != nil {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, fmt.Errorf("failed to check for updates: %w", err)
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("failed to check for updates: %w", err)
 	}
 	if !found {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, nil
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, nil
 	}
 
-	current, err := semver.Make(appVersion)
+	current, err := semver.Make(currentVersion)
 	if err != nil {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: appVersion}, fmt.Errorf("invalid current version: %w", err)
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("invalid current version: %w", err)
 	}
 
 	if !latest.Version.GT(current) {
 		return &UpdateInfo{
 			UpdateAvailable: false,
-			CurrentVersion:  appVersion,
+			CurrentVersion:  currentVersion,
 			LatestVersion:   latest.Version.String(),
 		}, nil
 	}
@@ -552,9 +576,15 @@ func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 		return nil, fmt.Errorf("failed to resolve executable path: %w", err)
 	}
 
-	tmpFile := filepath.Join(os.TempDir(), "linesolv_update"+filepath.Ext(exePath))
-	if err := selfupdate.UpdateTo(latest.AssetURL, tmpFile); err != nil {
-		os.Remove(tmpFile)
+	tmpFile, err := os.CreateTemp("", "linesolv_update_*"+filepath.Ext(exePath))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpFile.Close()
+	os.Remove(tmpFile.Name()) // CreateTemp creates the file; selfupdate.UpdateTo will recreate it
+
+	if err := selfupdate.UpdateTo(latest.AssetURL, tmpFile.Name()); err != nil {
+		os.Remove(tmpFile.Name())
 		return nil, fmt.Errorf("failed to download update: %w", err)
 	}
 
@@ -565,13 +595,13 @@ func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 
 	go func() {
 		time.Sleep(500 * time.Millisecond)
-		s.replaceAndRestart(exePath, tmpFile)
+		s.replaceAndRestart(exePath, tmpFile.Name())
 		wailsruntime.Quit(ctx)
 	}()
 
 	return &UpdateInfo{
 		UpdateAvailable: true,
-		CurrentVersion:  appVersion,
+		CurrentVersion:  currentVersion,
 		LatestVersion:   latest.Version.String(),
 	}, nil
 }
@@ -633,6 +663,8 @@ rm -f "$0"`,
 
 // registerPluginFunctions registers all enabled plugin functions and variables with the engine.
 func (s *AppService) registerPluginFunctions() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if s.pluginMgr == nil {
 		return
 	}
@@ -687,6 +719,8 @@ func (s *AppService) ReloadPlugins() error {
 
 // GetPluginThemes returns all themes from enabled plugins.
 func (s *AppService) GetPluginThemes() []plugin.ThemeDef {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.pluginThemes
 }
 
@@ -702,6 +736,13 @@ func (s *AppService) GetPluginsDir() string {
 // then triggers a rescan to activate it.
 func (s *AppService) InstallPlugin(pluginsDir, pluginDir, manifestJSON string) error {
 	dir := filepath.Join(pluginsDir, pluginDir)
+	// Prevent path traversal
+	cleanDir := filepath.Clean(dir)
+	cleanPluginsDir := filepath.Clean(pluginsDir) + string(os.PathSeparator)
+	if !strings.HasPrefix(cleanDir, cleanPluginsDir) {
+		return fmt.Errorf("invalid plugin directory: path traversal detected")
+	}
+
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create plugin directory: %w", err)
 	}
@@ -724,6 +765,13 @@ func (s *AppService) InstallPlugin(pluginsDir, pluginDir, manifestJSON string) e
 // RemovePlugin removes a plugin directory, then triggers a rescan.
 func (s *AppService) RemovePlugin(pluginsDir, pluginDir string) error {
 	dir := filepath.Join(pluginsDir, pluginDir)
+	// Prevent path traversal
+	cleanDir := filepath.Clean(dir)
+	cleanPluginsDir := filepath.Clean(pluginsDir) + string(os.PathSeparator)
+	if !strings.HasPrefix(cleanDir, cleanPluginsDir) {
+		return fmt.Errorf("invalid plugin directory: path traversal detected")
+	}
+
 	if err := os.RemoveAll(dir); err != nil {
 		return fmt.Errorf("failed to remove plugin: %w", err)
 	}

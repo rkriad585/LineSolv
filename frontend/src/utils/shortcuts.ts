@@ -23,8 +23,8 @@ export interface ShortcutMap {
 let fullscreen = false;
 
 // --- Undo/Redo stack ---
-const undoStack = new Map<HTMLTextAreaElement, string[]>();
-const redoStack = new Map<HTMLTextAreaElement, string[]>();
+const undoStack = new WeakMap<HTMLTextAreaElement, string[]>();
+const redoStack = new WeakMap<HTMLTextAreaElement, string[]>();
 const MAX_UNDO = 200;
 let programmaticChange = false;
 

@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 )
@@ -16,6 +17,7 @@ type PluginFunction func(args []float64) (float64, error)
 // Engine evaluates natural-language arithmetic expressions.
 // It maintains a variable store, computation history, and last-result context.
 type Engine struct {
+	mu              sync.RWMutex
 	variables       map[string]float64
 	lastResult      float64
 	history         []HistoryEntry
@@ -40,22 +42,30 @@ func NewEngine() *Engine {
 
 // RegisterPluginFunction registers a function from a plugin.
 func (e *Engine) RegisterPluginFunction(name string, fn PluginFunction) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.pluginFunctions[strings.ToLower(name)] = fn
 }
 
 // RegisterPluginVariable registers a variable from a plugin.
 func (e *Engine) RegisterPluginVariable(name string, value float64) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.pluginVars[strings.ToLower(name)] = value
 }
 
 // ClearPluginFunctions removes all registered plugin functions.
 func (e *Engine) ClearPluginFunctions() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.pluginFunctions = make(map[string]PluginFunction)
 	e.pluginVars = make(map[string]float64)
 }
 
 // GetHistory returns a copy of the computation history.
 func (e *Engine) GetHistory() []HistoryEntry {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 	r := make([]HistoryEntry, len(e.history))
 	copy(r, e.history)
 	return r
@@ -63,6 +73,8 @@ func (e *Engine) GetHistory() []HistoryEntry {
 
 // ClearHistory clears all stored history entries.
 func (e *Engine) ClearHistory() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.history = nil
 }
 
@@ -74,6 +86,14 @@ const maxInputLength = 10000
 // Returns the result string (or "" on failure) and an error.
 // Empty lines, comment lines (#, //), and label lines (ending with :) return empty strings.
 func (e *Engine) EvaluateLine(input string) (string, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.evaluateLineUnlocked(input)
+}
+
+// evaluateLineUnlocked is the internal implementation of EvaluateLine without locking.
+// Caller must hold e.mu.
+func (e *Engine) evaluateLineUnlocked(input string) (string, error) {
 	s := strings.TrimSpace(input)
 	if s == "" || strings.HasPrefix(s, "#") || strings.HasPrefix(s, "//") || strings.HasSuffix(s, ":") {
 		return "", nil
@@ -90,7 +110,7 @@ func (e *Engine) EvaluateLine(input string) (string, error) {
 		if isIdentifier(name) {
 			r, err := e.evaluateExpr(val)
 			if err != nil {
-				return "", nil
+				return "", err
 			}
 			n, err := strconv.ParseFloat(r, 64)
 			if err == nil {
@@ -103,10 +123,12 @@ func (e *Engine) EvaluateLine(input string) (string, error) {
 
 	r, err := e.evaluateExpr(s)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
-	n, _ := strconv.ParseFloat(r, 64) //nolint:errcheck
-	e.lastResult = n
+	n, err := strconv.ParseFloat(r, 64)
+	if err == nil {
+		e.lastResult = n
+	}
 	e.history = append(e.history, HistoryEntry{Input: s, Output: r})
 	return r, nil
 }
@@ -114,12 +136,18 @@ func (e *Engine) EvaluateLine(input string) (string, error) {
 // EvaluateAll evaluates each line of a multi-line input string.
 // Returns one result string per line. Variables persist across lines.
 func (e *Engine) EvaluateAll(input string) []string {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	lines := strings.Split(input, "\n")
 	results := make([]string, len(lines))
 	e.lastResult = 0
 	for i, line := range lines {
-		res, _ := e.EvaluateLine(line) //nolint:errcheck
-		results[i] = res
+		res, err := e.evaluateLineUnlocked(line)
+		if err != nil {
+			results[i] = "Error: " + err.Error()
+		} else {
+			results[i] = res
+		}
 	}
 	return results
 }
@@ -127,6 +155,8 @@ func (e *Engine) EvaluateAll(input string) []string {
 // GetSteps evaluates a single expression and returns intermediate steps, without
 // modifying engine state (no history, no lastResult, no variable changes).
 func (e *Engine) GetSteps(input string) *EvalDetail {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 	s := strings.TrimSpace(input)
 	if s == "" || strings.HasPrefix(s, "#") || strings.HasPrefix(s, "//") || strings.HasSuffix(s, ":") {
 		return &EvalDetail{}
@@ -238,7 +268,7 @@ func (e *Engine) evaluateExprDetailed(input string) *EvalDetail {
 
 	result, parseSteps, err := e.parseExprWithSteps(s)
 	if err != nil {
-		return &EvalDetail{Result: ""}
+		return &EvalDetail{Result: "Error: " + err.Error()}
 	}
 	steps = append(steps, parseSteps...)
 	return &EvalDetail{Result: formatNumber(result), Steps: steps}
@@ -1339,9 +1369,9 @@ func computeWeekdayDate(modifier, weekday string) string {
 			diff = 7 // next week, not today
 		}
 	case "last", "previous":
-		diff = int((today - targetGo + 7) % 7)
+		diff = -int((today - targetGo + 7) % 7)
 		if diff == 0 {
-			diff = 7 // last week, not today
+			diff = -7 // last week, not today
 		}
 	case "this":
 		diff = int(targetGo - today)
@@ -1829,16 +1859,16 @@ func (p *parser) parseMulDiv() (float64, error) {
 	return left, nil
 }
 
-// parsePow → parseUnary {^ parseUnary}
+// parsePow → parseUnary {^ parseUnary} (right-associative)
 func (p *parser) parsePow() (float64, error) {
 	left, err := p.parseUnary()
 	if err != nil {
 		return 0, err
 	}
-	for p.peek().kind == tokPow {
+	if p.peek().kind == tokPow {
 		p.advance()
 		leftStr := fmtVal(left)
-		right, err := p.parseUnary()
+		right, err := p.parsePow() // right-associative: recurse into parsePow
 		if err != nil {
 			return 0, err
 		}
@@ -1996,7 +2026,7 @@ func (p *parser) parseArgs() ([]float64, error) {
 // --- Helpers ---
 
 func formatNumber(v float64) string {
-	if v == math.Trunc(v) && !math.IsInf(v, 0) && math.Abs(v) < 1e15 {
+	if v == math.Trunc(v) && !math.IsInf(v, 0) && math.Abs(v) <= 1e15 {
 		return strconv.FormatInt(int64(v), 10)
 	}
 	return fmt.Sprintf("%g", v)

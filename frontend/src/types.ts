@@ -44,6 +44,7 @@ export interface SettingsData {
   toast_enabled: string;
   opacity: string;
   line_numbers_enabled: string;
+  ui_style: string;
 }
 
 export interface UpdateInfo {
@@ -51,12 +52,6 @@ export interface UpdateInfo {
   current_version: string;
   latest_version: string;
   download_url: string;
-}
-
-export interface ShortcutDef {
-  id: string;
-  keys: string;
-  desc: string;
 }
 
 export interface AutocompleteItem {

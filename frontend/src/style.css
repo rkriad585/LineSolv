@@ -153,6 +153,421 @@ aside, #notes-sidebar, #vars-panel, #steps-panel, #history-panel,
   --calc-font-color: #ffcccc;
 }
 
+/* ═══════════════════════════════════════════
+   Theme: Midnight — deep navy, sky blue accent
+   ═══════════════════════════════════════════ */
+:root.theme-midnight {
+  --surface: #0f172a;
+  --surface-secondary: #1e293b;
+  --surface-hover: #334155;
+  --border: #1e293b;
+  --text: #f1f5f9;
+  --text-muted: #64748b;
+  --text-subtle: #334155;
+  --accent: #38bdf8;
+  --error: #f87171;
+  --btn-hover: #38bdf8;
+  --note-bg: #1e293b;
+  --note-hover: #334155;
+  --note-text: #cbd5e1;
+  --calc-font-color: #f1f5f9;
+}
+
+/* ═══════════════════════════════════════════
+   Theme: Aurora — deep purple-black, cyan accent
+   ═══════════════════════════════════════════ */
+:root.theme-aurora {
+  --surface: #0c0a1a;
+  --surface-secondary: #161230;
+  --surface-hover: #221e40;
+  --border: #2a2450;
+  --text: #e8e0ff;
+  --text-muted: #7060a0;
+  --text-subtle: #2a2450;
+  --accent: #22d3ee;
+  --error: #fb7185;
+  --btn-hover: #22d3ee;
+  --note-bg: #161230;
+  --note-hover: #221e40;
+  --note-text: #c0b0e0;
+  --calc-font-color: #e8e0ff;
+}
+
+/* ═══════════════════════════════════════════
+   Theme: Mono — pure black/white, max contrast
+   ═══════════════════════════════════════════ */
+:root.theme-mono {
+  --surface: #000000;
+  --surface-secondary: #0a0a0a;
+  --surface-hover: #1a1a1a;
+  --border: #222222;
+  --text: #ffffff;
+  --text-muted: #666666;
+  --text-subtle: #333333;
+  --accent: #ffffff;
+  --error: #ff3333;
+  --btn-hover: #ffffff;
+  --note-bg: #0a0a0a;
+  --note-hover: #1a1a1a;
+  --note-text: #cccccc;
+  --calc-font-color: #ffffff;
+}
+
+/* ═══════════════════════════════════════════
+   Theme: Frost — deep blue, soft blue glass
+   ═══════════════════════════════════════════ */
+:root.theme-frost {
+  --surface: #0a1628;
+  --surface-secondary: #132038;
+  --surface-hover: #1c2e4a;
+  --border: #1c2e4a;
+  --text: #e0ecff;
+  --text-muted: #4a7ab0;
+  --text-subtle: #1c2e4a;
+  --accent: #60a5fa;
+  --error: #f87171;
+  --btn-hover: #60a5fa;
+  --note-bg: #132038;
+  --note-hover: #1c2e4a;
+  --note-text: #b0c8e8;
+  --calc-font-color: #e0ecff;
+}
+
+/* ═══════════════════════════════════════════
+   Theme: Prism — deep violet, soft purple glass
+   ═══════════════════════════════════════════ */
+:root.theme-prism {
+  --surface: #1a0a28;
+  --surface-secondary: #241438;
+  --surface-hover: #301e48;
+  --border: #301e48;
+  --text: #f0e8ff;
+  --text-muted: #8060b0;
+  --text-subtle: #301e48;
+  --accent: #c084fc;
+  --error: #f87171;
+  --btn-hover: #c084fc;
+  --note-bg: #241438;
+  --note-hover: #301e48;
+  --note-text: #d0c0e8;
+  --calc-font-color: #f0e8ff;
+}
+
+/* ═══════════════════════════════════════════
+   Theme: Lavender — muted purple, lavender accent
+   ═══════════════════════════════════════════ */
+:root.theme-lavender {
+  --surface: #1a1528;
+  --surface-secondary: #241e38;
+  --surface-hover: #302848;
+  --border: #302848;
+  --text: #eee8ff;
+  --text-muted: #7060a0;
+  --text-subtle: #302848;
+  --accent: #a78bfa;
+  --error: #f87171;
+  --btn-hover: #a78bfa;
+  --note-bg: #241e38;
+  --note-hover: #302848;
+  --note-text: #c8c0e0;
+  --calc-font-color: #eee8ff;
+}
+
+/* ═══════════════════════════════════════════
+   Theme: Sage — deep green, emerald accent
+   ═══════════════════════════════════════════ */
+:root.theme-sage {
+  --surface: #0f1a14;
+  --surface-secondary: #182820;
+  --surface-hover: #203828;
+  --border: #203828;
+  --text: #e8f5ec;
+  --text-muted: #508060;
+  --text-subtle: #203828;
+  --accent: #34d399;
+  --error: #f87171;
+  --btn-hover: #34d399;
+  --note-bg: #182820;
+  --note-hover: #203828;
+  --note-text: #b0d0b8;
+  --calc-font-color: #e8f5ec;
+}
+
+/* ═══════════════════════════════════════════
+   Theme: Warm Light — warm dark, amber accent
+   ═══════════════════════════════════════════ */
+:root.theme-warm-light {
+  --surface: #1a1510;
+  --surface-secondary: #282018;
+  --surface-hover: #382c20;
+  --border: #382c20;
+  --text: #f5efe8;
+  --text-muted: #a08060;
+  --text-subtle: #382c20;
+  --accent: #fbbf24;
+  --error: #f87171;
+  --btn-hover: #fbbf24;
+  --note-bg: #282018;
+  --note-hover: #382c20;
+  --note-text: #d8c8b0;
+  --calc-font-color: #f5efe8;
+}
+
+/* ═══════════════════════════════════════════
+   UI Style: Default
+   Flat, clean, minimal. No blur, no glow.
+   ═══════════════════════════════════════════ */
+:root.style-default {
+  --ui-radius-sm: 4px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 10px;
+  --ui-radius-full: 9999px;
+  --ui-shadow-sm: none;
+  --ui-shadow-md: none;
+  --ui-shadow-lg: none;
+  --ui-blur: 0px;
+  --ui-surface-alpha: 1;
+  --ui-border-style: solid;
+  --ui-border-width: 1px;
+  --ui-glow-color: transparent;
+  --ui-transition: ease;
+  --ui-font-display: inherit;
+}
+
+/* ═══════════════════════════════════════════
+   UI Style: Nothing
+   Monochrome, industrial, Swiss typography.
+   ═══════════════════════════════════════════ */
+:root.style-nothing {
+  --ui-radius-sm: 2px;
+  --ui-radius-md: 4px;
+  --ui-radius-lg: 6px;
+  --ui-radius-full: 9999px;
+  --ui-shadow-sm: none;
+  --ui-shadow-md: none;
+  --ui-shadow-lg: 0 0 0 1px rgba(255,255,255,0.06);
+  --ui-blur: 0px;
+  --ui-surface-alpha: 1;
+  --ui-border-style: solid;
+  --ui-border-width: 1px;
+  --ui-glow-color: transparent;
+  --ui-transition: cubic-bezier(0.2, 0, 0, 1);
+  --ui-font-display: 'Space Grotesk', 'Inter', sans-serif;
+}
+
+.style-nothing #settings-modal { font-family: var(--ui-font-display); }
+.style-nothing .nothing-dot-matrix {
+  display: grid; grid-template-columns: repeat(5, 4px); gap: 3px; justify-content: center;
+}
+.style-nothing .nothing-dot-matrix span {
+  width: 4px; height: 4px; border-radius: 50%; background: var(--accent); opacity: 0.7;
+}
+.style-nothing .nothing-segmented {
+  display: flex; border: 1px solid var(--border); border-radius: var(--ui-radius-sm); overflow: hidden;
+}
+.style-nothing .nothing-segmented > * {
+  flex: 1; padding: 4px 8px; font-size: 11px; text-align: center; color: var(--text-muted);
+  border-right: 1px solid var(--border); cursor: pointer; transition: background 0.15s var(--ui-transition);
+}
+.style-nothing .nothing-segmented > *:last-child { border-right: none; }
+.style-nothing .nothing-segmented > *.active { background: var(--accent); color: #000; font-weight: 600; }
+
+/* ═══════════════════════════════════════════
+   UI Style: Liquid Glass
+   Apple-inspired glassmorphism.
+   ═══════════════════════════════════════════ */
+:root.style-glass {
+  --ui-radius-sm: 8px;
+  --ui-radius-md: 16px;
+  --ui-radius-lg: 20px;
+  --ui-radius-full: 9999px;
+  --ui-shadow-sm: 0 1px 2px rgba(0,0,0,0.1);
+  --ui-shadow-md: 0 4px 16px rgba(0,0,0,0.15);
+  --ui-shadow-lg: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+  --ui-blur: 20px;
+  --ui-surface-alpha: 0.65;
+  --ui-border-style: solid;
+  --ui-border-width: 1px;
+  --ui-glow-color: rgba(255,255,255,0.08);
+  --ui-transition: cubic-bezier(0.4, 0, 0.2, 1);
+  --ui-font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+
+.style-glass #settings-modal,
+.style-glass #shortcut-modal,
+.style-glass .context-menu-item,
+.style-glass .autocomplete-popup {
+  backdrop-filter: blur(var(--ui-blur));
+  -webkit-backdrop-filter: blur(var(--ui-blur));
+}
+.style-glass aside,
+.style-glass #notes-sidebar,
+.style-glass #vars-panel,
+.style-glass #steps-panel,
+.style-glass #history-panel,
+.style-glass #graph-panel {
+  backdrop-filter: blur(var(--ui-blur));
+  -webkit-backdrop-filter: blur(var(--ui-blur));
+}
+.style-glass .glass-specular {
+  position: relative; overflow: hidden;
+}
+.style-glass .glass-specular::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%);
+  border-radius: inherit; z-index: 1;
+}
+.style-glass input[type="text"],
+.style-glass input[type="search"],
+.style-glass textarea {
+  background: rgba(255,255,255,0.06) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ═══════════════════════════════════════════
+   UI Style: Material 3
+   Google's Material Design 3 language.
+   ═══════════════════════════════════════════ */
+:root.style-material {
+  --ui-radius-sm: 8px;
+  --ui-radius-md: 12px;
+  --ui-radius-lg: 28px;
+  --ui-radius-full: 9999px;
+  --ui-shadow-sm: 0 1px 2px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.1);
+  --ui-shadow-md: 0 2px 6px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1);
+  --ui-shadow-lg: 0 4px 8px rgba(0,0,0,0.15), 0 8px 16px rgba(0,0,0,0.1);
+  --ui-blur: 0px;
+  --ui-surface-alpha: 1;
+  --ui-border-style: none;
+  --ui-border-width: 0px;
+  --ui-glow-color: transparent;
+  --ui-transition: cubic-bezier(0.2, 0, 0, 1);
+  --ui-font-display: 'Google Sans', 'Inter', sans-serif;
+}
+
+.style-material .material-tint {
+  position: relative;
+}
+.style-material .material-tint::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  border-radius: inherit; z-index: 0;
+}
+.style-material .material-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 12px; border-radius: var(--ui-radius-sm); font-size: 12px; font-weight: 500;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent); border: none; cursor: pointer; transition: background 0.2s var(--ui-transition);
+}
+.style-material .material-chip:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.style-material .material-fab {
+  width: 40px; height: 40px; border-radius: var(--ui-radius-md);
+  background: var(--accent); color: #fff; border: none;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--ui-shadow-md); cursor: pointer;
+  transition: box-shadow 0.2s var(--ui-transition), transform 0.15s var(--ui-transition);
+}
+.style-material .material-fab:hover {
+  box-shadow: var(--ui-shadow-lg);
+  transform: scale(1.05);
+}
+
+/* ═══════════════════════════════════════════
+   UI Style: Alivated
+   Soft, warm, neumorphic-lite.
+   ═══════════════════════════════════════════ */
+:root.style-alivated {
+  --ui-radius-sm: 8px;
+  --ui-radius-md: 16px;
+  --ui-radius-lg: 20px;
+  --ui-radius-full: 9999px;
+  --ui-shadow-sm: 2px 2px 6px rgba(0,0,0,0.12), -2px -2px 6px rgba(255,255,255,0.04);
+  --ui-shadow-md: 4px 4px 12px rgba(0,0,0,0.15), -4px -4px 12px rgba(255,255,255,0.04);
+  --ui-shadow-lg: 6px 6px 20px rgba(0,0,0,0.18), -6px -6px 20px rgba(255,255,255,0.04);
+  --ui-blur: 0px;
+  --ui-surface-alpha: 1;
+  --ui-border-style: none;
+  --ui-border-width: 0px;
+  --ui-glow-color: transparent;
+  --ui-transition: cubic-bezier(0.4, 0, 0.2, 1);
+  --ui-font-display: 'Overpass', 'Inter', sans-serif;
+}
+
+.style-alivated aside,
+.style-alivated #notes-sidebar,
+.style-alivated #vars-panel,
+.style-alivated #steps-panel,
+.style-alivated #history-panel {
+  box-shadow: var(--ui-shadow-md);
+}
+.style-alivated button:active,
+.style-alivated .note-item:active {
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.15), inset -2px -2px 5px rgba(255,255,255,0.04);
+}
+.style-alivated .alivated-soft-border {
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+/* ═══════════════════════════════════════════
+   UI Style: Neon
+   Cyberpunk aesthetic. Glowing borders.
+   ═══════════════════════════════════════════ */
+:root.style-neon {
+  --ui-radius-sm: 2px;
+  --ui-radius-md: 4px;
+  --ui-radius-lg: 6px;
+  --ui-radius-full: 9999px;
+  --ui-shadow-sm: none;
+  --ui-shadow-md: 0 0 8px var(--accent), 0 0 2px var(--accent);
+  --ui-shadow-lg: 0 0 16px var(--accent), 0 0 4px var(--accent), 0 0 32px rgba(0,255,65,0.15);
+  --ui-blur: 0px;
+  --ui-surface-alpha: 1;
+  --ui-border-style: solid;
+  --ui-border-width: 1px;
+  --ui-glow-color: var(--accent);
+  --ui-transition: ease;
+  --ui-font-display: 'Fira Code', 'JetBrains Mono', monospace;
+}
+
+.style-neon aside,
+.style-neon #notes-sidebar,
+.style-neon #vars-panel,
+.style-neon #steps-panel,
+.style-neon #history-panel {
+  box-shadow: 0 0 8px var(--accent), inset 0 0 4px rgba(0,255,65,0.05);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.style-neon button:hover,
+.style-neon .note-item:hover {
+  box-shadow: 0 0 10px var(--accent), 0 0 2px var(--accent);
+}
+.style-neon button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent);
+}
+@keyframes neon-border-pulse {
+  0%, 100% { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  50% { border-color: var(--accent); }
+}
+.style-neon .neon-pulse {
+  animation: neon-border-pulse 2s ease-in-out infinite;
+}
+.style-neon::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  mix-blend-mode: overlay;
+}
+
 html {
   background: transparent;
   color: var(--text);
@@ -165,7 +580,7 @@ body {
   margin: 0;
   overflow: hidden;
   background: transparent;
-  border-radius: 10px;
+  border-radius: var(--ui-radius-lg, 10px);
   width: 100vw;
   height: 100vh;
 }
@@ -203,7 +618,7 @@ body {
 }
 #settings-modal input[type="color"]::-webkit-color-swatch {
   border: none;
-  border-radius: 3px;
+  border-radius: var(--ui-radius-sm, 3px);
 }
 #settings-modal select option {
   background: var(--surface);

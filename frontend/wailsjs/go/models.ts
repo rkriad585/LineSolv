@@ -274,6 +274,7 @@ export namespace service {
 	    toast_enabled: string;
 	    opacity: string;
 	    line_numbers_enabled: string;
+	    ui_style: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SettingsData(source);
@@ -290,6 +291,7 @@ export namespace service {
 	        this.toast_enabled = source["toast_enabled"];
 	        this.opacity = source["opacity"];
 	        this.line_numbers_enabled = source["line_numbers_enabled"];
+	        this.ui_style = source["ui_style"];
 	    }
 	}
 	export class UpdateInfo {

@@ -72,8 +72,20 @@ function md(text: string, codeBlocks?: string[]): string {
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/~~(.+?)~~/g, '<del>$1</del>')
     .replace(/`([^`\n]+)`/g, '<code style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent);font-family:monospace;">$1</code>')
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:6px;margin:8px 0;" />')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:border-color 0.15s;">$1</a>')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt: string, url: string) => {
+      const trimmed = url.trim();
+      if (/^https?:\/\//i.test(trimmed)) {
+        return `<img src="${trimmed}" alt="${alt}" style="max-width:100%;border-radius:6px;margin:8px 0;" />`;
+      }
+      return `![${alt}](${url})`;
+    })
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, text: string, url: string) => {
+      const trimmed = url.trim();
+      if (/^https?:\/\//i.test(trimmed)) {
+        return `<a href="${trimmed}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:border-color 0.15s;">${text}</a>`;
+      }
+      return `[${text}](${url})`;
+    })
     .replace(/^> (.+)$/gm, '<blockquote style="margin:8px 0;padding:8px 16px;border-left:3px solid var(--accent);background:var(--surface-secondary);border-radius:0 6px 6px 0;font-size:13px;color:var(--text-muted);">$1</blockquote>')
     .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">')
     .replace(/^\|(.+)\|$/gm, (match) => {

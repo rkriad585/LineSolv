@@ -27,6 +27,11 @@ export class ContextMenu {
   }
 
   show(items: ContextMenuItem[], x: number, y: number): void {
+    // Clean up any open submenus before clearing
+    for (const sub of this.openSubs) {
+      sub.remove();
+    }
+    this.openSubs = [];
     this.el.innerHTML = '';
     this.el.style.display = 'block';
 
@@ -163,6 +168,7 @@ export class ContextMenu {
         document.body.appendChild(sub);
         this.openSubs.push(sub);
         sub.style.display = 'block';
+        sub.style.opacity = '0';
 
         requestAnimationFrame(() => {
           const triggerRect = trigger.getBoundingClientRect();
@@ -188,6 +194,7 @@ export class ContextMenu {
 
           sub.style.left = left + 'px';
           sub.style.top = top + 'px';
+          sub.style.opacity = '1';
         });
       }, 80);
     };

@@ -24,6 +24,23 @@ const THEMES = [
   {id: 'obsidian',   label: 'Obsidian',  bg: '#0d0d0d', accent: '#d4a043', text: '#d4c5a9'},
   {id: 'plasma',     label: 'Plasma',    bg: '#0d0d1a', accent: '#bb86fc', text: '#e0dff0'},
   {id: 'blood',      label: 'Blood',      bg: '#0a0505', accent: '#b71c1c', text: '#e8d0d0'},
+  {id: 'midnight',   label: 'Midnight',   bg: '#0f172a', accent: '#38bdf8', text: '#f1f5f9'},
+  {id: 'aurora',     label: 'Aurora',     bg: '#0c0a1a', accent: '#22d3ee', text: '#e8e0ff'},
+  {id: 'mono',       label: 'Mono',       bg: '#000000', accent: '#ffffff', text: '#ffffff'},
+  {id: 'frost',      label: 'Frost',      bg: '#0a1628', accent: '#60a5fa', text: '#e0ecff'},
+  {id: 'prism',      label: 'Prism',      bg: '#1a0a28', accent: '#c084fc', text: '#f0e8ff'},
+  {id: 'lavender',   label: 'Lavender',   bg: '#1a1528', accent: '#a78bfa', text: '#eee8ff'},
+  {id: 'sage',       label: 'Sage',       bg: '#0f1a14', accent: '#34d399', text: '#e8f5ec'},
+  {id: 'warm-light', label: 'Warm Light', bg: '#1a1510', accent: '#fbbf24', text: '#f5efe8'},
+];
+
+const STYLES = [
+  {id: 'default',   label: 'Default',   desc: 'Flat, clean, minimal',        radius: '8px',  shadow: 'none'},
+  {id: 'nothing',   label: 'Nothing',   desc: 'Monochrome, industrial, Swiss', radius: '4px',  shadow: 'none'},
+  {id: 'glass',     label: 'Liquid Glass', desc: 'Frosted glass, translucent', radius: '16px', shadow: '0 4px 16px rgba(0,0,0,0.15)'},
+  {id: 'material',  label: 'Material 3', desc: 'Rounded, tinted, elevation', radius: '12px', shadow: '0 2px 6px rgba(0,0,0,0.15)'},
+  {id: 'alivated',  label: 'Alivated',  desc: 'Soft, warm, neumorphic',      radius: '16px', shadow: '4px 4px 12px rgba(0,0,0,0.15), -4px -4px 12px rgba(255,255,255,0.04)'},
+  {id: 'neon',      label: 'Neon',      desc: 'Cyberpunk, glowing borders',  radius: '4px',  shadow: '0 0 8px var(--accent)'},
 ];
 
 const EDIT_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
@@ -57,6 +74,7 @@ export class SettingsModal {
 
   private onApply: (s: Partial<SettingsState>) => void;
   private selectedTheme: string;
+  private selectedStyle: string;
 
   private fontSizeInput!: HTMLInputElement;
   private fontSizeValueEl!: HTMLSpanElement;
@@ -71,12 +89,21 @@ export class SettingsModal {
   private opacityInput!: HTMLInputElement;
   private opacityValueEl!: HTMLSpanElement;
   private animationsToggle!: HTMLInputElement;
+  private animationsTrack!: HTMLDivElement;
+  private animationsThumb!: HTMLDivElement;
   private toastToggle!: HTMLInputElement;
+  private toastTrack!: HTMLDivElement;
+  private toastThumb!: HTMLDivElement;
   private autocompleteToggle!: HTMLInputElement;
+  private autocompleteTrack!: HTMLDivElement;
+  private autocompleteThumb!: HTMLDivElement;
   private lineNumbersToggle!: HTMLInputElement;
+  private lineNumbersTrack!: HTMLDivElement;
+  private lineNumbersThumb!: HTMLDivElement;
 
   constructor(initialTheme: string, settingsStore: SettingsStore) {
     this.selectedTheme = initialTheme;
+    this.selectedStyle = 'default';
     this.onApply = (partial: Partial<SettingsState>) => {
       settingsStore.update(partial);
       settingsStore.scheduleSave();
@@ -159,7 +186,7 @@ export class SettingsModal {
     this.tabsEl.innerHTML = '';
     this.tabButtons.clear();
 
-    const tabs = ['General', 'Theme', 'Keyboard Shortcuts', 'About'];
+    const tabs = ['General', 'Theme', 'UI Style', 'Keyboard Shortcuts', 'About'];
     for (const name of tabs) {
       const btn = document.createElement('button');
       btn.textContent = name;
@@ -194,6 +221,12 @@ export class SettingsModal {
     this.tabPanels.push(themePanel);
     this.contentEl.appendChild(themePanel);
 
+    const uiStylePanel = document.createElement('div');
+    uiStylePanel.style.display = 'none';
+    this.buildUiStyle(uiStylePanel);
+    this.tabPanels.push(uiStylePanel);
+    this.contentEl.appendChild(uiStylePanel);
+
     const shortcutsPanel = document.createElement('div');
     shortcutsPanel.style.display = 'none';
     this.buildShortcuts(shortcutsPanel);
@@ -209,7 +242,7 @@ export class SettingsModal {
 
   private switchTab(name: string): void {
     this.activeTab = name;
-    const tabNames = ['General', 'Theme', 'Keyboard Shortcuts', 'About'];
+    const tabNames = ['General', 'Theme', 'UI Style', 'Keyboard Shortcuts', 'About'];
     const idx = tabNames.indexOf(name);
 
     for (const [n, btn] of this.tabButtons) {
@@ -347,7 +380,7 @@ export class SettingsModal {
     return row;
   }
 
-  private toggleRow(label: string, desc: string, checked: boolean): { el: HTMLDivElement; toggle: HTMLInputElement } {
+  private toggleRow(label: string, desc: string, checked: boolean): { el: HTMLDivElement; toggle: HTMLInputElement; track: HTMLDivElement; thumb: HTMLDivElement } {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
 
@@ -384,7 +417,12 @@ export class SettingsModal {
     });
 
     row.append(left, track);
-    return { el: row, toggle };
+    return { el: row, toggle, track, thumb };
+  }
+
+  private updateToggleVisual(toggle: HTMLInputElement, track: HTMLDivElement, thumb: HTMLDivElement): void {
+    track.style.background = toggle.checked ? 'var(--accent)' : 'var(--border)';
+    thumb.style.left = toggle.checked ? '18px' : '2px';
   }
 
   private sectionHeader(text: string): HTMLDivElement {
@@ -489,6 +527,8 @@ export class SettingsModal {
       true,
     );
     this.autocompleteToggle = autocompleteRow.toggle;
+    this.autocompleteTrack = autocompleteRow.track;
+    this.autocompleteThumb = autocompleteRow.thumb;
 
     panel.append(familyRow, sizeRow, autocompleteRow.el);
 
@@ -531,6 +571,8 @@ export class SettingsModal {
       true,
     );
     this.animationsToggle = animationsRow.toggle;
+    this.animationsTrack = animationsRow.track;
+    this.animationsThumb = animationsRow.thumb;
 
     panel.append(opacityRow, animationsRow.el);
 
@@ -543,6 +585,8 @@ export class SettingsModal {
       true,
     );
     this.lineNumbersToggle = lineNumbersRow.toggle;
+    this.lineNumbersTrack = lineNumbersRow.track;
+    this.lineNumbersThumb = lineNumbersRow.thumb;
 
     const toastRow = this.toggleRow(
       'Toast Notifications',
@@ -550,6 +594,8 @@ export class SettingsModal {
       true,
     );
     this.toastToggle = toastRow.toggle;
+    this.toastTrack = toastRow.track;
+    this.toastThumb = toastRow.thumb;
 
     panel.append(lineNumbersRow.el, toastRow.el);
 
@@ -694,6 +740,92 @@ export class SettingsModal {
         }
       }
     }).catch(() => {});
+
+    panel.append(note, grid);
+  }
+
+  private buildUiStyle(panel: HTMLDivElement): void {
+    panel.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
+
+    const note = document.createElement('p');
+    note.textContent = 'Select a UI style. Controls shape, depth, and motion.';
+    note.style.cssText = 'font-size:12px;color:var(--text-muted);margin:0 0 12px;user-select:none;';
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;';
+
+    const styleCards = new Map<string, HTMLDivElement>();
+
+    const addStyleCard = (s: {id: string; label: string; desc: string; radius: string; shadow: string}) => {
+      const card = document.createElement('div');
+      card.tabIndex = 0;
+      (card as StyleCardElement).styleId = s.id;
+      card.style.cssText =
+        'border:2px solid var(--border);border-radius:8px;cursor:pointer;' +
+        'overflow:hidden;transition:border-color .15s;outline:none;';
+      card.addEventListener('mouseenter', () => {
+        if (s.id !== this.selectedStyle) card.style.borderColor = 'var(--text-muted)';
+      });
+      card.addEventListener('mouseleave', () => {
+        if (s.id !== this.selectedStyle) card.style.borderColor = 'var(--border)';
+      });
+
+      const preview = document.createElement('div');
+      preview.style.cssText = 'height:56px;display:flex;align-items:center;justify-content:center;background:var(--surface-secondary);position:relative;';
+
+      const sample = document.createElement('div');
+      sample.style.cssText =
+        `width:70%;padding:8px 12px;border-radius:${s.radius};background:var(--surface);` +
+        `border:1px solid var(--border);box-shadow:${s.shadow};text-align:center;` +
+        `font-size:12px;color:var(--text-muted);`;
+
+      const check = document.createElement('span');
+      check.innerHTML = CHECK_ICON;
+      check.style.cssText = 'display:none;position:absolute;top:6px;right:6px;color:var(--accent);';
+      preview.append(sample, check);
+
+      const label = document.createElement('div');
+      label.style.cssText =
+        'padding:6px 10px;font-size:12px;font-weight:500;' +
+        'background:var(--surface-secondary);color:var(--text);user-select:none;display:flex;flex-direction:column;gap:1px;';
+      const labelName = document.createElement('span');
+      labelName.textContent = s.label;
+      const labelDesc = document.createElement('span');
+      labelDesc.textContent = s.desc;
+      labelDesc.style.cssText = 'font-size:10px;color:var(--text-muted);font-weight:400;';
+      label.append(labelName, labelDesc);
+
+      card.append(preview, label);
+      grid.appendChild(card);
+      styleCards.set(s.id, card);
+
+      card.addEventListener('click', () => {
+        this.selectedStyle = s.id;
+        styleCards.forEach((c, id) => {
+          c.style.borderColor = id === s.id ? 'var(--accent)' : 'var(--border)';
+          const chk = c.querySelector('span:last-child') as HTMLElement;
+          if (chk) chk.style.display = id === s.id ? '' : 'none';
+        });
+        this.applyAll();
+      });
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          card.click();
+        }
+      });
+    };
+
+    STYLES.forEach((s) => addStyleCard(s));
+
+    requestAnimationFrame(() => {
+      const initial = styleCards.get(this.selectedStyle);
+      if (initial) {
+        initial.style.borderColor = 'var(--accent)';
+        const chk = initial.querySelector('span:last-child') as HTMLElement;
+        if (chk) chk.style.display = '';
+      }
+    });
 
     panel.append(note, grid);
   }
@@ -945,6 +1077,7 @@ export class SettingsModal {
 
   private async resetToDefaults(): Promise<void> {
     this.selectedTheme = 'dark';
+    this.selectedStyle = 'default';
     this.fontSizeInput.value = '16';
     this.fontSizeValueEl.textContent = '16px';
     this.fontFamilySelect.value = '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif';
@@ -954,6 +1087,10 @@ export class SettingsModal {
     this.toastToggle.checked = true;
     this.autocompleteToggle.checked = true;
     this.lineNumbersToggle.checked = true;
+    this.updateToggleVisual(this.animationsToggle, this.animationsTrack, this.animationsThumb);
+    this.updateToggleVisual(this.toastToggle, this.toastTrack, this.toastThumb);
+    this.updateToggleVisual(this.autocompleteToggle, this.autocompleteTrack, this.autocompleteThumb);
+    this.updateToggleVisual(this.lineNumbersToggle, this.lineNumbersTrack, this.lineNumbersThumb);
     this.overrides = {};
     this.updatePreview();
 
@@ -971,8 +1108,11 @@ export class SettingsModal {
       }
     }
 
-    // Update shortcut displays
-    this.shortcutKbds.forEach((kbd) => { kbd.textContent = ''; });
+    // Update shortcut displays — restore default keys
+    ALL_SHORTCUTS.forEach((s) => {
+      const kbd = this.shortcutKbds.get(s.id);
+      if (kbd) kbd.textContent = s.keys;
+    });
 
     this.applyAll();
     toast.show('Settings reset to defaults', 'info');
@@ -981,6 +1121,7 @@ export class SettingsModal {
   private applyAll(): void {
     this.onApply({
       theme: this.selectedTheme,
+      ui_style: this.selectedStyle,
       font_size: this.fontSizeInput.value,
       font_family: this.fontFamilySelect.value,
       shortcut_overrides: JSON.stringify(this.overrides),
@@ -1012,6 +1153,7 @@ export class SettingsModal {
       } catch { this.overrides = {}; }
 
       this.selectedTheme = settings.theme || 'dark';
+      this.selectedStyle = settings.ui_style || 'default';
       this.fontSizeInput.value = settings.font_size || '16';
       this.fontSizeValueEl.textContent = (settings.font_size || '16') + 'px';
       const fontFamily = settings.font_family || '';
@@ -1036,6 +1178,20 @@ export class SettingsModal {
           const card = cards[i] as ThemeCardElement;
           const themeId = card.themeId || null;
           const isActive = themeId === this.selectedTheme;
+          card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+          const chk = card.querySelector('span:last-child') as HTMLElement;
+          if (chk) chk.style.display = isActive ? '' : 'none';
+        }
+      }
+
+      // Update UI Style card highlights
+      const styleGrids = this.el.querySelectorAll('div[style*="grid-template-columns:1fr 1fr"]');
+      if (styleGrids.length > 1) {
+        const styleCards = styleGrids[1].children;
+        for (let i = 0; i < styleCards.length; i++) {
+          const card = styleCards[i] as StyleCardElement;
+          const styleId = card.styleId || null;
+          const isActive = styleId === this.selectedStyle;
           card.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
           const chk = card.querySelector('span:last-child') as HTMLElement;
           if (chk) chk.style.display = isActive ? '' : 'none';

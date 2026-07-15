@@ -28,6 +28,7 @@ type Config struct {
 		ToastEnabled        string `toml:"toast_enabled"`
 		Opacity             string `toml:"opacity"`
 		LineNumbersEnabled  string `toml:"line_numbers_enabled"`
+		UIStyle             string `toml:"ui_style"`
 	} `toml:"settings"`
 }
 
@@ -45,6 +46,7 @@ func DefaultConfig() *Config {
 	c.Settings.ToastEnabled = "true"
 	c.Settings.Opacity = "0.95"
 	c.Settings.LineNumbersEnabled = "true"
+	c.Settings.UIStyle = "default"
 	return c
 }
 
@@ -89,6 +91,7 @@ func SaveConfig(cfg *Config) error {
 	buf.WriteString(fmt.Sprintf("toast_enabled = %q\n", cfg.Settings.ToastEnabled))
 	buf.WriteString(fmt.Sprintf("opacity = %q\n", cfg.Settings.Opacity))
 	buf.WriteString(fmt.Sprintf("line_numbers_enabled = %q\n", cfg.Settings.LineNumbersEnabled))
+	buf.WriteString(fmt.Sprintf("ui_style = %q\n", cfg.Settings.UIStyle))
 	return os.WriteFile(dir, []byte(buf.String()), 0600)
 }
 
@@ -146,10 +149,12 @@ func parseConfigTOML(data string, cfg *Config) {
 				cfg.Settings.AnimationsEnabled = val
 			case "toast_enabled":
 				cfg.Settings.ToastEnabled = val
-		case "opacity":
-			cfg.Settings.Opacity = val
-		case "line_numbers_enabled":
-			cfg.Settings.LineNumbersEnabled = val
+			case "opacity":
+				cfg.Settings.Opacity = val
+			case "line_numbers_enabled":
+				cfg.Settings.LineNumbersEnabled = val
+			case "ui_style":
+				cfg.Settings.UIStyle = val
 			}
 		default:
 			switch key {
