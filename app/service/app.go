@@ -610,8 +610,8 @@ func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 	go func() {
 		time.Sleep(500 * time.Millisecond)
 		s.replaceAndRestart(exePath, tmpFile.Name())
-		time.Sleep(1 * time.Second) // give new process time to start
-		wailsruntime.Quit(ctx)
+		// Let the new process take over; just exit this one cleanly.
+		os.Exit(0)
 	}()
 
 	return &UpdateInfo{
@@ -622,68 +622,34 @@ func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 }
 
 func (s *AppService) replaceAndRestart(exePath, tmpFile string) {
-	// Ensure temp file is executable before any move operations
 	_ = os.Chmod(tmpFile, 0755) //nolint:errcheck
 
 	switch runtime.GOOS {
 	case "windows":
-		// Windows: rename running exe to .old (allowed), place new binary, schedule cleanup
 		oldExe := exePath + ".old"
-		_ = os.Remove(oldExe) // clean up any previous .old file
+		_ = os.Remove(oldExe)
 		if err := os.Rename(exePath, oldExe); err != nil {
 			return
 		}
 		if err := os.Rename(tmpFile, exePath); err != nil {
-			// Rollback: try to restore old exe
 			_ = os.Rename(oldExe, exePath) //nolint:errcheck
 			return
 		}
-		// Start new process, then exit current
-		_ = exec.Command(exePath).Start() //nolint:errcheck
-		// Schedule cleanup of .old file after a delay
+		_ = exec.Command(exePath).Start() //nolint:gosec,errcheck
 		go func() {
 			time.Sleep(3 * time.Second)
 			_ = os.Remove(oldExe) //nolint:errcheck
 		}()
 	case "darwin":
-		// macOS: use osascript for elevation if needed (app may be in /Applications)
 		if err := os.Rename(tmpFile, exePath); err != nil {
-			// Fallback: elevated mv via osascript
-			script := fmt.Sprintf(
-				`#!/bin/bash
-sleep 1
-osascript -e 'do shell script "mv \"%s\" \"%s\"" with administrator privileges' 2>/dev/null
-"%s" &
-rm -f "$0"`,
-				tmpFile, exePath, exePath,
-			)
-			f := filepath.Join(os.TempDir(), "linesolv_update.sh")
-			if err := os.WriteFile(f, []byte(script), 0600); err != nil { //nolint:gosec
-				return
-			}
-			_ = exec.Command("/bin/bash", f).Start() //nolint:errcheck
 			return
 		}
-		_ = exec.Command(exePath).Start() //nolint:errcheck
+		_ = exec.Command(exePath).Start() //nolint:gosec,errcheck
 	default: // linux
-		if err := os.Rename(tmpFile, exePath); err == nil {
-			_ = exec.Command(exePath).Start() //nolint:errcheck
+		if err := os.Rename(tmpFile, exePath); err != nil {
 			return
 		}
-		// Fallback: elevated mv via pkexec
-		script := fmt.Sprintf(
-			`#!/bin/bash
-sleep 1
-mv "%s" "%s"
-"%s" &
-rm -f "$0"`,
-			tmpFile, exePath, exePath,
-		)
-		f := filepath.Join(os.TempDir(), "linesolv_update.sh")
-		if err := os.WriteFile(f, []byte(script), 0600); err != nil { //nolint:gosec
-			return
-		}
-		_ = exec.Command("pkexec", "/bin/bash", f).Start() //nolint:errcheck
+		_ = exec.Command(exePath).Start() //nolint:gosec,errcheck
 	}
 }
 
