@@ -26,13 +26,19 @@ jobs:
     needs: version
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Create release
+        id: create_release
         run: |
-          gh release create "${{ needs.version.outputs.version }}" \
-            --title "LineSolv ${{ needs.version.outputs.version }}" \
+          VERSION="${{ needs.version.outputs.version }}"
+          echo "Creating release for version: ${VERSION}"
+          gh release create "${VERSION}" \
+            --title "LineSolv ${VERSION}" \
             --generate-notes \
             --draft=false \
-            --prerelease=false || true
+            --prerelease=false
+          echo "Release created successfully"
+          gh release view "${VERSION}" --json url,tagName
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -56,7 +62,10 @@ jobs:
       - name: Build
         run: wails build -tags "webkit2_41" -ldflags "-X main.version=${{ needs.version.outputs.version }}"
       - name: Verify binary
-        run: test -f build/bin/LineSolv || { echo "Binary not found"; exit 1; }
+        run: |
+          echo "Build output:"
+          ls -la build/bin/ || true
+          test -f build/bin/LineSolv || { echo "Binary not found"; exit 1; }
       - name: Package .deb
         run: |
           VERSION="${{ needs.version.outputs.version }}"
@@ -100,11 +109,14 @@ jobs:
       - name: Upload
         run: |
           VERSION="${{ needs.version.outputs.version }}"
+          echo "Uploading Linux artifacts..."
+          ls -la "linesolv-${VERSION}-linux-amd64.deb" "LineSolv-${VERSION}-linux-amd64" "SHA256SUMS-linux-${VERSION}"
           gh release upload "${VERSION}" \
             "linesolv-${VERSION}-linux-amd64.deb" \
             "LineSolv-${VERSION}-linux-amd64" \
             "SHA256SUMS-linux-${VERSION}" \
             --clobber
+          echo "Linux upload complete"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -123,6 +135,14 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
       - name: Build arm64
         run: GOARCH=arm64 wails build -ldflags "-X main.version=${{ needs.version.outputs.version }}"
+      - name: Debug arm64 build output
+        run: |
+          echo "Build output after arm64 build:"
+          ls -la build/bin/ || true
+          if [ -d build/bin/LineSolv.app ]; then
+            echo "Found .app bundle:"
+            ls -la build/bin/LineSolv.app/Contents/MacOS/ || true
+          fi
       - name: Verify arm64 binary
         run: |
           if [ -d build/bin/LineSolv.app ]; then
@@ -175,6 +195,14 @@ jobs:
           chmod +x "LineSolv-${VERSION}-darwin-arm64"
       - name: Build amd64 (cross-compile)
         run: GOARCH=amd64 wails build -ldflags "-X main.version=${{ needs.version.outputs.version }}"
+      - name: Debug amd64 build output
+        run: |
+          echo "Build output after amd64 cross-compile:"
+          ls -la build/bin/ || true
+          if [ -d build/bin/LineSolv.app ]; then
+            echo "Found .app bundle:"
+            ls -la build/bin/LineSolv.app/Contents/MacOS/ || true
+          fi
       - name: Package amd64 .app
         run: |
           VERSION="${{ needs.version.outputs.version }}"
@@ -218,6 +246,8 @@ jobs:
             cp build/bin/LineSolv "LineSolv-${VERSION}-darwin-amd64"
           else
             echo "Error: LineSolv binary not found in expected locations"
+            echo "Build output:"
+            ls -la build/bin/ || true
             exit 1
           fi
           chmod +x "LineSolv-${VERSION}-darwin-amd64"
@@ -228,6 +258,8 @@ jobs:
       - name: Upload
         run: |
           VERSION="${{ needs.version.outputs.version }}"
+          echo "Uploading macOS artifacts..."
+          ls -la "LineSolv-${VERSION}-darwin-arm64.dmg" "LineSolv-${VERSION}-darwin-arm64" "LineSolv-${VERSION}-darwin-amd64.dmg" "LineSolv-${VERSION}-darwin-amd64" "SHA256SUMS-darwin-${VERSION}"
           gh release upload "${VERSION}" \
             "LineSolv-${VERSION}-darwin-arm64.dmg" \
             "LineSolv-${VERSION}-darwin-arm64" \
@@ -235,6 +267,7 @@ jobs:
             "LineSolv-${VERSION}-darwin-amd64" \
             "SHA256SUMS-darwin-${VERSION}" \
             --clobber
+          echo "macOS upload complete"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -261,7 +294,10 @@ jobs:
         run: GOOS=windows GOARCH=amd64 wails build -nsis -webview2 embed -ldflags "-X main.version=${{ needs.version.outputs.version }}"
       - name: Verify binary
         shell: bash
-        run: test -f build/bin/LineSolv.exe || { echo "Binary not found"; exit 1; }
+        run: |
+          echo "Build output:"
+          ls -la build/bin/ || true
+          test -f build/bin/LineSolv.exe || { echo "Binary not found"; exit 1; }
       - name: Rename artifacts
         shell: bash
         run: |
@@ -281,14 +317,18 @@ jobs:
         shell: bash
         run: |
           VERSION="${{ needs.version.outputs.version }}"
+          echo "Uploading Windows artifacts..."
+          ls -la "LineSolv-${VERSION}-windows-amd64.exe" "SHA256SUMS-windows-${VERSION}"
           INSTALLER=""
           if [ -f "LineSolv-${VERSION}-windows-amd64-installer.exe" ]; then
             INSTALLER="LineSolv-${VERSION}-windows-amd64-installer.exe"
+            ls -la "${INSTALLER}"
           fi
           gh release upload "${VERSION}" \
             "LineSolv-${VERSION}-windows-amd64.exe" \
             ${INSTALLER} \
             "SHA256SUMS-windows-${VERSION}" \
             --clobber
+          echo "Windows upload complete"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
