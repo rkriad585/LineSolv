@@ -22,17 +22,31 @@ jobs:
         id: get-version
         run: echo "version=$(cat .version)" >> $GITHUB_OUTPUT
 
-  linux:
+  release:
     needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release
+        run: |
+          gh release create "${{ needs.version.outputs.version }}" \
+            --title "LineSolv ${{ needs.version.outputs.version }}" \
+            --generate-notes \
+            --draft=false \
+            --prerelease=false || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  linux:
+    needs: [version, release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: '1.24'
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
       - name: Install system deps
         run: |
           sudo apt-get update -qq
@@ -84,25 +98,27 @@ jobs:
           VERSION="${{ needs.version.outputs.version }}"
           sha256sum "linesolv-${VERSION}-linux-amd64.deb" "LineSolv-${VERSION}-linux-amd64" > "SHA256SUMS-linux-${VERSION}"
       - name: Upload
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.version.outputs.version }}
-          files: |
-            linesolv-*.deb
-            LineSolv-*-linux-amd64
-            SHA256SUMS-linux-*
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          gh release upload "${VERSION}" \
+            "linesolv-${VERSION}-linux-amd64.deb" \
+            "LineSolv-${VERSION}-linux-amd64" \
+            "SHA256SUMS-linux-${VERSION}" \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   macos:
-    needs: version
+    needs: [version, release]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: '1.24'
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
       - name: Build arm64
@@ -210,25 +226,29 @@ jobs:
           VERSION="${{ needs.version.outputs.version }}"
           shasum -a 256 "LineSolv-${VERSION}-darwin-arm64.dmg" "LineSolv-${VERSION}-darwin-arm64" "LineSolv-${VERSION}-darwin-amd64.dmg" "LineSolv-${VERSION}-darwin-amd64" > "SHA256SUMS-darwin-${VERSION}"
       - name: Upload
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.version.outputs.version }}
-          files: |
-            LineSolv-*-darwin-*.dmg
-            LineSolv-*-darwin-*
-            SHA256SUMS-darwin-*
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          gh release upload "${VERSION}" \
+            "LineSolv-${VERSION}-darwin-arm64.dmg" \
+            "LineSolv-${VERSION}-darwin-arm64" \
+            "LineSolv-${VERSION}-darwin-amd64.dmg" \
+            "LineSolv-${VERSION}-darwin-amd64" \
+            "SHA256SUMS-darwin-${VERSION}" \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   windows:
-    needs: version
+    needs: [version, release]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: '1.24'
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
       - name: Install NSIS
         shell: pwsh
         run: |
@@ -258,10 +278,17 @@ jobs:
             sha256sum "LineSolv-${VERSION}-windows-amd64.exe" > "SHA256SUMS-windows-${VERSION}"
           fi
       - name: Upload
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.version.outputs.version }}
-          files: |
-            LineSolv-*-windows-amd64.exe
-            LineSolv-*-windows-amd64-installer.exe
-            SHA256SUMS-windows-*
+        shell: bash
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          INSTALLER=""
+          if [ -f "LineSolv-${VERSION}-windows-amd64-installer.exe" ]; then
+            INSTALLER="LineSolv-${VERSION}-windows-amd64-installer.exe"
+          fi
+          gh release upload "${VERSION}" \
+            "LineSolv-${VERSION}-windows-amd64.exe" \
+            ${INSTALLER} \
+            "SHA256SUMS-windows-${VERSION}" \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

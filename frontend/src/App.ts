@@ -42,6 +42,20 @@ const BUILTIN_THEMES = [
   'lavender',
   'sage',
   'warm-light',
+  'claude-dark',
+  'claude-light',
+  'blue-trust-dark',
+  'blue-trust-light',
+  'orange-energy-dark',
+  'orange-energy-light',
+  'green-growth-dark',
+  'green-growth-light',
+  'yellow-optimism-dark',
+  'yellow-optimism-light',
+  'purple-innovation-dark',
+  'purple-innovation-light',
+  'red-passion-dark',
+  'red-passion-light',
 ];
 let pluginThemeStyle: HTMLStyleElement | null = null;
 let pluginThemeIds: string[] = [];

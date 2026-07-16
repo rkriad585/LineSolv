@@ -2,6 +2,25 @@
 
 ## [Released]
 
+## [0.15.10] — 2026-07-16
+
+### Added
+
+- **12 New Psychology-Driven Themes** — Blue Trust (security/trust), Orange Energy (friendly CTA), Green Growth (nature/success), Yellow Optimism (attention), Purple Innovation (luxury/creative), Red Passion (urgency/energy), each with dark + light variants.
+- **CVD-Safe Status Tokens** — standardized `--color-error`, `--color-success`, `--color-warning`, `--color-info` CSS variables across all themes for color-vision-deficiency safety.
+- **Tinted Gray Scale** — 11-step gray scale (`--gray-50` to `--gray-950`) with warm violet tint for consistent neutral colors.
+- **WCAG AA Compliance** — all 29 themes now pass WCAG AA contrast ratios (4.5:1 minimum) for text-muted on surface-secondary.
+
+### Changed
+
+- **WCAG AA Contrast Fixes** — corrected `text-muted` values in 15 existing themes that failed accessibility standards (Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light).
+- **Theme Count** — expanded from 17 to 29 themes.
+- **Glass Style Default Theme** — changed from Dark to Blue Trust Dark.
+
+### Fixed
+
+- **Release Workflow macOS Job** — fixed GitHub API 404 errors when deleting/updating release assets by switching to `gh release upload --clobber` for more reliable asset management.
+
 ## [0.15.0] — 2026-07-16
 
 ### Added
@@ -372,6 +391,7 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
+[0.15.10]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.10
 [0.15.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.0
 [0.14.1]: https://github.com/rkriad585/LineSolv/releases/tag/v0.14.1
 [0.14.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.14.0

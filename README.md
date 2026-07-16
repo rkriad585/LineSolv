@@ -6,7 +6,7 @@
     <a href="https://github.com/rkriad585/LineSolv/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
     </a>
-    <img src="https://img.shields.io/badge/version-0.15.0-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/version-0.15.10-green.svg" alt="Version">
     <img src="https://img.shields.io/badge/platform-linux%20|%20macOS%20|%20windows-lightgrey" alt="Platform">
     <img src="https://img.shields.io/badge/go-1.24+-00ADD8?logo=go&logoColor=white" alt="Go">
     <img src="https://img.shields.io/badge/wails-v2-5c2d91?logo=wails&logoColor=white" alt="Wails">
@@ -481,7 +481,7 @@ LineSolv/
 ├── main.go                 # Entrypoint
 ├── wails.json              # Wails configuration
 ├── go.mod                  # Go module definition
-├── .version                # Current version (0.15.0)
+├── .version                # Current version (0.15.10)
 ├── logo.svg                # Project logo
 ├── docs/examples.txt       # Input examples
 ├── CHANGELOG.md            # Version history

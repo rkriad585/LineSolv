@@ -29,7 +29,7 @@ const evalTimeout = 5 * time.Second
 var (
 	globalCtx  context.Context
 	ctxMu      sync.Mutex
-	appVersion = "0.15.0"
+	appVersion = "0.15.10"
 	versionMu  sync.RWMutex
 )
 
@@ -610,6 +610,7 @@ func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 	go func() {
 		time.Sleep(500 * time.Millisecond)
 		s.replaceAndRestart(exePath, tmpFile.Name())
+		time.Sleep(1 * time.Second) // give new process time to start
 		wailsruntime.Quit(ctx)
 	}()
 
@@ -621,45 +622,58 @@ func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
 }
 
 func (s *AppService) replaceAndRestart(exePath, tmpFile string) {
+	// Ensure temp file is executable before any move operations
+	_ = os.Chmod(tmpFile, 0755) //nolint:errcheck
+
 	switch runtime.GOOS {
 	case "windows":
-		bat := filepath.Join(os.TempDir(), "linesolv_update.bat")
-		exeDir := filepath.Dir(exePath)
-		exeName := filepath.Base(exePath)
-		if err := os.WriteFile(bat, []byte(fmt.Sprintf(
-			"@echo off\r\n"+
-				"timeout /t 2 /nobreak >nul\r\n"+
-				"cd /d \"%s\"\r\n"+
-				"del \"%s\"\r\n"+
-				"move \"%s\" \"%s\"\r\n"+
-				"start \"\" \"%s\"\r\n"+
-				"del \"%s\"\r\n",
-			exeDir, exeName, tmpFile, exeName, exePath, bat,
-		)), 0600); err != nil {
+		// Windows: rename running exe to .old (allowed), place new binary, schedule cleanup
+		oldExe := exePath + ".old"
+		_ = os.Remove(oldExe) // clean up any previous .old file
+		if err := os.Rename(exePath, oldExe); err != nil {
 			return
 		}
-		_ = exec.Command("cmd.exe", "/c", bat).Start() //nolint:errcheck
+		if err := os.Rename(tmpFile, exePath); err != nil {
+			// Rollback: try to restore old exe
+			_ = os.Rename(oldExe, exePath) //nolint:errcheck
+			return
+		}
+		// Start new process, then exit current
+		_ = exec.Command(exePath).Start() //nolint:errcheck
+		// Schedule cleanup of .old file after a delay
+		go func() {
+			time.Sleep(3 * time.Second)
+			_ = os.Remove(oldExe) //nolint:errcheck
+		}()
 	case "darwin":
-		script := fmt.Sprintf(
-			`#!/bin/bash
-sleep 2
-osascript -e 'do shell script "mv \"%s\" \"%s\" && \"%s\" &" with administrator privileges' 2>/dev/null
-rm -f "%s"`,
-			tmpFile, exePath, exePath, tmpFile,
-		)
-		f := filepath.Join(os.TempDir(), "linesolv_update.sh")
-		if err := os.WriteFile(f, []byte(script), 0600); err != nil { //nolint:gosec
+		// macOS: use osascript for elevation if needed (app may be in /Applications)
+		if err := os.Rename(tmpFile, exePath); err != nil {
+			// Fallback: elevated mv via osascript
+			script := fmt.Sprintf(
+				`#!/bin/bash
+sleep 1
+osascript -e 'do shell script "mv \"%s\" \"%s\"" with administrator privileges' 2>/dev/null
+"%s" &
+rm -f "$0"`,
+				tmpFile, exePath, exePath,
+			)
+			f := filepath.Join(os.TempDir(), "linesolv_update.sh")
+			if err := os.WriteFile(f, []byte(script), 0600); err != nil { //nolint:gosec
+				return
+			}
+			_ = exec.Command("/bin/bash", f).Start() //nolint:errcheck
 			return
 		}
-		_ = exec.Command("/bin/bash", f).Start() //nolint:errcheck
+		_ = exec.Command(exePath).Start() //nolint:errcheck
 	default: // linux
 		if err := os.Rename(tmpFile, exePath); err == nil {
 			_ = exec.Command(exePath).Start() //nolint:errcheck
 			return
 		}
+		// Fallback: elevated mv via pkexec
 		script := fmt.Sprintf(
 			`#!/bin/bash
-sleep 2
+sleep 1
 mv "%s" "%s"
 "%s" &
 rm -f "$0"`,

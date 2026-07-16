@@ -1,7 +1,7 @@
-import type {SettingsStore, SettingsState} from '../stores/settings';
+import type { SettingsStore, SettingsState } from '../stores/settings';
 import * as serviceBindings from '../../wailsjs/go/service/AppService';
-import {toast} from '../utils/toast';
-import {EventsOn} from '../../wailsjs/runtime/runtime';
+import { toast } from '../utils/toast';
+import { EventsOn } from '../../wailsjs/runtime/runtime';
 
 interface CustomSelect {
   el: HTMLElement;
@@ -10,57 +10,184 @@ interface CustomSelect {
   addEventListener(type: 'change', fn: () => void): void;
 }
 
-import {ALL_SHORTCUTS} from '../utils/shortcutDefs';
+import { ALL_SHORTCUTS } from '../utils/shortcutDefs';
 
 const APP_REPO = 'https://github.com/rkriad585/LineSolv';
 
-const CHECK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const CHECK_ICON =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 
 const THEMES = [
-  {id: 'dark',       label: 'Dark',       bg: '#18181b', accent: '#a78bfa', text: '#f4f4f5'},
-  {id: 'light',      label: 'Light',     bg: '#fafafa', accent: '#7c3aed', text: '#18181b'},
-  {id: 'neon',       label: 'Neon',       bg: '#0a0a0a', accent: '#00ff41', text: '#e0e0e0'},
-  {id: 'red',        label: 'Red',        bg: '#1a0a0a', accent: '#e53935', text: '#f0e0e0'},
-  {id: 'obsidian',   label: 'Obsidian',  bg: '#0d0d0d', accent: '#d4a043', text: '#d4c5a9'},
-  {id: 'plasma',     label: 'Plasma',    bg: '#0d0d1a', accent: '#bb86fc', text: '#e0dff0'},
-  {id: 'blood',      label: 'Blood',      bg: '#0a0505', accent: '#b71c1c', text: '#e8d0d0'},
-  {id: 'midnight',   label: 'Midnight',   bg: '#0f172a', accent: '#38bdf8', text: '#f1f5f9'},
-  {id: 'aurora',     label: 'Aurora',     bg: '#0c0a1a', accent: '#22d3ee', text: '#e8e0ff'},
-  {id: 'mono',       label: 'Mono',       bg: '#000000', accent: '#ffffff', text: '#ffffff'},
-  {id: 'frost',      label: 'Frost',      bg: '#0a1628', accent: '#60a5fa', text: '#e0ecff'},
-  {id: 'prism',      label: 'Prism',      bg: '#1a0a28', accent: '#c084fc', text: '#f0e8ff'},
-  {id: 'lavender',   label: 'Lavender',   bg: '#1a1528', accent: '#a78bfa', text: '#eee8ff'},
-  {id: 'sage',       label: 'Sage',       bg: '#0f1a14', accent: '#34d399', text: '#e8f5ec'},
-  {id: 'warm-light', label: 'Warm Light', bg: '#1a1510', accent: '#fbbf24', text: '#f5efe8'},
+  { id: 'dark', label: 'Dark', bg: '#18181b', accent: '#a78bfa', text: '#f4f4f5' },
+  { id: 'light', label: 'Light', bg: '#fafafa', accent: '#7c3aed', text: '#18181b' },
+  { id: 'neon', label: 'Neon', bg: '#0a0a0a', accent: '#00ff41', text: '#e0e0e0' },
+  { id: 'red', label: 'Red', bg: '#1a0a0a', accent: '#e53935', text: '#f0e0e0' },
+  { id: 'obsidian', label: 'Obsidian', bg: '#0d0d0d', accent: '#d4a043', text: '#d4c5a9' },
+  { id: 'plasma', label: 'Plasma', bg: '#0d0d1a', accent: '#bb86fc', text: '#e0dff0' },
+  { id: 'blood', label: 'Blood', bg: '#0a0505', accent: '#b71c1c', text: '#e8d0d0' },
+  { id: 'midnight', label: 'Midnight', bg: '#0f172a', accent: '#38bdf8', text: '#f1f5f9' },
+  { id: 'aurora', label: 'Aurora', bg: '#0c0a1a', accent: '#22d3ee', text: '#e8e0ff' },
+  { id: 'mono', label: 'Mono', bg: '#000000', accent: '#ffffff', text: '#ffffff' },
+  { id: 'frost', label: 'Frost', bg: '#0a1628', accent: '#60a5fa', text: '#e0ecff' },
+  { id: 'prism', label: 'Prism', bg: '#1a0a28', accent: '#c084fc', text: '#f0e8ff' },
+  { id: 'lavender', label: 'Lavender', bg: '#1a1528', accent: '#a78bfa', text: '#eee8ff' },
+  { id: 'sage', label: 'Sage', bg: '#0f1a14', accent: '#34d399', text: '#e8f5ec' },
+  { id: 'warm-light', label: 'Warm Light', bg: '#1a1510', accent: '#fbbf24', text: '#f5efe8' },
+  { id: 'claude-dark', label: 'Claude Dark', bg: '#141413', accent: '#c96442', text: '#f4f3ee' },
+  { id: 'claude-light', label: 'Claude Light', bg: '#f5f4ed', accent: '#c96442', text: '#141413' },
+  {
+    id: 'blue-trust-dark',
+    label: 'Blue Trust Dark',
+    bg: '#0f1729',
+    accent: '#3b82f6',
+    text: '#e8edf5',
+  },
+  {
+    id: 'blue-trust-light',
+    label: 'Blue Trust Light',
+    bg: '#f0f4fa',
+    accent: '#2563eb',
+    text: '#0f1729',
+  },
+  {
+    id: 'orange-energy-dark',
+    label: 'Orange Energy Dark',
+    bg: '#1a1210',
+    accent: '#f97316',
+    text: '#f5efe8',
+  },
+  {
+    id: 'orange-energy-light',
+    label: 'Orange Energy Light',
+    bg: '#fdf8f3',
+    accent: '#ea580c',
+    text: '#1a1210',
+  },
+  {
+    id: 'green-growth-dark',
+    label: 'Green Growth Dark',
+    bg: '#0a1a12',
+    accent: '#10b981',
+    text: '#e8f5ec',
+  },
+  {
+    id: 'green-growth-light',
+    label: 'Green Growth Light',
+    bg: '#f0f8f4',
+    accent: '#059669',
+    text: '#0a1a12',
+  },
+  {
+    id: 'yellow-optimism-dark',
+    label: 'Yellow Optimism Dark',
+    bg: '#1a1810',
+    accent: '#eab308',
+    text: '#f5f0e0',
+  },
+  {
+    id: 'yellow-optimism-light',
+    label: 'Yellow Optimism Light',
+    bg: '#fefcf0',
+    accent: '#ca8a04',
+    text: '#1a1810',
+  },
+  {
+    id: 'purple-innovation-dark',
+    label: 'Purple Innovation Dark',
+    bg: '#12101a',
+    accent: '#8b5cf6',
+    text: '#eee8ff',
+  },
+  {
+    id: 'purple-innovation-light',
+    label: 'Purple Innovation Light',
+    bg: '#f5f0fa',
+    accent: '#7c3aed',
+    text: '#12101a',
+  },
+  {
+    id: 'red-passion-dark',
+    label: 'Red Passion Dark',
+    bg: '#1a0e0e',
+    accent: '#ef4444',
+    text: '#f0e0e0',
+  },
+  {
+    id: 'red-passion-light',
+    label: 'Red Passion Light',
+    bg: '#fef5f5',
+    accent: '#dc2626',
+    text: '#1a0e0e',
+  },
 ];
 
 const STYLES = [
-  {id: 'default',   label: 'Default',   desc: 'Flat, clean, minimal',        radius: '8px',  shadow: 'none'},
-  {id: 'nothing',   label: 'Nothing',   desc: 'Monochrome, industrial, Swiss', radius: '4px',  shadow: 'none'},
-  {id: 'glass',     label: 'Liquid Glass', desc: 'Frosted glass, translucent', radius: '16px', shadow: '0 4px 16px rgba(0,0,0,0.15)'},
-  {id: 'material',  label: 'Material 3', desc: 'Rounded, tinted, elevation', radius: '12px', shadow: '0 2px 6px rgba(0,0,0,0.15)'},
-  {id: 'alivated',  label: 'Alivated',  desc: 'Soft, warm, neumorphic',      radius: '16px', shadow: '4px 4px 12px rgba(0,0,0,0.15), -4px -4px 12px rgba(255,255,255,0.04)'},
-  {id: 'neon',      label: 'Neon',      desc: 'Cyberpunk, glowing borders',  radius: '4px',  shadow: '0 0 8px var(--accent)'},
-  {id: 'claude',    label: 'Claude Code', desc: 'Clean, warm, Anthropic-inspired', radius: '10px', shadow: '0 2px 8px rgba(0,0,0,0.1)'},
+  { id: 'default', label: 'Default', desc: 'Flat, clean, minimal', radius: '8px', shadow: 'none' },
+  {
+    id: 'nothing',
+    label: 'Nothing',
+    desc: 'Monochrome, industrial, Swiss',
+    radius: '4px',
+    shadow: 'none',
+  },
+  {
+    id: 'glass',
+    label: 'Liquid Glass',
+    desc: 'Frosted glass, translucent',
+    radius: '16px',
+    shadow: '0 4px 16px rgba(0,0,0,0.15)',
+  },
+  {
+    id: 'material',
+    label: 'Material 3',
+    desc: 'Rounded, tinted, elevation',
+    radius: '12px',
+    shadow: '0 2px 6px rgba(0,0,0,0.15)',
+  },
+  {
+    id: 'alivated',
+    label: 'Alivated',
+    desc: 'Soft, warm, neumorphic',
+    radius: '16px',
+    shadow: '4px 4px 12px rgba(0,0,0,0.15), -4px -4px 12px rgba(255,255,255,0.04)',
+  },
+  {
+    id: 'neon',
+    label: 'Neon',
+    desc: 'Cyberpunk, glowing borders',
+    radius: '4px',
+    shadow: '0 0 8px var(--accent)',
+  },
+  {
+    id: 'claude',
+    label: 'Claude Code',
+    desc: 'Clean, warm, Anthropic-inspired',
+    radius: '10px',
+    shadow: '0 2px 8px rgba(0,0,0,0.1)',
+  },
 ];
 
 const STYLE_THEME_DEFAULTS: Record<string, string> = {
-  'default':  'dark',
-  'nothing':  'mono',
-  'glass':    'dark',
-  'material': 'midnight',
-  'alivated': 'warm-light',
-  'neon':     'neon',
-  'claude':   'claude-dark',
+  default: 'dark',
+  nothing: 'mono',
+  glass: 'blue-trust-dark',
+  material: 'midnight',
+  alivated: 'warm-light',
+  neon: 'neon',
+  claude: 'claude-dark',
 };
 
-const EDIT_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
+const EDIT_ICON =
+  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
 
-const CLOSE_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+const CLOSE_ICON =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
 
-const SETTINGS_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+const SETTINGS_ICON =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 
-const LOGO_SVG = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
+const LOGO_SVG =
+  '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
 
 function keyEventToCombo(e: KeyboardEvent): string {
   const parts: string[] = [];
@@ -145,11 +272,13 @@ export class SettingsModal {
       'background:var(--surface-secondary);border-bottom:1px solid var(--border);--wails-draggable:drag;';
 
     this.headerTitleEl = document.createElement('div');
-    this.headerTitleEl.style.cssText = 'display:flex;align-items:center;gap:8px;color:var(--text);font-weight:600;--wails-draggable:drag;';
+    this.headerTitleEl.style.cssText =
+      'display:flex;align-items:center;gap:8px;color:var(--text);font-weight:600;--wails-draggable:drag;';
     this.headerTitleEl.innerHTML = `${SETTINGS_ICON}<span>Settings</span>`;
 
     const headerActions = document.createElement('div');
-    headerActions.style.cssText = 'display:flex;align-items:center;gap:8px;--wails-draggable:no-drag;';
+    headerActions.style.cssText =
+      'display:flex;align-items:center;gap:8px;--wails-draggable:no-drag;';
 
     const resetBtn = document.createElement('button');
     resetBtn.textContent = 'Reset';
@@ -157,8 +286,14 @@ export class SettingsModal {
     resetBtn.style.cssText =
       'padding:5px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;' +
       'background:transparent;color:var(--text-muted);transition:all 0.15s;';
-    resetBtn.addEventListener('mouseenter', () => { resetBtn.style.borderColor = 'var(--accent)'; resetBtn.style.color = 'var(--text)'; });
-    resetBtn.addEventListener('mouseleave', () => { resetBtn.style.borderColor = 'var(--border)'; resetBtn.style.color = 'var(--text-muted)'; });
+    resetBtn.addEventListener('mouseenter', () => {
+      resetBtn.style.borderColor = 'var(--accent)';
+      resetBtn.style.color = 'var(--text)';
+    });
+    resetBtn.addEventListener('mouseleave', () => {
+      resetBtn.style.borderColor = 'var(--border)';
+      resetBtn.style.color = 'var(--text-muted)';
+    });
     resetBtn.addEventListener('click', () => this.resetToDefaults());
 
     const closeBtn = document.createElement('button');
@@ -168,8 +303,12 @@ export class SettingsModal {
       'display:flex;align-items:center;justify-content:center;width:28px;height:28px;' +
       'border:none;border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;' +
       'transition:background 0.15s;';
-    closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'var(--surface-hover)'; });
-    closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'transparent'; });
+    closeBtn.addEventListener('mouseenter', () => {
+      closeBtn.style.background = 'var(--surface-hover)';
+    });
+    closeBtn.addEventListener('mouseleave', () => {
+      closeBtn.style.background = 'transparent';
+    });
     closeBtn.addEventListener('click', () => this.close());
 
     headerActions.append(resetBtn, closeBtn);
@@ -282,7 +421,9 @@ export class SettingsModal {
     });
   }
 
-  private styledFontSelect(fonts: Array<{ group: string; value: string; label: string }>): CustomSelect {
+  private styledFontSelect(
+    fonts: Array<{ group: string; value: string; label: string }>,
+  ): CustomSelect {
     const container = document.createElement('div');
     container.style.cssText = 'position:relative;max-width:240px;';
 
@@ -350,15 +491,19 @@ export class SettingsModal {
       check.style.cssText = 'display:none;color:var(--accent);flex-shrink:0;';
       item.appendChild(check);
 
-      item.addEventListener('mouseenter', () => { item.style.background = 'var(--surface-hover)'; });
-      item.addEventListener('mouseleave', () => { item.style.background = 'transparent'; });
+      item.addEventListener('mouseenter', () => {
+        item.style.background = 'var(--surface-hover)';
+      });
+      item.addEventListener('mouseleave', () => {
+        item.style.background = 'transparent';
+      });
       item.addEventListener('click', () => {
         currentIndex = idx;
         label.textContent = f.label;
         label.style.fontFamily = f.value;
         updateActiveItem();
         closePanel();
-        changeCallbacks.forEach(fn => fn());
+        changeCallbacks.forEach((fn) => fn());
       });
       panel.appendChild(item);
       itemEls.push(item);
@@ -396,9 +541,11 @@ export class SettingsModal {
 
     return {
       el: container,
-      get value() { return fonts[currentIndex].value; },
+      get value() {
+        return fonts[currentIndex].value;
+      },
       set value(v: string) {
-        const idx = fonts.findIndex(f => f.value === v);
+        const idx = fonts.findIndex((f) => f.value === v);
         if (idx >= 0) {
           currentIndex = idx;
           label.textContent = fonts[idx].label;
@@ -406,7 +553,7 @@ export class SettingsModal {
           updateActiveItem();
         }
       },
-      options: fonts.map(f => f.value),
+      options: fonts.map((f) => f.value),
       addEventListener(type: string, fn: () => void) {
         if (type === 'change') changeCallbacks.push(fn);
       },
@@ -415,7 +562,8 @@ export class SettingsModal {
 
   private fieldRow(label: string, makeCtrl: () => HTMLElement): HTMLDivElement {
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
+    row.style.cssText =
+      'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
 
     const lbl = document.createElement('span');
     lbl.textContent = label;
@@ -425,9 +573,19 @@ export class SettingsModal {
     return row;
   }
 
-  private toggleRow(label: string, desc: string, checked: boolean): { el: HTMLDivElement; toggle: HTMLInputElement; track: HTMLDivElement; thumb: HTMLDivElement } {
+  private toggleRow(
+    label: string,
+    desc: string,
+    checked: boolean,
+  ): {
+    el: HTMLDivElement;
+    toggle: HTMLInputElement;
+    track: HTMLDivElement;
+    thumb: HTMLDivElement;
+  } {
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
+    row.style.cssText =
+      'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
 
     const left = document.createElement('div');
     left.style.cssText = 'display:flex;flex-direction:column;gap:1px;';
@@ -465,7 +623,11 @@ export class SettingsModal {
     return { el: row, toggle, track, thumb };
   }
 
-  private updateToggleVisual(toggle: HTMLInputElement, track: HTMLDivElement, thumb: HTMLDivElement): void {
+  private updateToggleVisual(
+    toggle: HTMLInputElement,
+    track: HTMLDivElement,
+    thumb: HTMLDivElement,
+  ): void {
     track.style.background = toggle.checked ? 'var(--accent)' : 'var(--border)';
     thumb.style.left = toggle.checked ? '18px' : '2px';
   }
@@ -498,7 +660,9 @@ export class SettingsModal {
       const isActive = this.sizeChipValues[i] === current;
       chip.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
       chip.style.color = isActive ? 'var(--text)' : 'var(--text-muted)';
-      chip.style.background = isActive ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent';
+      chip.style.background = isActive
+        ? 'color-mix(in srgb, var(--accent) 10%, transparent)'
+        : 'transparent';
     });
   }
 
@@ -519,23 +683,27 @@ export class SettingsModal {
 
     const familyRow = this.fieldRow('Font Family', () => {
       const fonts = [
-        { group: 'Sans-Serif', value: '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif', label: 'System Default' },
+        {
+          group: 'Sans-Serif',
+          value: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          label: 'System Default',
+        },
         { group: 'Sans-Serif', value: 'Inter, sans-serif', label: 'Inter' },
         { group: 'Sans-Serif', value: 'Overpass, sans-serif', label: 'Overpass' },
         { group: 'Sans-Serif', value: 'Ubuntu, sans-serif', label: 'Ubuntu' },
         { group: 'Serif', value: 'Georgia, serif', label: 'Georgia' },
-        { group: 'Serif', value: '\'Times New Roman\', serif', label: 'Times New Roman' },
-        { group: 'Serif', value: '\'Playfair Display\', serif', label: 'Playfair Display' },
+        { group: 'Serif', value: "'Times New Roman', serif", label: 'Times New Roman' },
+        { group: 'Serif', value: "'Playfair Display', serif", label: 'Playfair Display' },
         { group: 'Monospace', value: 'monospace', label: 'System Mono' },
-        { group: 'Monospace', value: '\'JetBrains Mono\', monospace', label: 'JetBrains Mono' },
-        { group: 'Monospace', value: '\'Fira Code\', monospace', label: 'Fira Code' },
-        { group: 'Monospace', value: '\'Source Code Pro\', monospace', label: 'Source Code Pro' },
-        { group: 'Monospace', value: '\'IBM Plex Mono\', monospace', label: 'IBM Plex Mono' },
-        { group: 'Monospace', value: '\'Cascadia Code\', monospace', label: 'Cascadia Code' },
-        { group: 'Monospace', value: '\'Hack\', monospace', label: 'Hack' },
-        { group: 'Monospace', value: '\'Victor Mono\', monospace', label: 'Victor Mono' },
-        { group: 'Monospace', value: '\'Space Mono\', monospace', label: 'Space Mono' },
-        { group: 'Monospace', value: '\'Courier New\', monospace', label: 'Courier New' },
+        { group: 'Monospace', value: "'JetBrains Mono', monospace", label: 'JetBrains Mono' },
+        { group: 'Monospace', value: "'Fira Code', monospace", label: 'Fira Code' },
+        { group: 'Monospace', value: "'Source Code Pro', monospace", label: 'Source Code Pro' },
+        { group: 'Monospace', value: "'IBM Plex Mono', monospace", label: 'IBM Plex Mono' },
+        { group: 'Monospace', value: "'Cascadia Code', monospace", label: 'Cascadia Code' },
+        { group: 'Monospace', value: "'Hack', monospace", label: 'Hack' },
+        { group: 'Monospace', value: "'Victor Mono', monospace", label: 'Victor Mono' },
+        { group: 'Monospace', value: "'Space Mono', monospace", label: 'Space Mono' },
+        { group: 'Monospace', value: "'Courier New', monospace", label: 'Courier New' },
       ];
       const sel = this.styledFontSelect(fonts);
       this.fontFamilySelect = sel;
@@ -547,7 +715,8 @@ export class SettingsModal {
     sizeRow.style.cssText = 'padding:9px 0;';
 
     const sizeTop = document.createElement('div');
-    sizeTop.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
+    sizeTop.style.cssText =
+      'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
 
     const sizeLabel = document.createElement('span');
     sizeLabel.textContent = 'Font Size';
@@ -555,7 +724,8 @@ export class SettingsModal {
 
     const sizeValue = document.createElement('span');
     this.fontSizeValueEl = sizeValue;
-    sizeValue.style.cssText = 'font-size:12px;color:var(--text-muted);min-width:28px;text-align:right;';
+    sizeValue.style.cssText =
+      'font-size:12px;color:var(--text-muted);min-width:28px;text-align:right;';
     sizeTop.append(sizeLabel, sizeValue);
 
     const slider = document.createElement('input');
@@ -587,14 +757,19 @@ export class SettingsModal {
       chip.style.cssText =
         'padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:transparent;' +
         'color:var(--text-muted);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;';
-      chip.addEventListener('mouseenter', () => { chip.style.borderColor = 'var(--accent)'; chip.style.color = 'var(--text)'; });
-      chip.addEventListener('mouseleave', () => { this.updateSizeChipHighlight(); });
+      chip.addEventListener('mouseenter', () => {
+        chip.style.borderColor = 'var(--accent)';
+        chip.style.color = 'var(--text)';
+      });
+      chip.addEventListener('mouseleave', () => {
+        this.updateSizeChipHighlight();
+      });
       chip.addEventListener('click', () => {
         slider.value = s.value;
         sizeValue.textContent = s.value + 'px';
         this.updateSizeChipHighlight();
-      this.updatePreview();
-      this.updateSizeChipHighlight();
+        this.updatePreview();
+        this.updateSizeChipHighlight();
       });
       presets.appendChild(chip);
       this.sizeChipEls.push(chip);
@@ -623,7 +798,8 @@ export class SettingsModal {
     panel.appendChild(this.sectionHeader('Appearance'));
 
     const opacityRow = document.createElement('div');
-    opacityRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
+    opacityRow.style.cssText =
+      'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
     const opacityLeft = document.createElement('div');
     opacityLeft.style.cssText = 'display:flex;flex-direction:column;gap:1px;';
     const opacityLabel = document.createElement('span');
@@ -641,11 +817,11 @@ export class SettingsModal {
     this.opacityInput.max = '1';
     this.opacityInput.step = '0.05';
     this.opacityInput.value = '0.95';
-    this.opacityInput.style.cssText =
-      'width:100px;accent-color:var(--accent);cursor:pointer;';
+    this.opacityInput.style.cssText = 'width:100px;accent-color:var(--accent);cursor:pointer;';
     this.opacityValueEl = document.createElement('span');
     this.opacityValueEl.textContent = '95%';
-    this.opacityValueEl.style.cssText = 'font-size:12px;color:var(--text-muted);min-width:32px;text-align:right;';
+    this.opacityValueEl.style.cssText =
+      'font-size:12px;color:var(--text-muted);min-width:32px;text-align:right;';
     this.opacityInput.addEventListener('input', () => {
       this.opacityValueEl.textContent = Math.round(parseFloat(this.opacityInput.value) * 100) + '%';
     });
@@ -684,20 +860,12 @@ export class SettingsModal {
     this.resultPanelTrack = resultPanelRow.track;
     this.resultPanelThumb = resultPanelRow.thumb;
 
-    const lineWrapRow = this.toggleRow(
-      'Line Wrap',
-      'Wrap long lines in the editor',
-      true,
-    );
+    const lineWrapRow = this.toggleRow('Line Wrap', 'Wrap long lines in the editor', true);
     this.lineWrapToggle = lineWrapRow.toggle;
     this.lineWrapTrack = lineWrapRow.track;
     this.lineWrapThumb = lineWrapRow.thumb;
 
-    const toastRow = this.toggleRow(
-      'Toast Notifications',
-      'Show success and error messages',
-      true,
-    );
+    const toastRow = this.toggleRow('Toast Notifications', 'Show success and error messages', true);
     this.toastToggle = toastRow.toggle;
     this.toastTrack = toastRow.track;
     this.toastThumb = toastRow.thumb;
@@ -712,11 +880,13 @@ export class SettingsModal {
 
     const previewLabel = document.createElement('div');
     previewLabel.textContent = 'Preview';
-    previewLabel.style.cssText = 'font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:6px;user-select:none;';
+    previewLabel.style.cssText =
+      'font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:6px;user-select:none;';
 
     this.previewEl = document.createElement('div');
     this.previewEl.textContent = 'AaBbCc 123 \u2014 The quick brown fox jumps over the lazy dog.';
-    this.previewEl.style.cssText = 'font-size:14px;font-family:monospace;color:var(--text);padding:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    this.previewEl.style.cssText =
+      'font-size:14px;font-family:monospace;color:var(--text);padding:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
 
     previewSection.append(previewLabel, this.previewEl);
     panel.appendChild(previewSection);
@@ -745,7 +915,10 @@ export class SettingsModal {
 
     this.themeCards.clear();
 
-    const addThemeCard = (t: {id: string; label: string; bg: string; accent: string; text: string}, isPlugin = false) => {
+    const addThemeCard = (
+      t: { id: string; label: string; bg: string; accent: string; text: string },
+      isPlugin = false,
+    ) => {
       const card = document.createElement('div');
       card.tabIndex = 0;
       (card as ThemeCardElement).themeId = t.id;
@@ -760,7 +933,8 @@ export class SettingsModal {
       });
 
       const swatch = document.createElement('div');
-      swatch.style.cssText = 'height:48px;display:flex;align-items:center;justify-content:center;gap:6px;';
+      swatch.style.cssText =
+        'height:48px;display:flex;align-items:center;justify-content:center;gap:6px;';
       swatch.style.background = t.bg;
       swatch.style.color = t.accent;
 
@@ -791,7 +965,8 @@ export class SettingsModal {
       if (isPlugin) {
         const badge = document.createElement('span');
         badge.textContent = 'Plugin';
-        badge.style.cssText = 'font-size:10px;padding:1px 6px;border-radius:8px;background:var(--accent);color:var(--surface);font-weight:500;';
+        badge.style.cssText =
+          'font-size:10px;padding:1px 6px;border-radius:8px;background:var(--accent);color:var(--surface);font-weight:500;';
         label.appendChild(badge);
       }
 
@@ -821,21 +996,27 @@ export class SettingsModal {
       this.highlightThemeCard(currentTheme);
     });
 
-    serviceBindings.GetPluginThemes().then((pluginThemes) => {
-      if (pluginThemes && pluginThemes.length > 0) {
-        for (const pt of pluginThemes) {
-          const colors = pt.colors || {};
-          addThemeCard({
-            id: pt.id,
-            label: pt.label,
-            bg: colors['--surface'] || '#18181b',
-            accent: colors['--accent'] || '#a78bfa',
-            text: colors['--text'] || '#f4f4f5',
-          }, true);
+    serviceBindings
+      .GetPluginThemes()
+      .then((pluginThemes) => {
+        if (pluginThemes && pluginThemes.length > 0) {
+          for (const pt of pluginThemes) {
+            const colors = pt.colors || {};
+            addThemeCard(
+              {
+                id: pt.id,
+                label: pt.label,
+                bg: colors['--surface'] || '#18181b',
+                accent: colors['--accent'] || '#a78bfa',
+                text: colors['--text'] || '#f4f4f5',
+              },
+              true,
+            );
+          }
+          this.highlightThemeCard(this.selectedTheme);
         }
-        this.highlightThemeCard(this.selectedTheme);
-      }
-    }).catch(() => {});
+      })
+      .catch(() => {});
 
     panel.append(note, grid);
   }
@@ -852,7 +1033,13 @@ export class SettingsModal {
 
     this.styleCards.clear();
 
-    const addStyleCard = (s: {id: string; label: string; desc: string; radius: string; shadow: string}) => {
+    const addStyleCard = (s: {
+      id: string;
+      label: string;
+      desc: string;
+      radius: string;
+      shadow: string;
+    }) => {
       const card = document.createElement('div');
       card.tabIndex = 0;
       (card as StyleCardElement).styleId = s.id;
@@ -867,7 +1054,8 @@ export class SettingsModal {
       });
 
       const preview = document.createElement('div');
-      preview.style.cssText = 'height:56px;display:flex;align-items:center;justify-content:center;background:var(--surface-secondary);position:relative;';
+      preview.style.cssText =
+        'height:56px;display:flex;align-items:center;justify-content:center;background:var(--surface-secondary);position:relative;';
 
       const sample = document.createElement('div');
       sample.style.cssText =
@@ -940,8 +1128,12 @@ export class SettingsModal {
       row.style.cssText =
         'display:flex;align-items:center;justify-content:space-between;' +
         'padding:6px 10px;border-radius:6px;transition:background .1s;';
-      row.addEventListener('mouseenter', () => { row.style.background = 'var(--surface-hover)'; });
-      row.addEventListener('mouseleave', () => { row.style.background = ''; });
+      row.addEventListener('mouseenter', () => {
+        row.style.background = 'var(--surface-hover)';
+      });
+      row.addEventListener('mouseleave', () => {
+        row.style.background = '';
+      });
 
       const descEl = document.createElement('span');
       descEl.textContent = s.desc;
@@ -1003,8 +1195,14 @@ export class SettingsModal {
         'display:flex;align-items:center;justify-content:center;width:24px;height:24px;' +
         'border:none;border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;flex-shrink:0;' +
         'transition:background .15s;';
-      editBtn.addEventListener('mouseenter', () => { editBtn.style.background = 'var(--surface-hover)'; editBtn.style.color = 'var(--text)'; });
-      editBtn.addEventListener('mouseleave', () => { editBtn.style.background = 'transparent'; editBtn.style.color = 'var(--text-muted)'; });
+      editBtn.addEventListener('mouseenter', () => {
+        editBtn.style.background = 'var(--surface-hover)';
+        editBtn.style.color = 'var(--text)';
+      });
+      editBtn.addEventListener('mouseleave', () => {
+        editBtn.style.background = 'transparent';
+        editBtn.style.color = 'var(--text-muted)';
+      });
       editBtn.addEventListener('click', beginEdit);
       kbd.addEventListener('click', beginEdit);
 
@@ -1018,7 +1216,8 @@ export class SettingsModal {
 
   private buildAbout(panel: HTMLDivElement): void {
     const center = document.createElement('div');
-    center.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 0;';
+    center.style.cssText =
+      'display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 0;';
 
     const logo = document.createElement('div');
     logo.innerHTML = LOGO_SVG;
@@ -1042,7 +1241,11 @@ export class SettingsModal {
     authorLink.style.cssText = 'color:var(--accent);text-decoration:none;';
     authorLink.addEventListener('click', (e) => {
       e.preventDefault();
-      try { window.runtime?.BrowserOpenURL('https://www.google.com/search?q=rkriad585'); } catch { /* ignored */ }
+      try {
+        window.runtime?.BrowserOpenURL('https://www.google.com/search?q=rkriad585');
+      } catch {
+        /* ignored */
+      }
     });
     authorEl.append('Author: ', authorLink);
 
@@ -1058,7 +1261,11 @@ export class SettingsModal {
     repoLink.style.cssText = 'color:var(--accent);text-decoration:none;';
     repoLink.addEventListener('click', (e) => {
       e.preventDefault();
-      try { window.runtime?.BrowserOpenURL(APP_REPO); } catch { /* ignored */ }
+      try {
+        window.runtime?.BrowserOpenURL(APP_REPO);
+      } catch {
+        /* ignored */
+      }
     });
     repoEl.appendChild(repoLink);
 
@@ -1070,20 +1277,31 @@ export class SettingsModal {
     privacyLink.style.cssText = 'color:var(--accent);text-decoration:none;';
     privacyLink.addEventListener('click', (e) => {
       e.preventDefault();
-      try { window.runtime?.BrowserOpenURL('https://github.com/rkriad585/LineSolv/blob/main/docs/privacy-policy.md'); } catch { /* ignored */ }
+      try {
+        window.runtime?.BrowserOpenURL(
+          'https://github.com/rkriad585/LineSolv/blob/main/docs/privacy-policy.md',
+        );
+      } catch {
+        /* ignored */
+      }
     });
     privacyEl.appendChild(privacyLink);
 
     const updateSection = document.createElement('div');
-    updateSection.style.cssText = 'margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;';
+    updateSection.style.cssText =
+      'margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;';
 
     this.checkBtn = document.createElement('button');
     this.checkBtn.textContent = 'Update';
     this.checkBtn.style.cssText =
       'padding:7px 18px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;' +
       'background:var(--accent);color:#fff;transition:opacity .15s;';
-    this.checkBtn.addEventListener('mouseenter', () => { this.checkBtn.style.opacity = '0.85'; });
-    this.checkBtn.addEventListener('mouseleave', () => { this.checkBtn.style.opacity = '1'; });
+    this.checkBtn.addEventListener('mouseenter', () => {
+      this.checkBtn.style.opacity = '0.85';
+    });
+    this.checkBtn.addEventListener('mouseleave', () => {
+      this.checkBtn.style.opacity = '1';
+    });
     this.checkBtn.addEventListener('click', () => this.performUpdate());
 
     this.updateProgressEl = document.createElement('div');
@@ -1094,16 +1312,28 @@ export class SettingsModal {
       'height:4px;border-radius:2px;background:var(--border);overflow:hidden;width:100%;';
 
     const progressFill = document.createElement('div');
-    progressFill.style.cssText = 'height:100%;background:var(--accent);width:0%;transition:width 0.3s;';
+    progressFill.style.cssText =
+      'height:100%;background:var(--accent);width:0%;transition:width 0.3s;';
     progressFill.id = 'update-progress-fill';
     this.updateProgressBarEl.appendChild(progressFill);
     this.updateProgressEl.appendChild(this.updateProgressBarEl);
 
     this.updateStatusEl = document.createElement('div');
-    this.updateStatusEl.style.cssText = 'font-size:12px;color:var(--text-muted);text-align:center;user-select:none;';
+    this.updateStatusEl.style.cssText =
+      'font-size:12px;color:var(--text-muted);text-align:center;user-select:none;';
 
     updateSection.append(this.checkBtn, this.updateProgressEl, this.updateStatusEl);
-    center.append(logo, nameEl, versionEl, divider, authorEl, emailEl, repoEl, privacyEl, updateSection);
+    center.append(
+      logo,
+      nameEl,
+      versionEl,
+      divider,
+      authorEl,
+      emailEl,
+      repoEl,
+      privacyEl,
+      updateSection,
+    );
     panel.appendChild(center);
   }
 
@@ -1128,42 +1358,42 @@ export class SettingsModal {
     this.updateProgressEl.style.display = 'none';
     this.setProgress(0);
 
-    const removeListener = EventsOn('update-progress', (data: {status: string; message: string}) => {
-      this.updateStatusEl.textContent = data.message;
-      this.updateProgressEl.style.display = 'block';
+    const removeListener = EventsOn(
+      'update-progress',
+      (data: { status: string; message: string }) => {
+        this.updateStatusEl.textContent = data.message;
+        this.updateProgressEl.style.display = 'block';
 
-      switch (data.status) {
-        case 'checking':
-          this.setProgress(10);
-          this.checkBtn.textContent = 'Checking...';
-          break;
-        case 'downloading':
-          this.setProgress(50);
-          this.checkBtn.textContent = 'Updating...';
-          break;
-        case 'restarting':
-          this.setProgress(100);
-          this.checkBtn.textContent = 'Restarting...';
-          break;
-      }
-    });
+        switch (data.status) {
+          case 'checking':
+            this.setProgress(10);
+            this.checkBtn.textContent = 'Checking...';
+            break;
+          case 'downloading':
+            this.setProgress(50);
+            this.checkBtn.textContent = 'Updating...';
+            break;
+          case 'restarting':
+            this.setProgress(100);
+            this.checkBtn.textContent = 'Restarting...';
+            break;
+        }
+      },
+    );
 
     try {
       const info = await serviceBindings.PerformUpdate();
 
       if (!info.update_available) {
-        this.updateStatusEl.innerHTML =
-          `<span style="color:var(--text-muted)">\u2713 You're up to date (${info.current_version})</span>`;
+        this.updateStatusEl.innerHTML = `<span style="color:var(--text-muted)">\u2713 You're up to date (${info.current_version})</span>`;
         this.updateProgressEl.style.display = 'none';
         this.checkBtn.textContent = 'Update';
       } else {
-        this.updateStatusEl.innerHTML =
-          `<span style="color:var(--accent);font-weight:600">Updated to v${info.latest_version}! Restarting...</span>`;
+        this.updateStatusEl.innerHTML = `<span style="color:var(--accent);font-weight:600">Updated to v${info.latest_version}! Restarting...</span>`;
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      this.updateStatusEl.innerHTML =
-        `<span style="color:var(--text-muted)">Update failed: ${msg}</span>`;
+      this.updateStatusEl.innerHTML = `<span style="color:var(--text-muted)">Update failed: ${msg}</span>`;
       this.updateProgressEl.style.display = 'none';
       this.checkBtn.textContent = 'Update';
     } finally {
@@ -1177,7 +1407,8 @@ export class SettingsModal {
     this.selectedStyle = 'default';
     this.fontSizeInput.value = '16';
     this.fontSizeValueEl.textContent = '16px';
-    this.fontFamilySelect.value = '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif';
+    this.fontFamilySelect.value =
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     this.opacityInput.value = '0.95';
     this.opacityValueEl.textContent = '95%';
     this.animationsToggle.checked = true;
@@ -1188,7 +1419,11 @@ export class SettingsModal {
     this.lineWrapToggle.checked = true;
     this.updateToggleVisual(this.animationsToggle, this.animationsTrack, this.animationsThumb);
     this.updateToggleVisual(this.toastToggle, this.toastTrack, this.toastThumb);
-    this.updateToggleVisual(this.autocompleteToggle, this.autocompleteTrack, this.autocompleteThumb);
+    this.updateToggleVisual(
+      this.autocompleteToggle,
+      this.autocompleteTrack,
+      this.autocompleteThumb,
+    );
     this.updateToggleVisual(this.lineNumbersToggle, this.lineNumbersTrack, this.lineNumbersThumb);
     this.updateToggleVisual(this.resultPanelToggle, this.resultPanelTrack, this.resultPanelThumb);
     this.overrides = {};
@@ -1239,14 +1474,16 @@ export class SettingsModal {
         } else {
           this.overrides = {};
         }
-      } catch { this.overrides = {}; }
+      } catch {
+        this.overrides = {};
+      }
 
       this.selectedTheme = state.theme || 'dark';
       this.selectedStyle = state.ui_style || 'default';
       this.fontSizeInput.value = state.font_size || '16';
       this.fontSizeValueEl.textContent = (state.font_size || '16') + 'px';
       const fontFamily = state.font_family || '';
-      if (this.fontFamilySelect.options.some(o => o === fontFamily)) {
+      if (this.fontFamilySelect.options.some((o) => o === fontFamily)) {
         this.fontFamilySelect.value = fontFamily;
       }
       this.updatePreview();
@@ -1262,10 +1499,14 @@ export class SettingsModal {
       this.lineWrapToggle.checked = state.line_wrap_enabled;
       this.updateToggleVisual(this.animationsToggle, this.animationsTrack, this.animationsThumb);
       this.updateToggleVisual(this.toastToggle, this.toastTrack, this.toastThumb);
-      this.updateToggleVisual(this.autocompleteToggle, this.autocompleteTrack, this.autocompleteThumb);
+      this.updateToggleVisual(
+        this.autocompleteToggle,
+        this.autocompleteTrack,
+        this.autocompleteThumb,
+      );
       this.updateToggleVisual(this.lineNumbersToggle, this.lineNumbersTrack, this.lineNumbersThumb);
-    this.updateToggleVisual(this.resultPanelToggle, this.resultPanelTrack, this.resultPanelThumb);
-    this.updateToggleVisual(this.lineWrapToggle, this.lineWrapTrack, this.lineWrapThumb);
+      this.updateToggleVisual(this.resultPanelToggle, this.resultPanelTrack, this.resultPanelThumb);
+      this.updateToggleVisual(this.lineWrapToggle, this.lineWrapTrack, this.lineWrapThumb);
       this.updateToggleVisual(this.lineWrapToggle, this.lineWrapTrack, this.lineWrapThumb);
 
       this.highlightThemeCard(this.selectedTheme);
@@ -1276,10 +1517,13 @@ export class SettingsModal {
       });
 
       // Version fetch does not block highlight setup
-      serviceBindings.GetAppVersion().then((version) => {
-        const verEl = this.el.querySelector('#settings-version');
-        if (verEl) verEl.textContent = `Version ${version}`;
-      }).catch(() => {});
+      serviceBindings
+        .GetAppVersion()
+        .then((version) => {
+          const verEl = this.el.querySelector('#settings-version');
+          if (verEl) verEl.textContent = `Version ${version}`;
+        })
+        .catch(() => {});
     } catch {
       toast.show('Failed to load settings', 'error');
     }
