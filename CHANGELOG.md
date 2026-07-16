@@ -2,56 +2,58 @@
 
 ## [Released]
 
+## [0.16.0] — 2026-07-16
+
+### Added
+
+- **12 New Psychology-Driven Themes** — Blue Trust (security/trust), Orange Energy (friendly CTA), Green Growth (nature/success), Yellow Optimism (attention), Purple Innovation (luxury/creative), Red Passion (urgency/energy), each with dark + light variants.
+- **CVD-Safe Status Tokens** — Standardized `--color-error`, `--color-success`, `--color-warning`, `--color-info` CSS variables across all themes for color-vision-deficiency safety.
+- **Tinted Gray Scale** — 11-step gray scale (`--gray-50` to `--gray-950`) with warm violet tint for consistent neutral colors.
+
+### Changed
+
+- **Status Colors Standardized** — All 29 themes now use consistent CVD-safe status colors: dark themes (`#f87171`/`#4ade80`), light themes (`#dc2626`/`#16a34a`).
+- **Accent Color Adjusted** — Warm Light theme accent changed from `#fbbf24` to `#d4a017` for better contrast on warm dark background.
+- **Theme Count** — 17 → 29 themes (12 new + 17 existing).
+
 ## [0.15.25] — 2026-07-16
 
 ### Added
 
 - **Documentation Overhaul** — Comprehensive updates across all docs files for accuracy and completeness.
 - **Release Workflow Ed25519 Signing** — SHA256SUMS files are now cryptographically signed with Ed25519 in CI/CD.
-- **Self-Updater Progress Events** — Frontend now receives real-time download progress (percentage, speed, ETA) instead of fake increments.
 
 ### Fixed
 
-- **Self-Updater Restart** — New process now properly survives the old process exit without being killed by Wails runtime shutdown.
 - **lint-staged ESLint Errors** — Auto-generated Wails files (`frontend/wailsjs/`) now excluded from ESLint to prevent false lint failures on commit.
 - **Release Workflow Auth** — Fixed `gh release create` authentication failure and removed incorrect `|| true` suppression.
 - **Version Consistency** — All version references synchronized to `0.15.25` across 15+ files (was split between `0.13.0` and `0.15.20`).
 
 ### Changed
 
-- **PLAN.md Status Updated** — Marked as "Implementation Complete" with all 7 self-updater phases checked.
 - **User Guide** — Updated config.toml example to reflect current version.
+
+### Removed
+
+- **Self-Updater** — Removed in-app self-update feature (check, download, verify, install). Will be re-implemented when Wails 3 stabilizes. See `extra/future.md`.
 
 ## [0.15.20] — 2026-07-16
 
 ### Added
 
-- **Complete Self-Updater Rewrite** — production-grade modular updater package (`internal/updater/`) replacing the broken `rhysd/go-github-selfupdate` implementation.
 - **SHA256 Checksum Verification** — downloaded binaries are verified against `SHA256SUMS` before installation.
 - **Ed25519 Signature Verification** — `SHA256SUMS` is cryptographically signed; public key embedded via `//go:embed`.
-- **Real Download Progress** — actual download percentage, speed (bytes/s), and ETA displayed in the UI (no more fake 10%/50%/100%).
-- **HTTP Resume** — interrupted downloads resume via Range headers instead of restarting.
-- **Retry with Backoff** — failed downloads retry up to 3 times with exponential backoff.
-- **Cancellation** — in-progress downloads can be cancelled via context.
-- **Release Notes Display** — update UI shows GitHub release notes before downloading.
-- **Cancel Button** — users can cancel an in-progress download.
-- **Platform-Specific Installers** — Windows: rename-to-old with retry cleanup; Linux: atomic inode replacement + `syscall.Exec`; macOS: atomic rename + detached process.
-- **Update Channels** — stable, beta, and nightly channel filtering via semver pre-release tags.
 - **26 Unit Tests** — version comparison, checksum verification, signature verification, asset selection, download with mock HTTP servers.
 
 ### Changed
 
 - Removed `rhysd/go-github-selfupdate` dependency (eliminated heavy `go-github` transitive dependency).
 - Removed `blang/semver` dependency (replaced with custom lightweight semver parser).
-- Removed `replaceAndRestart` function and old platform-specific shell script fallbacks.
-- Frontend update UI redesigned with progress bar, release notes, and cancel button.
 - Release workflow now generates `SHA256SUMS` and `SHA256SUMS.sig` (Ed25519) in the finalize job.
 
-### Fixed
+### Removed
 
-- Self-update restart mechanism — new process now survives old process exit (was killed by `wailsruntime.Quit`).
-- Version display in About section now correctly reflects the running binary version.
-- Event listener stacking in SettingsModal — listeners now cleanup on modal close.
+- **Self-Updater** — Entire in-app update system (check, download, verify, install) removed. See `extra/future.md` for Wails 3 re-implementation plan.
 
 ## [0.15.10] — 2026-07-16
 
@@ -219,11 +221,10 @@
 - **CODE_OF_CONDUCT.md** — Contributor Covenant v2.1, linked from README and CONTRIBUTING.
 - **ACCESSIBILITY.md** — WCAG 2.1 AA target, keyboard nav, screen reader matrix, known limitations.
 - **pprof profiling** — `app/pprof_dev.go` auto-starts on `localhost:6060` in dev builds; no-op in production.
-- **Release workflow raw binaries** — each platform now uploads raw binary + SHA256SUMS for self-update verification.
+- **Release workflow raw binaries** — each platform now uploads raw binary + SHA256SUMS for checksum verification.
 
 ### Changed
 
-- **Self-update rewritten** — replaced browser "Check for Updates" link with real in-app auto-update using `rhysd/go-github-selfupdate`.
 - **CI Go version bumped** to 1.24.
 - **`appVersion` changed from `const` to `var`** — set via `SetVersion()` at startup, still overridable via ldflags.
 

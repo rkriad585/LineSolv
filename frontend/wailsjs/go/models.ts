@@ -300,36 +300,6 @@ export namespace service {
 	        this.theme_manually_set = source["theme_manually_set"];
 	    }
 	}
-	export class UpdateInfo {
-	    update_available: boolean;
-	    current_version: string;
-	    latest_version: string;
-	    release_notes?: string;
-	    download_url?: string;
-	    checksum_url?: string;
-	    signature_url?: string;
-	    asset_name?: string;
-	    asset_size?: number;
-	    published_at?: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateInfo(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.update_available = source["update_available"];
-	        this.current_version = source["current_version"];
-	        this.latest_version = source["latest_version"];
-	        this.release_notes = source["release_notes"];
-	        this.download_url = source["download_url"];
-	        this.checksum_url = source["checksum_url"];
-	        this.signature_url = source["signature_url"];
-	        this.asset_name = source["asset_name"];
-	        this.asset_size = source["asset_size"];
-	        this.published_at = source["published_at"];
-	    }
-	}
 
 }
 

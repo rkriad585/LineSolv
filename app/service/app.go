@@ -4,10 +4,8 @@ import (
 	"LineSolv/app/calculator"
 	"LineSolv/app/plugin"
 	"LineSolv/app/storage"
-	"LineSolv/internal/updater"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,7 +25,7 @@ const evalTimeout = 5 * time.Second
 var (
 	globalCtx  context.Context
 	ctxMu      sync.Mutex
-	appVersion = "0.15.25"
+	appVersion = "0.16.0"
 	versionMu  sync.RWMutex
 )
 
@@ -63,7 +61,6 @@ type AppService struct {
 	docsContent  map[string]string
 	pluginMgr    *plugin.Manager
 	pluginThemes []plugin.ThemeDef
-	cancelUpdate context.CancelFunc
 }
 
 func NewAppService(db *storage.DB) *AppService {
@@ -461,19 +458,6 @@ type SettingsData struct {
 	ThemeManuallySet    string `json:"theme_manually_set"`
 }
 
-type UpdateInfo struct {
-	UpdateAvailable bool   `json:"update_available"`
-	CurrentVersion  string `json:"current_version"`
-	LatestVersion   string `json:"latest_version"`
-	ReleaseNotes    string `json:"release_notes,omitempty"`
-	DownloadURL     string `json:"download_url,omitempty"`
-	ChecksumURL     string `json:"checksum_url,omitempty"`
-	SignatureURL    string `json:"signature_url,omitempty"`
-	AssetName       string `json:"asset_name,omitempty"`
-	AssetSize       int64  `json:"asset_size,omitempty"`
-	PublishedAt     string `json:"published_at,omitempty"`
-}
-
 func (s *AppService) GetSettings() (*SettingsData, error) {
 	cfg, err := storage.LoadConfig()
 	if err != nil {
@@ -521,109 +505,6 @@ func (s *AppService) GetAppVersion() string {
 	versionMu.RLock()
 	defer versionMu.RUnlock()
 	return appVersion
-}
-
-func (s *AppService) CheckForUpdate() (*UpdateInfo, error) {
-	versionMu.RLock()
-	currentVersion := appVersion
-	versionMu.RUnlock()
-
-	u := updater.New(
-		updater.WithVersion(currentVersion),
-		updater.WithChannel(updater.ChannelStable),
-	)
-
-	ctx := context.Background()
-	info, err := u.CheckForUpdates(ctx)
-	if err != nil {
-		if errors.Is(err, updater.ErrUpToDate) {
-			return &UpdateInfo{
-				UpdateAvailable: false,
-				CurrentVersion:  currentVersion,
-			}, nil
-		}
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("check for updates: %w", err)
-	}
-
-	return &UpdateInfo{
-		UpdateAvailable: true,
-		CurrentVersion:  info.CurrentVersion,
-		LatestVersion:   info.LatestVersion,
-		ReleaseNotes:    info.ReleaseNotes,
-		DownloadURL:     info.DownloadURL,
-		ChecksumURL:     info.ChecksumURL,
-		SignatureURL:    info.SignatureURL,
-		AssetName:       info.AssetName,
-		AssetSize:       info.AssetSize,
-		PublishedAt:     info.PublishedAt,
-	}, nil
-}
-
-func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	s.mu.Lock()
-	s.cancelUpdate = cancel
-	s.mu.Unlock()
-
-	defer func() {
-		s.mu.Lock()
-		s.cancelUpdate = nil
-		s.mu.Unlock()
-	}()
-
-	versionMu.RLock()
-	currentVersion := appVersion
-	versionMu.RUnlock()
-
-	eventFn := func(eventName string, data ...interface{}) {
-		wailsruntime.EventsEmit(getCtx(), eventName, data...)
-	}
-
-	u := updater.New(
-		updater.WithVersion(currentVersion),
-		updater.WithChannel(updater.ChannelStable),
-		updater.WithEventHandler(eventFn),
-	)
-
-	info, err := u.CheckForUpdates(ctx)
-	if err != nil {
-		if errors.Is(err, updater.ErrUpToDate) {
-			return &UpdateInfo{
-				UpdateAvailable: false,
-				CurrentVersion:  currentVersion,
-			}, nil
-		}
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("check for updates: %w", err)
-	}
-
-	binaryPath, err := u.DownloadUpdate(ctx, info)
-	if err != nil {
-		return nil, fmt.Errorf("download update: %w", err)
-	}
-
-	if err := u.VerifyUpdate(ctx, binaryPath, info); err != nil {
-		return nil, fmt.Errorf("verify update: %w", err)
-	}
-
-	if err := u.InstallUpdate(ctx, binaryPath); err != nil {
-		return nil, fmt.Errorf("install update: %w", err)
-	}
-
-	return &UpdateInfo{
-		UpdateAvailable: true,
-		CurrentVersion:  info.CurrentVersion,
-		LatestVersion:   info.LatestVersion,
-	}, nil
-}
-
-// CancelUpdate cancels any in-progress update download.
-func (s *AppService) CancelUpdate() {
-	s.mu.RLock()
-	cancel := s.cancelUpdate
-	s.mu.RUnlock()
-	if cancel != nil {
-		cancel()
-	}
 }
 
 // --- Plugin Management ---

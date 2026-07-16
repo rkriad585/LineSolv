@@ -1,7 +1,7 @@
 # LineSolv Color Psychology & UI/UX Redesign Plan
 
 > **Date:** July 2026
-> **Version:** 0.15.25
+> **Version:** 0.16.0
 > **Status:** Implementation Complete
 
 ---
@@ -412,49 +412,49 @@ Some existing accent colors will be slightly adjusted for better contrast on the
 
 ## 5. Implementation Plan
 
-### Phase 1: Design Token Standardization
+### Phase 1: Design Token Standardization ✅
 
 **Objective:** Create a unified token system for all themes.
 
-- [ ] Add CVD-safe status tokens to `style.css` (`:root` base):
+- [x] Add CVD-safe status tokens to `style.css` (`:root` base):
   - `--color-error`, `--color-success`, `--color-warning`, `--color-info`
-- [ ] Add tinted gray tokens to `:root` base
-- [ ] Standardize 60-30-10 proportions across all theme definitions
-- [ ] Verify all `--text` / `--surface` pairs pass WCAG AA (4.5:1 minimum)
-- [ ] Verify all `--text-muted` / `--surface-secondary` pairs pass WCAG AA
-- [ ] Run contrast checks with WebAIM Contrast Checker for every pair
+- [x] Add tinted gray tokens to `:root` base
+- [x] Standardize 60-30-10 proportions across all theme definitions
+- [x] Verify all `--text` / `--surface` pairs pass WCAG AA (4.5:1 minimum)
+- [x] Verify all `--text-muted` / `--surface-secondary` pairs pass WCAG AA
+- [x] Run contrast checks with WebAIM Contrast Checker for every pair
 
-### Phase 2: New Theme Implementation
+### Phase 2: New Theme Implementation ✅
 
 **Objective:** Add 12 new themes (6 dark + 6 light).
 
-- [ ] Add CSS blocks for all 12 new themes in `style.css`
-- [ ] Add TypeScript entries to `THEMES` array in `SettingsModal.ts`
-- [ ] Add TypeScript entries to `BUILTIN_THEMES` array in `App.ts`
-- [ ] Update `STYLE_THEME_DEFAULTS` map for each new theme
-- [ ] Test theme switching for all new themes
-- [ ] Test all 7 UI styles with each new theme (84 combinations)
+- [x] Add CSS blocks for all 12 new themes in `style.css`
+- [x] Add TypeScript entries to `THEMES` array in `SettingsModal.ts`
+- [x] Add TypeScript entries to `BUILTIN_THEMES` array in `App.ts`
+- [x] Update `STYLE_THEME_DEFAULTS` map for each new theme
+- [x] Test theme switching for all new themes
+- [x] Test all 7 UI styles with each new theme (84 combinations)
 
-### Phase 3: Existing Theme Redesign
+### Phase 3: Existing Theme Redesign ✅
 
 **Objective:** Fix contrast, standardize status colors, add tinted grays.
 
-- [ ] Update all 17 existing themes in `style.css`
-- [ ] Fix WCAG contrast failures in Dark, Mono, Blood, Plasma, Obsidian
-- [ ] Standardize status colors across all themes
-- [ ] Add tinted grays to all dark mode themes
-- [ ] Adjust accent colors where needed for contrast
-- [ ] Test all 17 x 7 = 119 theme×style combinations
+- [x] Update all 17 existing themes in `style.css`
+- [x] Fix WCAG contrast failures in Dark, Mono, Blood, Plasma, Obsidian
+- [x] Standardize status colors across all themes
+- [x] Add tinted grays to all dark mode themes
+- [x] Adjust accent colors where needed for contrast
+- [x] Test all 17 x 7 = 119 theme×style combinations
 
-### Phase 4: Documentation & Polish
+### Phase 4: Documentation & Polish ✅
 
 **Objective:** Document the new color system.
 
-- [ ] Update `CHANGELOG.md` with new themes
-- [ ] Update `README.md` with theme count (17 → 29 themes)
-- [ ] Bump version to 0.16.0
-- [ ] Run full test suite
-- [ ] Build and verify
+- [x] Update `CHANGELOG.md` with new themes
+- [x] Update `README.md` with theme count (17 → 29 themes)
+- [x] Bump version to 0.16.0
+- [x] Run full test suite
+- [x] Build and verify
 
 ---
 

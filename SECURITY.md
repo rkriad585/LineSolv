@@ -24,22 +24,22 @@ LineSolv is a desktop-only application with no exposed network server. All data 
 
 ### Data Protection
 
-| Control | Implementation |
-|---------|---------------|
-| **File permissions** | Config and state files use `0600` (owner read/write only). Directories use `0700`. |
-| **Atomic writes** | Config uses write-to-temp-then-rename to prevent corruption on power loss. |
-| **Database** | SQLite with WAL journal mode. Single-connection serialization via mutex. |
-| **Data location** | `~/.config/neostore/linesolv/` on Linux/macOS, `%APPDATA%/neostore/linesolv` on Windows. |
-| **Fallback** | If `os.UserConfigDir()` fails, data falls back to `os.TempDir()` (less secure — documented limitation). |
+| Control              | Implementation                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| **File permissions** | Config and state files use `0600` (owner read/write only). Directories use `0700`.                      |
+| **Atomic writes**    | Config uses write-to-temp-then-rename to prevent corruption on power loss.                              |
+| **Database**         | SQLite with WAL journal mode. Single-connection serialization via mutex.                                |
+| **Data location**    | `~/.config/neostore/linesolv/` on Linux/macOS, `%APPDATA%/neostore/linesolv` on Windows.                |
+| **Fallback**         | If `os.UserConfigDir()` fails, data falls back to `os.TempDir()` (less secure — documented limitation). |
 
 ### Input Validation and Resource Limits
 
-| Control | Limit |
-|---------|-------|
-| Max expression length | 10,000 characters |
-| Evaluation timeout | 5 seconds per evaluation |
-| HTTP response body limit | 1MB (currency rate API) |
-| HTTP client timeout | 10 seconds |
+| Control                  | Limit                    |
+| ------------------------ | ------------------------ |
+| Max expression length    | 10,000 characters        |
+| Evaluation timeout       | 5 seconds per evaluation |
+| HTTP response body limit | 1MB (currency rate API)  |
+| HTTP client timeout      | 10 seconds               |
 
 ### SQL Injection Prevention
 
@@ -65,16 +65,10 @@ All database queries use parameterized queries exclusively. No string interpolat
 - Plugins can be enabled/disabled by the user
 - **Known limitation**: No cryptographic signing or checksum verification of plugin manifests
 
-### Self-Update Security
-
-- Updates fetched from `github.com/rkriad585/LineSolv` via `go-github-selfupdate`
-- Semantic version comparison prevents downgrades
-- Updated binary written to temp file then atomically replaces the executable
-- On Linux, elevated privileges may be requested via `pkexec`
-
 ### Thread Safety
 
 All shared mutable state is protected by `sync.Mutex` or `sync.RWMutex`:
+
 - Config cache, AppService, Plugin manager, Engine, App version, Global context
 
 ## Known Limitations

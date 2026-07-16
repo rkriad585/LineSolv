@@ -39,9 +39,7 @@ You can delete all data at any time by uninstalling the application or clearing 
 
 LineSolv works fully offline for all core functionality (calculations, unit conversion, notes). However, the app makes limited network requests for optional features:
 
-1. **Self-Update Check** — When you click "Update" in Settings, LineSolv queries the GitHub Releases API (`api.github.com`) to check for new versions. This sends a standard HTTP GET request containing only the app version. No personal data is included.
-
-2. **Plugin List Fetch** — When you open the Plugins panel, LineSolv fetches the plugin catalog from `github.com/rkriad585/linesolv-plugins`. This is a public GET request for a JSON manifest. No personal data is included.
+1. **Plugin List Fetch** — When you open the Plugins panel, LineSolv fetches the plugin catalog from `github.com/rkriad585/linesolv-plugins`. This is a public GET request for a JSON manifest. No personal data is included.
 
 These requests are made **only** when you explicitly trigger them. No background network activity occurs.
 
@@ -49,7 +47,7 @@ These requests are made **only** when you explicitly trigger them. No background
 
 ## Third-Party Services
 
-- **GitHub** — Used for update checks and plugin catalog. GitHub may log standard server data (IP addresses, user agent) per their [Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). This logging is performed by GitHub, not by LineSolv.
+- **GitHub** — Used for plugin catalog. GitHub may log standard server data (IP addresses, user agent) per their [Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). This logging is performed by GitHub, not by LineSolv.
 
 ---
 

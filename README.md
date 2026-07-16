@@ -6,7 +6,7 @@
     <a href="https://github.com/rkriad585/LineSolv/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
     </a>
-    <img src="https://img.shields.io/badge/version-0.15.25-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/version-0.16.0-green.svg" alt="Version">
     <img src="https://img.shields.io/badge/platform-linux%20|%20macOS%20|%20windows-lightgrey" alt="Platform">
     <img src="https://img.shields.io/badge/go-1.24+-00ADD8?logo=go&logoColor=white" alt="Go">
     <img src="https://img.shields.io/badge/wails-v2-5c2d91?logo=wails&logoColor=white" alt="Wails">
@@ -24,7 +24,7 @@ Built with **Wails v2** (Go + WebView), **Vite**, **TypeScript**, and **CSS cust
 - **Real-Time Settings** — Every setting (theme, font, opacity, line numbers, autocomplete) applies instantly with no Save button
 - **Line Number Toggle** — Show or hide line numbers in the calculator editor
 - **Autocomplete Popup** — Type-aware keyword suggestions that can be toggled on/off
-- **17 Color Themes** — Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light, Claude Dark, Claude Light with instant switching
+- **29 Color Themes** — Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light, Claude Dark, Claude Light, Blue Trust Dark/Light, Orange Energy Dark/Light, Green Growth Dark/Light, Yellow Optimism Dark/Light, Purple Innovation Dark/Light, Red Passion Dark/Light with instant switching
 - **7 UI Styles** — Default, Nothing, Liquid Glass, Material 3, Alivated, Neon, and Claude Code — all rewritten to match their real-world design systems with authentic colors, typography, shadows, and component styling
 - **17 Font Options** — Sans-Serif, Serif, and Monospace fonts including JetBrains Mono, Fira Code, and more
 - **40+ Unit Conversions** — Length, mass, volume, temperature, time, and 30+ live currencies
