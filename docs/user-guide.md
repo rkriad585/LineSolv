@@ -1173,7 +1173,7 @@ Customize any shortcut in **Settings > Keyboard Shortcuts**. Overrides are saved
 ```toml
 [app]
 theme = "dark"
-version = "0.15.20"
+version = "0.15.25"
 
 [notes]
 last_active = "note-uuid-here"

@@ -2,6 +2,26 @@
 
 ## [Released]
 
+## [0.15.25] — 2026-07-16
+
+### Added
+
+- **Documentation Overhaul** — Comprehensive updates across all docs files for accuracy and completeness.
+- **Release Workflow Ed25519 Signing** — SHA256SUMS files are now cryptographically signed with Ed25519 in CI/CD.
+- **Self-Updater Progress Events** — Frontend now receives real-time download progress (percentage, speed, ETA) instead of fake increments.
+
+### Fixed
+
+- **Self-Updater Restart** — New process now properly survives the old process exit without being killed by Wails runtime shutdown.
+- **lint-staged ESLint Errors** — Auto-generated Wails files (`frontend/wailsjs/`) now excluded from ESLint to prevent false lint failures on commit.
+- **Release Workflow Auth** — Fixed `gh release create` authentication failure and removed incorrect `|| true` suppression.
+- **Version Consistency** — All version references synchronized to `0.15.25` across 15+ files (was split between `0.13.0` and `0.15.20`).
+
+### Changed
+
+- **PLAN.md Status Updated** — Marked as "Implementation Complete" with all 7 self-updater phases checked.
+- **User Guide** — Updated config.toml example to reflect current version.
+
 ## [0.15.20] — 2026-07-16
 
 ### Added
@@ -422,6 +442,7 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
+[0.15.25]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.25
 [0.15.20]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.20
 [0.15.10]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.10
 [0.15.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.0

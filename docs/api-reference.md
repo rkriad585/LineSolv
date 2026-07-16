@@ -364,7 +364,7 @@ Saves application settings to `config.toml`. In the frontend, settings auto-save
 function GetAppVersion(): Promise<string>;
 ```
 
-Returns the current application version string (e.g. `"0.15.20"`).
+Returns the current application version string (e.g. `"0.15.25"`).
 
 ---
 
