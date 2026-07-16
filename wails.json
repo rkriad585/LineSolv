@@ -13,8 +13,8 @@
   "info": {
     "companyName": "LineSolv",
     "productName": "LineSolv",
-    "productVersion": "0.13.0",
+    "productVersion": "0.15.20",
     "copyright": "LineSolv (c) 2026 rkriad585",
-    "comments": "Built using Wails (https://wails.io)"
+    "comments": "LineSolv by RK Riad Khan (rkriad585)"
   }
 }

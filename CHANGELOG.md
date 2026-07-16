@@ -2,6 +2,37 @@
 
 ## [Released]
 
+## [0.15.20] — 2026-07-16
+
+### Added
+
+- **Complete Self-Updater Rewrite** — production-grade modular updater package (`internal/updater/`) replacing the broken `rhysd/go-github-selfupdate` implementation.
+- **SHA256 Checksum Verification** — downloaded binaries are verified against `SHA256SUMS` before installation.
+- **Ed25519 Signature Verification** — `SHA256SUMS` is cryptographically signed; public key embedded via `//go:embed`.
+- **Real Download Progress** — actual download percentage, speed (bytes/s), and ETA displayed in the UI (no more fake 10%/50%/100%).
+- **HTTP Resume** — interrupted downloads resume via Range headers instead of restarting.
+- **Retry with Backoff** — failed downloads retry up to 3 times with exponential backoff.
+- **Cancellation** — in-progress downloads can be cancelled via context.
+- **Release Notes Display** — update UI shows GitHub release notes before downloading.
+- **Cancel Button** — users can cancel an in-progress download.
+- **Platform-Specific Installers** — Windows: rename-to-old with retry cleanup; Linux: atomic inode replacement + `syscall.Exec`; macOS: atomic rename + detached process.
+- **Update Channels** — stable, beta, and nightly channel filtering via semver pre-release tags.
+- **26 Unit Tests** — version comparison, checksum verification, signature verification, asset selection, download with mock HTTP servers.
+
+### Changed
+
+- Removed `rhysd/go-github-selfupdate` dependency (eliminated heavy `go-github` transitive dependency).
+- Removed `blang/semver` dependency (replaced with custom lightweight semver parser).
+- Removed `replaceAndRestart` function and old platform-specific shell script fallbacks.
+- Frontend update UI redesigned with progress bar, release notes, and cancel button.
+- Release workflow now generates `SHA256SUMS` and `SHA256SUMS.sig` (Ed25519) in the finalize job.
+
+### Fixed
+
+- Self-update restart mechanism — new process now survives old process exit (was killed by `wailsruntime.Quit`).
+- Version display in About section now correctly reflects the running binary version.
+- Event listener stacking in SettingsModal — listeners now cleanup on modal close.
+
 ## [0.15.10] — 2026-07-16
 
 ### Added
@@ -391,6 +422,7 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
+[0.15.20]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.20
 [0.15.10]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.10
 [0.15.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.0
 [0.14.1]: https://github.com/rkriad585/LineSolv/releases/tag/v0.14.1

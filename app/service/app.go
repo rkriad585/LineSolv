@@ -4,23 +4,21 @@ import (
 	"LineSolv/app/calculator"
 	"LineSolv/app/plugin"
 	"LineSolv/app/storage"
+	"LineSolv/internal/updater"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/blang/semver"
 	"github.com/ledongthuc/pdf"
-	"github.com/rhysd/go-github-selfupdate/selfupdate"
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -29,7 +27,7 @@ const evalTimeout = 5 * time.Second
 var (
 	globalCtx  context.Context
 	ctxMu      sync.Mutex
-	appVersion = "0.15.10"
+	appVersion = "0.15.20"
 	versionMu  sync.RWMutex
 )
 
@@ -65,6 +63,7 @@ type AppService struct {
 	docsContent  map[string]string
 	pluginMgr    *plugin.Manager
 	pluginThemes []plugin.ThemeDef
+	cancelUpdate context.CancelFunc
 }
 
 func NewAppService(db *storage.DB) *AppService {
@@ -466,7 +465,13 @@ type UpdateInfo struct {
 	UpdateAvailable bool   `json:"update_available"`
 	CurrentVersion  string `json:"current_version"`
 	LatestVersion   string `json:"latest_version"`
-	DownloadURL     string `json:"download_url"`
+	ReleaseNotes    string `json:"release_notes,omitempty"`
+	DownloadURL     string `json:"download_url,omitempty"`
+	ChecksumURL     string `json:"checksum_url,omitempty"`
+	SignatureURL    string `json:"signature_url,omitempty"`
+	AssetName       string `json:"asset_name,omitempty"`
+	AssetSize       int64  `json:"asset_size,omitempty"`
+	PublishedAt     string `json:"published_at,omitempty"`
 }
 
 func (s *AppService) GetSettings() (*SettingsData, error) {
@@ -523,133 +528,101 @@ func (s *AppService) CheckForUpdate() (*UpdateInfo, error) {
 	currentVersion := appVersion
 	versionMu.RUnlock()
 
-	latest, found, err := selfupdate.DetectLatest("rkriad585/LineSolv")
-	if err != nil {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("failed to check for updates: %w", err)
-	}
-	if !found {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, nil
-	}
+	u := updater.New(
+		updater.WithVersion(currentVersion),
+		updater.WithChannel(updater.ChannelStable),
+	)
 
-	current, err := semver.Make(currentVersion)
+	ctx := context.Background()
+	info, err := u.CheckForUpdates(ctx)
 	if err != nil {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("invalid current version: %w", err)
+		if errors.Is(err, updater.ErrUpToDate) {
+			return &UpdateInfo{
+				UpdateAvailable: false,
+				CurrentVersion:  currentVersion,
+			}, nil
+		}
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("check for updates: %w", err)
 	}
 
 	return &UpdateInfo{
-		UpdateAvailable: latest.Version.GT(current),
-		CurrentVersion:  currentVersion,
-		LatestVersion:   latest.Version.String(),
-		DownloadURL:     "https://github.com/rkriad585/LineSolv/releases/latest",
+		UpdateAvailable: true,
+		CurrentVersion:  info.CurrentVersion,
+		LatestVersion:   info.LatestVersion,
+		ReleaseNotes:    info.ReleaseNotes,
+		DownloadURL:     info.DownloadURL,
+		ChecksumURL:     info.ChecksumURL,
+		SignatureURL:    info.SignatureURL,
+		AssetName:       info.AssetName,
+		AssetSize:       info.AssetSize,
+		PublishedAt:     info.PublishedAt,
 	}, nil
 }
 
 func (s *AppService) PerformUpdate() (*UpdateInfo, error) {
-	ctx := getCtx()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.mu.Lock()
+	s.cancelUpdate = cancel
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		s.cancelUpdate = nil
+		s.mu.Unlock()
+	}()
 
 	versionMu.RLock()
 	currentVersion := appVersion
 	versionMu.RUnlock()
 
-	wailsruntime.EventsEmit(ctx, "update-progress", map[string]interface{}{
-		"status":  "checking",
-		"message": "Checking for updates...",
-	})
+	eventFn := func(eventName string, data ...interface{}) {
+		wailsruntime.EventsEmit(getCtx(), eventName, data...)
+	}
 
-	latest, found, err := selfupdate.DetectLatest("rkriad585/LineSolv")
+	u := updater.New(
+		updater.WithVersion(currentVersion),
+		updater.WithChannel(updater.ChannelStable),
+		updater.WithEventHandler(eventFn),
+	)
+
+	info, err := u.CheckForUpdates(ctx)
 	if err != nil {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("failed to check for updates: %w", err)
-	}
-	if !found {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, nil
+		if errors.Is(err, updater.ErrUpToDate) {
+			return &UpdateInfo{
+				UpdateAvailable: false,
+				CurrentVersion:  currentVersion,
+			}, nil
+		}
+		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("check for updates: %w", err)
 	}
 
-	current, err := semver.Make(currentVersion)
+	binaryPath, err := u.DownloadUpdate(ctx, info)
 	if err != nil {
-		return &UpdateInfo{UpdateAvailable: false, CurrentVersion: currentVersion}, fmt.Errorf("invalid current version: %w", err)
+		return nil, fmt.Errorf("download update: %w", err)
 	}
 
-	if !latest.Version.GT(current) {
-		return &UpdateInfo{
-			UpdateAvailable: false,
-			CurrentVersion:  currentVersion,
-			LatestVersion:   latest.Version.String(),
-		}, nil
+	if err := u.VerifyUpdate(ctx, binaryPath, info); err != nil {
+		return nil, fmt.Errorf("verify update: %w", err)
 	}
 
-	wailsruntime.EventsEmit(ctx, "update-progress", map[string]interface{}{
-		"status":  "downloading",
-		"message": "Downloading v" + latest.Version.String() + "...",
-	})
-
-	exePath, err := os.Executable()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get executable path: %w", err)
+	if err := u.InstallUpdate(ctx, binaryPath); err != nil {
+		return nil, fmt.Errorf("install update: %w", err)
 	}
-	exePath, err = filepath.EvalSymlinks(exePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve executable path: %w", err)
-	}
-
-	tmpFile, err := os.CreateTemp("", "linesolv_update_*"+filepath.Ext(exePath))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp file: %w", err)
-	}
-	tmpFile.Close()
-
-	if err := selfupdate.UpdateTo(latest.AssetURL, tmpFile.Name()); err != nil {
-		os.Remove(tmpFile.Name())
-		return nil, fmt.Errorf("failed to download update: %w", err)
-	}
-
-	wailsruntime.EventsEmit(ctx, "update-progress", map[string]interface{}{
-		"status":  "restarting",
-		"message": "Update downloaded. Restarting...",
-	})
-
-	go func() {
-		time.Sleep(500 * time.Millisecond)
-		s.replaceAndRestart(exePath, tmpFile.Name())
-		// Let the new process take over; just exit this one cleanly.
-		os.Exit(0)
-	}()
 
 	return &UpdateInfo{
 		UpdateAvailable: true,
-		CurrentVersion:  currentVersion,
-		LatestVersion:   latest.Version.String(),
+		CurrentVersion:  info.CurrentVersion,
+		LatestVersion:   info.LatestVersion,
 	}, nil
 }
 
-func (s *AppService) replaceAndRestart(exePath, tmpFile string) {
-	_ = os.Chmod(tmpFile, 0755) //nolint:errcheck
-
-	switch runtime.GOOS {
-	case "windows":
-		oldExe := exePath + ".old"
-		_ = os.Remove(oldExe)
-		if err := os.Rename(exePath, oldExe); err != nil {
-			return
-		}
-		if err := os.Rename(tmpFile, exePath); err != nil {
-			_ = os.Rename(oldExe, exePath) //nolint:errcheck
-			return
-		}
-		_ = exec.Command(exePath).Start() //nolint:gosec,errcheck
-		go func() {
-			time.Sleep(3 * time.Second)
-			_ = os.Remove(oldExe) //nolint:errcheck
-		}()
-	case "darwin":
-		if err := os.Rename(tmpFile, exePath); err != nil {
-			return
-		}
-		_ = exec.Command(exePath).Start() //nolint:gosec,errcheck
-	default: // linux
-		if err := os.Rename(tmpFile, exePath); err != nil {
-			return
-		}
-		_ = exec.Command(exePath).Start() //nolint:gosec,errcheck
+// CancelUpdate cancels any in-progress update download.
+func (s *AppService) CancelUpdate() {
+	s.mu.RLock()
+	cancel := s.cancelUpdate
+	s.mu.RUnlock()
+	if cancel != nil {
+		cancel()
 	}
 }
 

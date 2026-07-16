@@ -9,24 +9,28 @@ All methods are bound via the Wails `Bind` option in `main.go` and are available
 ## `EvaluateAll`
 
 ```typescript
-function EvaluateAll(input: string): Promise<string[]>
+function EvaluateAll(input: string): Promise<string[]>;
 ```
 
 Evaluates every line of the input string. Each line is processed independently. Variables persist across lines. Empty lines and comment lines (`#`, `//`) return empty strings. Lines ending with `:` (labels) also return empty strings.
 
 **Parameters:**
+
 - `input` — Multi-line string, lines separated by `\n`
 
 **Returns:**
+
 - `string[]` — Array of result strings, one per line. Empty string for no result or evaluation errors.
 
 **Limits:**
+
 - Input length: max 10,000 characters per line
 - Evaluation timeout: 5 seconds per call (returns `["Error: evaluation timed out"]`)
 
 **Example:**
+
 ```typescript
-const results = await svc.EvaluateAll("x = 10\nx * pi\ntwenty five + 3");
+const results = await svc.EvaluateAll('x = 10\nx * pi\ntwenty five + 3');
 // results: ["x = 10", "31.4159", "28"]
 ```
 
@@ -35,18 +39,21 @@ const results = await svc.EvaluateAll("x = 10\nx * pi\ntwenty five + 3");
 ## `EvaluateLine`
 
 ```typescript
-function EvaluateLine(input: string): Promise<string>
+function EvaluateLine(input: string): Promise<string>;
 ```
 
 Evaluates a single line of natural-language arithmetic. Variables are preserved across calls. Empty lines, comment lines (`#`, `//`), and label lines (ending with `:`) return an empty string.
 
 **Parameters:**
+
 - `input` — Single line string
 
 **Returns:**
+
 - `string` — Result string, or empty string on error/unsupported input.
 
 **Limits:**
+
 - Input length: max 10,000 characters
 - Evaluation timeout: 5 seconds (returns `"Error: evaluation timed out"`)
 
@@ -55,17 +62,19 @@ Evaluates a single line of natural-language arithmetic. Variables are preserved 
 ## `GetVariables`
 
 ```typescript
-function GetVariables(): Promise<Record<string, number>>
+function GetVariables(): Promise<Record<string, number>>;
 ```
 
 Returns all currently defined variables as a map of name to value.
 
 **Returns:**
+
 - `Record<string, number>` — Object with variable names as keys (lowercase) and float64 values.
 
 **Example:**
+
 ```typescript
-await svc.EvaluateAll("x = 42\ny = 100");
+await svc.EvaluateAll('x = 42\ny = 100');
 const vars = await svc.GetVariables();
 // vars: { x: 42, y: 100 }
 ```
@@ -75,7 +84,7 @@ const vars = await svc.GetVariables();
 ## `ClearVariables`
 
 ```typescript
-function ClearVariables(): Promise<void>
+function ClearVariables(): Promise<void>;
 ```
 
 Clears all stored variables and resets the last-result context tracker.
@@ -90,12 +99,13 @@ interface HistoryEntry {
   output: string;
 }
 
-function GetHistory(): Promise<HistoryEntry[]>
+function GetHistory(): Promise<HistoryEntry[]>;
 ```
 
 Returns the evaluation history — each entry records the input line and its computed result.
 
 **Returns:**
+
 - `HistoryEntry[]` — Array of `{ input, output }` objects, ordered chronologically (oldest first).
 
 ---
@@ -103,7 +113,7 @@ Returns the evaluation history — each entry records the input line and its com
 ## `ClearHistory`
 
 ```typescript
-function ClearHistory(): Promise<void>
+function ClearHistory(): Promise<void>;
 ```
 
 Clears all stored history entries.
@@ -124,31 +134,36 @@ interface EvalDetail {
   steps: Step[];
 }
 
-function GetSteps(input: string): Promise<EvalDetail>
+function GetSteps(input: string): Promise<EvalDetail>;
 ```
 
 Evaluates a single expression and returns the intermediate computation steps. Does **not** modify engine state (no side effects on history or variables).
 
 **Parameters:**
+
 - `input` — Single expression string
 
 **Returns:**
+
 - `EvalDetail` with:
   - `result` — The final result string
   - `steps` — Ordered array of `Step` objects showing each parser-level reduction
 
 **`Step` fields:**
+
 - `operation` — The operation type (e.g. `"+"`, `"×"`, `"÷"`, `"^"`, `"mod"`)
 - `expression` — The sub-expression being reduced
 - `result` — The result of that reduction
 
 **Limits:**
+
 - Input length: max 10,000 characters
 - Evaluation timeout: 5 seconds
 
 **Example:**
+
 ```typescript
-const detail = await svc.GetSteps("2 + 3 * 4");
+const detail = await svc.GetSteps('2 + 3 * 4');
 // detail.result: "14"
 // detail.steps: [
 //   { operation: "×", expression: "3 * 4", result: "12" },
@@ -173,24 +188,28 @@ interface GraphResult {
   to: number;
 }
 
-function EvaluateGraph(input: string): Promise<GraphResult | null>
+function EvaluateGraph(input: string): Promise<GraphResult | null>;
 ```
 
 Evaluates a graphing expression (`plot`, `graph`, `y =` syntax) and returns 200 sampled points across the expression's range.
 
 **Parameters:**
+
 - `input` — Graphing expression (e.g. `"plot x^2"`, `"graph sin(x) from -5 to 5"`)
 
 **Supported prefixes:**
+
 - `plot <expr>` — e.g. `plot x^2`
 - `graph <expr>` — e.g. `graph sin(x)`
 - `y = <expr>` — e.g. `y = 2*x + 3`
 
 **Range specifiers:**
+
 - `from N to N` at the end of the expression — e.g. `plot x^2 from -5 to 5`
 - Default range: `-10` to `10`
 
 **Returns:**
+
 - `GraphResult | null` — Object with:
   - `points` — Array of 200 `{ x, y }` sampled points
   - `expression` — The cleaned expression (prefix and range stripped)
@@ -199,11 +218,13 @@ Evaluates a graphing expression (`plot`, `graph`, `y =` syntax) and returns 200 
 - Returns `null` if the input is not a graph expression or evaluation fails.
 
 **Limits:**
+
 - Evaluation timeout: 5 seconds
 
 **Example:**
+
 ```typescript
-const graph = await svc.EvaluateGraph("plot x^2 from -2 to 2");
+const graph = await svc.EvaluateGraph('plot x^2 from -2 to 2');
 // graph.points: [{ x: -2, y: 4 }, { x: -1.98, y: 3.9204 }, ...]
 // graph.expression: "x^2"
 // graph.from: -2
@@ -215,17 +236,19 @@ const graph = await svc.EvaluateGraph("plot x^2 from -2 to 2");
 ## `ReorderNotes`
 
 ```typescript
-function ReorderNotes(noteIDs: string[]): Promise<void>
+function ReorderNotes(noteIDs: string[]): Promise<void>;
 ```
 
 Updates the position of notes to match the given order. All note IDs in the array must exist in the database.
 
 **Parameters:**
+
 - `noteIDs` — Array of note ID strings in the desired display order
 
 **Example:**
+
 ```typescript
-await svc.ReorderNotes(["uuid-3", "uuid-1", "uuid-2"]);
+await svc.ReorderNotes(['uuid-3', 'uuid-1', 'uuid-2']);
 ```
 
 ---
@@ -235,22 +258,24 @@ await svc.ReorderNotes(["uuid-3", "uuid-1", "uuid-2"]);
 ```typescript
 interface CurrencyCacheInfo {
   cached: boolean;
-  updatedAt: number;  // Unix timestamp in milliseconds
-  source: string;     // "live", "cache", or "hardcoded"
+  updatedAt: number; // Unix timestamp in milliseconds
+  source: string; // "live", "cache", or "hardcoded"
 }
 
-function UpdateCurrencyRates(): Promise<CurrencyCacheInfo>
+function UpdateCurrencyRates(): Promise<CurrencyCacheInfo>;
 ```
 
 Fetches live exchange rates from [exchangerate-api.com](https://api.exchangerate-api.com/v4/latest/USD). Falls back to cached rates on network failure. Rates are stored in the SQLite `currency_cache` table and applied to the calculator engine.
 
 **Returns:**
+
 - `CurrencyCacheInfo` with:
   - `cached` — `true` if rates are available (live or cached)
   - `updatedAt` — Unix timestamp in milliseconds of when rates were last updated
   - `source` — `"live"` if freshly fetched, `"cache"` if using cached rates, `"hardcoded"` if no cache exists
 
 **Error handling:**
+
 - Returns an error if the fetch fails and no cached rates are available
 
 ---
@@ -258,12 +283,13 @@ Fetches live exchange rates from [exchangerate-api.com](https://api.exchangerate
 ## `GetCurrencyCacheInfo`
 
 ```typescript
-function GetCurrencyCacheInfo(): Promise<CurrencyCacheInfo>
+function GetCurrencyCacheInfo(): Promise<CurrencyCacheInfo>;
 ```
 
 Returns the current currency cache status without attempting a refresh.
 
 **Returns:**
+
 - `CurrencyCacheInfo` — Same structure as `UpdateCurrencyRates`, but `source` is `"hardcoded"` when no cache exists.
 
 ---
@@ -271,12 +297,13 @@ Returns the current currency cache status without attempting a refresh.
 ## `GetDataDir`
 
 ```typescript
-function GetDataDir(): Promise<string>
+function GetDataDir(): Promise<string>;
 ```
 
 Returns the application data directory path.
 
 **Returns:**
+
 - `string` — The data directory path (e.g. `~/.config/neostore/linesolv` on Linux/macOS, `%APPDATA%/neostore/linesolv` on Windows)
 
 ---
@@ -288,22 +315,23 @@ interface SettingsData {
   theme: string;
   font_size: string;
   font_family: string;
-  shortcut_overrides: string;  // JSON string
-  opacity: string;             // "0.30" to "1.00"
+  shortcut_overrides: string; // JSON string
+  opacity: string; // "0.30" to "1.00"
   line_numbers_enabled: string; // "true" or "false"
   autocomplete_enabled: string; // "true" or "false"
-  animations_enabled: string;   // "true" or "false"
-  toast_enabled: string;        // "true" or "false"
+  animations_enabled: string; // "true" or "false"
+  toast_enabled: string; // "true" or "false"
   result_panel_enabled: string; // "true" or "false"
-  line_wrap_enabled: string;    // "true" or "false"
+  line_wrap_enabled: string; // "true" or "false"
 }
 
-function GetSettings(): Promise<SettingsData>
+function GetSettings(): Promise<SettingsData>;
 ```
 
 Returns the current application settings loaded from `config.toml`.
 
 **Returns:**
+
 - `SettingsData` with theme name, font size, font family, shortcut overrides as a JSON string, opacity, line numbers toggle, autocomplete toggle, animations toggle, toast toggle, result panel toggle, and line wrap toggle.
 
 **Valid theme values (17 built-in):**
@@ -319,12 +347,13 @@ Plugin themes are also valid — their IDs are defined in each plugin's `plugin.
 ## `SaveSettings`
 
 ```typescript
-function SaveSettings(settings: SettingsData): Promise<void>
+function SaveSettings(settings: SettingsData): Promise<void>;
 ```
 
 Saves application settings to `config.toml`. In the frontend, settings auto-save on every change with a 50ms debounce and apply immediately (real-time pattern).
 
 **Parameters:**
+
 - `settings` — `SettingsData` object with the values to persist
 
 ---
@@ -332,10 +361,10 @@ Saves application settings to `config.toml`. In the frontend, settings auto-save
 ## `GetAppVersion`
 
 ```typescript
-function GetAppVersion(): Promise<string>
+function GetAppVersion(): Promise<string>;
 ```
 
-Returns the current application version string (e.g. `"0.13.0"`).
+Returns the current application version string (e.g. `"0.15.20"`).
 
 ---
 
@@ -349,12 +378,13 @@ interface UpdateInfo {
   download_url: string;
 }
 
-function CheckForUpdate(): Promise<UpdateInfo>
+function CheckForUpdate(): Promise<UpdateInfo>;
 ```
 
 Checks the GitHub repository for a newer version by fetching the `.version` file from the `main` branch.
 
 **Returns:**
+
 - `UpdateInfo` with:
   - `update_available` — `true` if the remote version differs from the local version
   - `current_version` — The local app version
@@ -366,8 +396,8 @@ Checks the GitHub repository for a newer version by fetching the `.version` file
 ## `GetDeleteWithoutConfirm` / `SetDeleteWithoutConfirm`
 
 ```typescript
-function GetDeleteWithoutConfirm(): Promise<boolean>
-function SetDeleteWithoutConfirm(v: boolean): Promise<void>
+function GetDeleteWithoutConfirm(): Promise<boolean>;
+function SetDeleteWithoutConfirm(v: boolean): Promise<void>;
 ```
 
 Gets or sets the "Don't ask again" preference for note deletion confirmation. Stored in `config.toml` under `[behavior] -> delete_without_confirm`.
@@ -377,26 +407,27 @@ Gets or sets the "Don't ask again" preference for note deletion confirmation. St
 ## Note Management Methods
 
 ```typescript
-function GetAllNotes(): Promise<Note[]>
-function CreateNote(): Promise<Note>
-function GetNote(id: string): Promise<Note>
-function RenameNote(id: string, name: string): Promise<void>
-function DeleteNote(id: string): Promise<void>
-function SaveNoteContent(id: string, content: string): Promise<void>
-function ExportNote(id: string, format: string): Promise<string>
-function ExportNoteToFile(id: string, format: string): Promise<string>
-function ImportNoteFromFile(): Promise<Note>
+function GetAllNotes(): Promise<Note[]>;
+function CreateNote(): Promise<Note>;
+function GetNote(id: string): Promise<Note>;
+function RenameNote(id: string, name: string): Promise<void>;
+function DeleteNote(id: string): Promise<void>;
+function SaveNoteContent(id: string, content: string): Promise<void>;
+function ExportNote(id: string, format: string): Promise<string>;
+function ExportNoteToFile(id: string, format: string): Promise<string>;
+function ImportNoteFromFile(): Promise<Note>;
 ```
 
 Where `Note` is:
+
 ```typescript
 interface Note {
   id: string;
   name: string;
   content: string;
-  createdAt: number;   // Unix timestamp in milliseconds
-  updatedAt: number;   // Unix timestamp in milliseconds
-  position: number;    // Sort order
+  createdAt: number; // Unix timestamp in milliseconds
+  updatedAt: number; // Unix timestamp in milliseconds
+  position: number; // Sort order
 }
 ```
 
@@ -409,8 +440,8 @@ interface Note {
 ## Documentation Methods
 
 ```typescript
-function GetDocList(): Promise<string[]>
-function GetDocContent(name: string): Promise<string>
+function GetDocList(): Promise<string[]>;
+function GetDocContent(name: string): Promise<string>;
 ```
 
 - `GetDocList()` — Returns sorted list of embedded documentation file names
@@ -425,13 +456,15 @@ Docs are embedded at build time via Go's `embed` package from the `docs/` direct
 ### `GetPlugins`
 
 ```typescript
-function GetPlugins(): Promise<PluginInfo[]>
+function GetPlugins(): Promise<PluginInfo[]>;
 ```
 
 Returns all loaded plugins with their manifest data and enabled state.
 
 **Returns:**
+
 - `PluginInfo[]` — Array of plugin info objects:
+
 ```typescript
 interface PluginInfo {
   name: string;
@@ -439,9 +472,9 @@ interface PluginInfo {
   description: string;
   author: string;
   homepage?: string;
-  dir: string;          // Full path to the plugin directory
+  dir: string; // Full path to the plugin directory
   enabled: boolean;
-  error?: string;       // Error message if the plugin failed to load
+  error?: string; // Error message if the plugin failed to load
   functions?: FunctionDef[];
   themes?: ThemeDef[];
   variables?: VariableDef[];
@@ -450,18 +483,18 @@ interface PluginInfo {
 interface FunctionDef {
   name: string;
   description: string;
-  args: number;         // -1 = variadic
+  args: number; // -1 = variadic
   min_args: number;
-  max_args: number;     // -1 = unlimited
-  expression?: string;  // Math expression using a,b,c... as args
-  builtin?: string;     // Pre-defined operation name
+  max_args: number; // -1 = unlimited
+  expression?: string; // Math expression using a,b,c... as args
+  builtin?: string; // Pre-defined operation name
   examples?: string[];
 }
 
 interface ThemeDef {
   id: string;
   label: string;
-  colors: Record<string, string>;  // 14 CSS custom properties
+  colors: Record<string, string>; // 14 CSS custom properties
 }
 
 interface VariableDef {
@@ -474,7 +507,7 @@ interface VariableDef {
 ### `ReloadPlugins`
 
 ```typescript
-function ReloadPlugins(): Promise<void>
+function ReloadPlugins(): Promise<void>;
 ```
 
 Rescans the plugins directory, re-reads all manifests, and re-registers enabled plugin functions/variables/themes with the calculator engine.
@@ -482,24 +515,26 @@ Rescans the plugins directory, re-reads all manifests, and re-registers enabled 
 ### `SetPluginEnabled`
 
 ```typescript
-function SetPluginEnabled(name: string, enabled: boolean): Promise<void>
+function SetPluginEnabled(name: string, enabled: boolean): Promise<void>;
 ```
 
 Enables or disables a plugin by name. Persists the state to `state.json` and re-registers all plugin functions.
 
 **Parameters:**
+
 - `name` — Plugin name (case-insensitive)
 - `enabled` — `true` to enable, `false` to disable
 
 ### `InstallPlugin`
 
 ```typescript
-function InstallPlugin(pluginsDir: string, pluginDir: string, manifestJSON: string): Promise<void>
+function InstallPlugin(pluginsDir: string, pluginDir: string, manifestJSON: string): Promise<void>;
 ```
 
 Installs a plugin by writing its manifest to the plugins directory, then triggers a rescan.
 
 **Parameters:**
+
 - `pluginsDir` — Path to the plugins directory (obtained from `GetPluginsDir()`)
 - `pluginDir` — Subdirectory name for the plugin (e.g. `"finance"`)
 - `manifestJSON` — The `plugin.json` content as a JSON string
@@ -507,19 +542,20 @@ Installs a plugin by writing its manifest to the plugins directory, then trigger
 ### `RemovePlugin`
 
 ```typescript
-function RemovePlugin(pluginsDir: string, pluginDir: string): Promise<void>
+function RemovePlugin(pluginsDir: string, pluginDir: string): Promise<void>;
 ```
 
 Removes a plugin directory entirely and triggers a rescan.
 
 **Parameters:**
+
 - `pluginsDir` — Path to the plugins directory
 - `pluginDir` — Subdirectory name of the plugin to remove
 
 ### `GetPluginsDir`
 
 ```typescript
-function GetPluginsDir(): Promise<string>
+function GetPluginsDir(): Promise<string>;
 ```
 
 Returns the absolute path to the plugins directory.
@@ -527,7 +563,7 @@ Returns the absolute path to the plugins directory.
 ### `GetPluginThemes`
 
 ```typescript
-function GetPluginThemes(): Promise<ThemeDef[]>
+function GetPluginThemes(): Promise<ThemeDef[]>;
 ```
 
 Returns all themes from currently enabled plugins.
@@ -540,24 +576,24 @@ Returns all themes from currently enabled plugins.
 import * as svc from '../wailsjs/go/service/AppService';
 
 // Evaluate all lines in a note
-const results = await svc.EvaluateAll("42\n10 inches in cm\nx = 5");
+const results = await svc.EvaluateAll('42\n10 inches in cm\nx = 5');
 
 // Evaluate a single expression
-const result = await svc.EvaluateLine("sqrt(144)");
+const result = await svc.EvaluateLine('sqrt(144)');
 
 // Get variables
 const vars = await svc.GetVariables();
 // vars: { x: 5 }
 
 // Get step-by-step breakdown
-const detail = await svc.GetSteps("2 + 3 * 4");
-console.log(detail.result);  // "14"
-console.log(detail.steps);   // [{ operation: "×", ... }, { operation: "+", ... }]
+const detail = await svc.GetSteps('2 + 3 * 4');
+console.log(detail.result); // "14"
+console.log(detail.steps); // [{ operation: "×", ... }, { operation: "+", ... }]
 
 // Graph a function
-const graph = await svc.EvaluateGraph("plot sin(x) from 0 to 6.2832");
+const graph = await svc.EvaluateGraph('plot sin(x) from 0 to 6.2832');
 if (graph) {
-  console.log(graph.points.length);  // 200
+  console.log(graph.points.length); // 200
 }
 
 // Get history
@@ -570,36 +606,36 @@ await svc.ClearHistory();
 
 // Currency rates
 const info = await svc.UpdateCurrencyRates();
-console.log(info.source);  // "live" or "cache"
+console.log(info.source); // "live" or "cache"
 
 // Notes
 const notes = await svc.GetAllNotes();
 const note = await svc.CreateNote();
-await svc.SaveNoteContent(note.id, "2 + 2\npi * 2");
-await svc.RenameNote(note.id, "My Calculations");
+await svc.SaveNoteContent(note.id, '2 + 2\npi * 2');
+await svc.RenameNote(note.id, 'My Calculations');
 await svc.ReorderNotes([note.id]);
 
 // Plugins
 const plugins = await svc.GetPlugins();
-await svc.SetPluginEnabled("finance", true);
+await svc.SetPluginEnabled('finance', true);
 await svc.ReloadPlugins();
 const pluginsDir = await svc.GetPluginsDir();
-await svc.InstallPlugin(pluginsDir, "my-plugin", JSON.stringify(manifest));
-await svc.RemovePlugin(pluginsDir, "my-plugin");
+await svc.InstallPlugin(pluginsDir, 'my-plugin', JSON.stringify(manifest));
+await svc.RemovePlugin(pluginsDir, 'my-plugin');
 
 // Settings
 const settings = await svc.GetSettings();
-await svc.SaveSettings({ ...settings, theme: "neon" });
+await svc.SaveSettings({ ...settings, theme: 'neon' });
 
 // Toggle result panel and line wrap
-await svc.SaveSettings({ ...settings, result_panel_enabled: "false", line_wrap_enabled: "true" });
+await svc.SaveSettings({ ...settings, result_panel_enabled: 'false', line_wrap_enabled: 'true' });
 
 // Data directory
 const dir = await svc.GetDataDir();
 
 // Documentation
 const docs = await svc.GetDocList();
-const content = await svc.GetDocContent("user-guide.md");
+const content = await svc.GetDocContent('user-guide.md');
 ```
 
 ---
@@ -609,14 +645,15 @@ const content = await svc.GetDocContent("user-guide.md");
 All Go errors result in an empty string (or empty array) being returned to the frontend. No error messages are propagated to the user through the API layer.
 
 The frontend should wrap every Wails binding call in `try/catch` to handle cases where:
+
 - The Wails runtime is not yet initialized (e.g. during app startup)
 - The Go backend encountered an unexpected error
 - A timeout occurred (5-second evaluation limit)
 
 ```typescript
 try {
-  const result = await svc.EvaluateLine("2 + 2");
-  if (result === "") {
+  const result = await svc.EvaluateLine('2 + 2');
+  if (result === '') {
     // Expression was invalid or timed out
   }
 } catch (e) {
@@ -626,9 +663,9 @@ try {
 
 ### Evaluation Limits
 
-| Limit | Value |
-|-------|-------|
-| Max input length | 10,000 characters per line |
-| Max nested parentheses | ~100 levels |
-| Evaluation timeout | 5 seconds per call |
-| Max graph points | 200 sampled points |
+| Limit                  | Value                      |
+| ---------------------- | -------------------------- |
+| Max input length       | 10,000 characters per line |
+| Max nested parentheses | ~100 levels                |
+| Evaluation timeout     | 5 seconds per call         |
+| Max graph points       | 200 sampled points         |

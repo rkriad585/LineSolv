@@ -1,7 +1,7 @@
 # LineSolv Color Psychology & UI/UX Redesign Plan
 
 > **Date:** July 2026
-> **Version:** 0.15.10
+> **Version:** 0.15.20
 > **Status:** Planning — Awaiting Approval
 
 ---
@@ -532,3 +532,335 @@ All theme text/background pairs verified:
 - JetBrains Developer Survey — Theme preferences
 - WONG, Bang (2011) — Colorblind-safe palettes, Nature Methods
 - Okabe & Ito — Color Universal Design
+
+---
+
+# Self-Updater System — Complete Rewrite
+
+> **Date:** July 2026
+> **Version:** 0.15.20+
+> **Status:** Planning — Awaiting Approval
+
+---
+
+## 10. Executive Summary
+
+The current self-update system (60 lines in `app/service/app.go`) is broken: no checksum verification, fake progress, duplicated logic, no tests, `os.Exit(0)` bypasses shutdown hooks, and the restart mechanism fails silently. This plan replaces it with a production-grade, modular, testable updater package following the launcher-binary pattern with Ed25519 signature verification, real download progress, and platform-specific install logic.
+
+**Design decisions:**
+
+- **Custom implementation** over `rhysd/go-github-selfupdate` — eliminates heavy `go-github` transitive dependency, gives full control over progress/signature/platform logic
+- **Launcher-binary architecture** — a small `updater` helper binary performs the actual swap, avoiding self-surgery on a running binary
+- **Ed25519 signatures** — deterministic, 64-byte signatures, 32-byte public key embedded via `//go:embed`
+- **Wails events** for real-time frontend progress — no polling, no fake percentages
+
+---
+
+## 11. Architecture
+
+```
+internal/
+    updater/
+        updater.go        # Main orchestrator — Check → Download → Verify → Install → Restart
+        checker.go        # GitHub Release API client, version comparison
+        downloader.go     # HTTP download with progress, resume, retry, cancellation
+        installer.go      # Platform-specific binary replacement
+        github.go         # GitHub API types, asset selection
+        version.go        # Semver parsing, comparison, channel filtering
+        checksum.go       # SHA256 verification
+        signature.go      # Ed25519 signature verification (embedded public key)
+        events.go         # Wails event emission helpers
+        updater_test.go   # Unit tests with mocks
+        platform/
+            windows.go    # Windows rename-to-old + retry cleanup
+            linux.go      # Linux atomic rename + permission preserve
+            darwin.go     # macOS .app bundle replacement + codesign
+```
+
+**Data flow:**
+
+```
+CheckForUpdates()
+    → GET /repos/{owner}/{repo}/releases/latest
+    → Parse Release JSON
+    → Compare versions (semver)
+    → Return UpdateInfo (current, latest, notes, asset URL, size)
+
+DownloadUpdate(ctx, assetURL)
+    → HTTP GET with progress callback
+    → Write to temp file (0600 permissions)
+    → Retry on failure (3 attempts with exponential backoff)
+    → Return temp file path
+
+VerifyUpdate(binaryPath, checksumURL, signatureURL)
+    → Download SHA256SUMS file
+    → Parse expected hash for our platform asset
+    → SHA256 verify binary
+    → Download SHA256SUMS.sig
+    → Ed25519 verify signature over SHA256SUMS content
+    → Return error or nil
+
+InstallUpdate(binaryPath, installPath)
+    → Platform-specific replacement:
+       Windows: rename current → .old, rename new → current, retry cleanup
+       Linux: atomic inode rename, preserve permissions
+       macOS: replace .app bundle Contents/MacOS binary
+    → Start new process
+    → Exit current process cleanly
+
+RestartApplication()
+    → Start new binary (detached)
+    → os.Exit(0)
+```
+
+---
+
+## 12. Package Design
+
+### 12.1 `updater.go` — Main Orchestrator
+
+```go
+type Updater struct {
+    owner       string
+    repo        string
+    currentVer  string
+    installPath string
+    httpClient  *http.Client
+    eventFn     func(string, interface{})  // Wails EventsEmit
+    logger      *slog.Logger
+}
+
+type UpdateInfo struct {
+    CurrentVersion string
+    LatestVersion  string
+    ReleaseNotes   string
+    DownloadURL    string
+    ChecksumURL    string
+    SignatureURL   string
+    PublishedAt    time.Time
+    AssetSize      int64
+    AssetName      string
+}
+
+func New(opts ...Option) *Updater
+func (u *Updater) CheckForUpdates(ctx context.Context) (*UpdateInfo, error)
+func (u *Updater) DownloadUpdate(ctx context.Context, info *UpdateInfo) (string, error)
+func (u *Updater) VerifyUpdate(ctx context.Context, binaryPath string, info *UpdateInfo) error
+func (u *Updater) InstallUpdate(ctx context.Context, binaryPath string) error
+func (u *Updater) PerformFullUpdate(ctx context.Context) error  // convenience: check+download+verify+install+restart
+```
+
+### 12.2 `checker.go` — GitHub Release Client
+
+```go
+type Release struct {
+    TagName     string         `json:"tag_name"`
+    Name        string         `json:"name"`
+    Draft       bool           `json:"draft"`
+    Prerelease  bool           `json:"prerelease"`
+    Body        string         `json:"body"`
+    PublishedAt time.Time      `json:"published_at"`
+    Assets      []ReleaseAsset `json:"assets"`
+}
+
+type ReleaseAsset struct {
+    Name               string `json:"name"`
+    Size               int64  `json:"size"`
+    BrowserDownloadURL string `json:"browser_download_url"`
+}
+
+func FetchLatestRelease(ctx context.Context, owner, repo string) (*Release, error)
+func SelectAsset(release *Release, goos, goarch string) *ReleaseAsset
+```
+
+### 12.3 `downloader.go` — HTTP Download
+
+```go
+type Progress struct {
+    BytesDownloaded int64
+    BytesTotal      int64
+    Percent         float64
+    Speed           float64   // bytes per second
+    ETA             time.Duration
+}
+
+type DownloadOpts struct {
+    MaxRetries   int
+    RetryDelay   time.Duration
+    Timeout      time.Duration
+    OnProgress   func(Progress)
+    Ctx          context.Context
+}
+
+func Download(ctx context.Context, url, dest string, opts DownloadOpts) error
+```
+
+### 12.4 `checksum.go` + `signature.go`
+
+```go
+// checksum.go
+func VerifySHA256(binaryPath, expectedHash string) error
+
+// signature.go
+//go:embed ed25519_public.pem
+var embeddedPublicKey []byte
+
+func VerifyEd25519(signaturePath, dataPath string) error
+```
+
+### 12.5 `platform/` — Platform Installers
+
+```go
+// Each platform file implements:
+func ReplaceBinary(currentPath, newPath string) error
+func StartProcess(path string) error
+func CleanupOld(path string)
+```
+
+---
+
+## 13. Frontend Integration
+
+### 13.1 TypeScript Types (auto-generated by Wails)
+
+```typescript
+interface UpdateInfo {
+  currentVersion: string;
+  latestVersion: string;
+  releaseNotes: string;
+  downloadURL: string;
+  checksumURL: string;
+  signatureURL: string;
+  publishedAt: string;
+  assetSize: number;
+  assetName: string;
+}
+```
+
+### 13.2 Events
+
+| Event Name           | Payload                    | When                     |
+| -------------------- | -------------------------- | ------------------------ |
+| `update:checking`    | `{ status: "checking" }`   | Start check              |
+| `update:available`   | `UpdateInfo`               | Update found             |
+| `update:up-to-date`  | `{ version: string }`      | No update                |
+| `update:downloading` | `Progress`                 | During download          |
+| `update:downloaded`  | `{ path: string }`         | Download complete        |
+| `update:verifying`   | `{ status: "verifying" }`  | Checksum/signature check |
+| `update:installing`  | `{ status: "installing" }` | Binary replacement       |
+| `update:restarting`  | `{ status: "restarting" }` | New process starting     |
+| `update:failed`      | `{ error: string }`        | Any failure              |
+
+### 13.3 UI Flow
+
+```
+[Check for Updates] button
+    → Shows spinner + "Checking..."
+    → If update available:
+        → Shows version diff, release notes, file size
+        → [Download & Install] button
+        → Progress bar with %, speed, ETA
+        → "Verifying..." → "Installing..." → "Restarting..."
+    → If up-to-date:
+        → "You're running the latest version (vX.Y.Z)"
+```
+
+---
+
+## 14. Error Handling
+
+| Error                  | Handling                                           |
+| ---------------------- | -------------------------------------------------- |
+| Offline / DNS failure  | "No internet connection" + retry button            |
+| 404 (no releases)      | "No releases found"                                |
+| 403 (rate limited)     | "Rate limited — try again in X minutes"            |
+| Checksum mismatch      | "Download corrupted — retrying..." (auto-retry 2x) |
+| Signature invalid      | "Release signature invalid — update rejected"      |
+| Permission denied      | "Cannot replace binary — try running as admin"     |
+| New binary won't start | Rollback: rename .old back to original             |
+| Download interrupted   | Resume via HTTP Range header                       |
+
+---
+
+## 15. CI/CD Changes
+
+### 15.1 Release Workflow Updates
+
+The release workflow must:
+
+1. Build platform binaries with embedded version (`-ldflags "-X main.version=..."`)
+2. Generate `SHA256SUMS` file
+3. Sign `SHA256SUMS` with Ed25519 private key (stored as GitHub secret `ED25519_PRIVATE_KEY`)
+4. Upload all assets + `SHA256SUMS` + `SHA256SUMS.sig` to GitHub Release
+
+### 15.2 Asset Naming Convention
+
+```
+LineSolv-{version}-windows-amd64.exe
+LineSolv-{version}-linux-amd64
+LineSolv-{version}-linux-arm64
+LineSolv-{version}-darwin-amd64
+LineSolv-{version}-darwin-arm64
+SHA256SUMS
+SHA256SUMS.sig
+```
+
+---
+
+## 16. Implementation Phases
+
+### Phase 1: Core Updater Package ✅
+
+- [x] Create `internal/updater/` directory structure
+- [x] Implement `github.go` — Release/Asset types, FetchLatestRelease, SelectAsset
+- [x] Implement `version.go` — Semver parsing, comparison, channel filtering
+- [x] Implement `checker.go` — CheckForUpdates orchestrator (in updater.go)
+- [x] Implement `downloader.go` — HTTP download with progress, retry, resume
+- [x] Implement `checksum.go` — SHA256 verification
+- [x] Implement `signature.go` — Ed25519 verification with embedded key
+- [x] Implement `events.go` — Wails event helpers
+- [x] Implement `updater.go` — Main Updater struct with options pattern
+
+### Phase 2: Platform Installers ✅
+
+- [x] Implement `platform/windows.go` — rename-to-old with retry cleanup
+- [x] Implement `platform/linux.go` — atomic rename + permission preserve + syscall.Exec
+- [x] Implement `platform/darwin.go` — atomic rename + detached process start
+
+### Phase 3: Integration ✅
+
+- [x] Replace old updater in `app/service/app.go` with new `internal/updater`
+- [x] Wire up Wails bindings (CheckForUpdate, PerformUpdate, CancelUpdate)
+- [x] Emit proper events for frontend (update:checking, update:available, update:downloading, etc.)
+- [x] Add cancellation support via context
+
+### Phase 4: Frontend ✅
+
+- [x] Update `SettingsModal.ts` update UI with new flow
+- [x] Add progress bar with real %, speed, ETA
+- [x] Add release notes display
+- [x] Fix event listener stacking (cleanup on modal close)
+- [x] Add cancel button
+
+### Phase 5: Testing ✅
+
+- [x] Unit tests for version comparison (12 tests)
+- [x] Unit tests for asset selection (4 tests)
+- [x] Unit tests for checksum verification (4 tests)
+- [x] Unit tests for signature verification (1 test)
+- [x] Mock HTTP tests for downloader (5 tests)
+- [x] Total: 26 tests, all passing
+
+### Phase 6: CI/CD ✅
+
+- [x] Update release workflow with SHA256SUMS generation
+- [x] Add Ed25519 signing step (requires `ED25519_PRIVATE_KEY` GitHub secret)
+- [x] Update asset upload to include checksums + signatures
+- [x] Ed25519 key pair generated (`internal/updater/ed25519_public.pem` embedded)
+
+### Phase 7: Cleanup ✅
+
+- [x] Remove `rhysd/go-github-selfupdate` dependency
+- [x] Remove `blang/semver` (replaced with custom lightweight parser)
+- [x] Clean up dead code in `app/service/app.go` (removed replaceAndRestart, old imports)
+- [x] Update `PLAN.md` and version references across codebase

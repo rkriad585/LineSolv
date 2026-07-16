@@ -225,7 +225,10 @@ export class SettingsModal {
   private updateStatusEl!: HTMLDivElement;
   private updateProgressEl!: HTMLDivElement;
   private updateProgressBarEl!: HTMLDivElement;
+  private updateProgressTextEl!: HTMLDivElement;
+  private updateReleaseNotesEl!: HTMLDivElement;
   private checkBtn!: HTMLButtonElement;
+  private cancelBtn!: HTMLButtonElement;
   private overrides: Record<string, string> = {};
   private shortcutKbds: Map<string, HTMLElement> = new Map();
   private opacityInput!: HTMLInputElement;
@@ -1291,8 +1294,11 @@ export class SettingsModal {
     updateSection.style.cssText =
       'margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;';
 
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:8px;align-items:center;';
+
     this.checkBtn = document.createElement('button');
-    this.checkBtn.textContent = 'Update';
+    this.checkBtn.textContent = 'Check for Updates';
     this.checkBtn.style.cssText =
       'padding:7px 18px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;' +
       'background:var(--accent);color:#fff;transition:opacity .15s;';
@@ -1304,8 +1310,17 @@ export class SettingsModal {
     });
     this.checkBtn.addEventListener('click', () => this.performUpdate());
 
+    this.cancelBtn = document.createElement('button');
+    this.cancelBtn.textContent = 'Cancel';
+    this.cancelBtn.style.cssText =
+      'padding:7px 14px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;' +
+      'background:transparent;color:var(--text-muted);transition:opacity .15s;display:none;';
+    this.cancelBtn.addEventListener('click', () => this.cancelUpdate());
+
+    btnRow.append(this.checkBtn, this.cancelBtn);
+
     this.updateProgressEl = document.createElement('div');
-    this.updateProgressEl.style.cssText = 'width:100%;max-width:260px;display:none;';
+    this.updateProgressEl.style.cssText = 'width:100%;max-width:300px;display:none;';
 
     this.updateProgressBarEl = document.createElement('div');
     this.updateProgressBarEl.style.cssText =
@@ -1318,11 +1333,27 @@ export class SettingsModal {
     this.updateProgressBarEl.appendChild(progressFill);
     this.updateProgressEl.appendChild(this.updateProgressBarEl);
 
+    this.updateProgressTextEl = document.createElement('div');
+    this.updateProgressTextEl.style.cssText =
+      'font-size:11px;color:var(--text-muted);text-align:center;margin-top:2px;';
+    this.updateProgressEl.appendChild(this.updateProgressTextEl);
+
+    this.updateReleaseNotesEl = document.createElement('div');
+    this.updateReleaseNotesEl.style.cssText =
+      'width:100%;max-width:300px;font-size:12px;color:var(--text-muted);text-align:left;' +
+      'max-height:120px;overflow-y:auto;padding:8px;border:1px solid var(--border);border-radius:6px;display:none;' +
+      'white-space:pre-wrap;line-height:1.4;';
+
     this.updateStatusEl = document.createElement('div');
     this.updateStatusEl.style.cssText =
       'font-size:12px;color:var(--text-muted);text-align:center;user-select:none;';
 
-    updateSection.append(this.checkBtn, this.updateProgressEl, this.updateStatusEl);
+    updateSection.append(
+      btnRow,
+      this.updateProgressEl,
+      this.updateReleaseNotesEl,
+      this.updateStatusEl,
+    );
     center.append(
       logo,
       nameEl,
@@ -1356,50 +1387,184 @@ export class SettingsModal {
     this.checkBtn.textContent = 'Checking...';
     this.updateStatusEl.textContent = '';
     this.updateProgressEl.style.display = 'none';
+    this.updateReleaseNotesEl.style.display = 'none';
+    this.cancelBtn.style.display = 'none';
     this.setProgress(0);
 
-    const removeListener = EventsOn(
-      'update-progress',
-      (data: { status: string; message: string }) => {
-        this.updateStatusEl.textContent = data.message;
-        this.updateProgressEl.style.display = 'block';
+    // Listen for all update events
+    const listeners: (() => void)[] = [];
 
-        switch (data.status) {
-          case 'checking':
-            this.setProgress(10);
-            this.checkBtn.textContent = 'Checking...';
-            break;
-          case 'downloading':
-            this.setProgress(50);
-            this.checkBtn.textContent = 'Updating...';
-            break;
-          case 'restarting':
-            this.setProgress(100);
-            this.checkBtn.textContent = 'Restarting...';
-            break;
+    listeners.push(
+      EventsOn('update:checking', () => {
+        this.updateStatusEl.textContent = 'Checking for updates...';
+        this.checkBtn.textContent = 'Checking...';
+      }),
+    );
+
+    listeners.push(
+      EventsOn('update:available', (data: Record<string, unknown>) => {
+        this.updateStatusEl.innerHTML = `<span style="color:var(--accent);font-weight:600">Update available: v${data.latestVersion}</span>`;
+        this.checkBtn.textContent = 'Download & Install';
+        this.checkBtn.disabled = false;
+
+        // Show release notes
+        if (
+          data.releaseNotes &&
+          typeof data.releaseNotes === 'string' &&
+          data.releaseNotes.trim()
+        ) {
+          this.updateReleaseNotesEl.textContent = data.releaseNotes;
+          this.updateReleaseNotesEl.style.display = 'block';
         }
-      },
+
+        // Re-bind click to download
+        this.checkBtn.onclick = () => this.downloadUpdate();
+      }),
+    );
+
+    listeners.push(
+      EventsOn('update:up-to-date', (data: Record<string, unknown>) => {
+        this.updateStatusEl.innerHTML = `<span style="color:var(--text-muted)">You're up to date (v${data.version || 'unknown'})</span>`;
+        this.updateProgressEl.style.display = 'none';
+        this.checkBtn.textContent = 'Check for Updates';
+        this.checkBtn.disabled = false;
+      }),
+    );
+
+    listeners.push(
+      EventsOn('update:downloading', (data: Record<string, unknown>) => {
+        this.updateProgressEl.style.display = 'block';
+        this.cancelBtn.style.display = 'block';
+        this.checkBtn.textContent = 'Downloading...';
+        this.checkBtn.disabled = true;
+
+        const percent = typeof data.percent === 'number' ? data.percent : 0;
+        this.setProgress(percent);
+
+        const downloaded = typeof data.bytesDownloaded === 'number' ? data.bytesDownloaded : 0;
+        const total = typeof data.bytesTotal === 'number' ? data.bytesTotal : 0;
+        const speed = typeof data.speed === 'number' ? data.speed : 0;
+        const eta = typeof data.eta === 'number' ? data.eta : 0;
+
+        let text = `${percent.toFixed(1)}%`;
+        if (total > 0) {
+          text += ` (${this.formatBytes(downloaded)} / ${this.formatBytes(total)})`;
+        }
+        if (speed > 0) {
+          text += ` - ${this.formatBytes(speed)}/s`;
+        }
+        if (eta > 0 && eta < 3600) {
+          text += ` - ${Math.ceil(eta)}s left`;
+        }
+        this.updateProgressTextEl.textContent = text;
+      }),
+    );
+
+    listeners.push(
+      EventsOn('update:downloaded', () => {
+        this.updateProgressTextEl.textContent = 'Download complete';
+        this.cancelBtn.style.display = 'none';
+      }),
+    );
+
+    listeners.push(
+      EventsOn('update:verifying', () => {
+        this.updateStatusEl.textContent = 'Verifying integrity...';
+        this.checkBtn.textContent = 'Verifying...';
+      }),
+    );
+
+    listeners.push(
+      EventsOn('update:installing', () => {
+        this.updateStatusEl.textContent = 'Installing update...';
+        this.checkBtn.textContent = 'Installing...';
+      }),
+    );
+
+    listeners.push(
+      EventsOn('update:restarting', () => {
+        this.updateStatusEl.innerHTML =
+          '<span style="color:var(--accent);font-weight:600">Restarting application...</span>';
+        this.checkBtn.textContent = 'Restarting...';
+        this.setProgress(100);
+      }),
+    );
+
+    listeners.push(
+      EventsOn('update:failed', (data: Record<string, unknown>) => {
+        const msg = typeof data.message === 'string' ? data.message : 'Unknown error';
+        this.updateStatusEl.innerHTML = `<span style="color:var(--text-muted)">Update failed: ${msg}</span>`;
+        this.updateProgressEl.style.display = 'none';
+        this.cancelBtn.style.display = 'none';
+        this.checkBtn.textContent = 'Check for Updates';
+        this.checkBtn.disabled = false;
+      }),
     );
 
     try {
-      const info = await serviceBindings.PerformUpdate();
+      // First call just checks — the Go side returns UpdateInfo
+      const info = await serviceBindings.CheckForUpdate();
 
       if (!info.update_available) {
-        this.updateStatusEl.innerHTML = `<span style="color:var(--text-muted)">\u2713 You're up to date (${info.current_version})</span>`;
-        this.updateProgressEl.style.display = 'none';
-        this.checkBtn.textContent = 'Update';
-      } else {
-        this.updateStatusEl.innerHTML = `<span style="color:var(--accent);font-weight:600">Updated to v${info.latest_version}! Restarting...</span>`;
+        this.updateStatusEl.innerHTML = `<span style="color:var(--text-muted)">You're up to date (v${info.current_version})</span>`;
+        this.checkBtn.textContent = 'Check for Updates';
+        this.checkBtn.disabled = false;
       }
+      // If update is available, the event listener will handle showing the download button
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.updateStatusEl.innerHTML = `<span style="color:var(--text-muted)">Check failed: ${msg}</span>`;
+      this.checkBtn.textContent = 'Check for Updates';
+      this.checkBtn.disabled = false;
+    } finally {
+      // Don't remove listeners here — they persist for download phase
+      // Listeners are cleaned up when modal closes
+      this._updateListeners = listeners;
+    }
+  }
+
+  private async downloadUpdate(): Promise<void> {
+    this.checkBtn.disabled = true;
+    this.checkBtn.textContent = 'Downloading...';
+    this.cancelBtn.style.display = 'block';
+    this.updateProgressEl.style.display = 'block';
+    this.setProgress(0);
+
+    try {
+      await serviceBindings.PerformUpdate();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       this.updateStatusEl.innerHTML = `<span style="color:var(--text-muted)">Update failed: ${msg}</span>`;
       this.updateProgressEl.style.display = 'none';
-      this.checkBtn.textContent = 'Update';
-    } finally {
-      removeListener();
+      this.cancelBtn.style.display = 'none';
+      this.checkBtn.textContent = 'Check for Updates';
       this.checkBtn.disabled = false;
     }
+  }
+
+  private cancelUpdate(): void {
+    serviceBindings.CancelUpdate();
+    this.cancelBtn.style.display = 'none';
+    this.checkBtn.textContent = 'Check for Updates';
+    this.checkBtn.disabled = false;
+    this.updateStatusEl.textContent = 'Update cancelled';
+    this.updateProgressEl.style.display = 'none';
+  }
+
+  private _updateListeners: (() => void)[] = [];
+
+  private cleanupUpdateListeners(): void {
+    for (const remove of this._updateListeners) {
+      remove();
+    }
+    this._updateListeners = [];
+  }
+
+  private formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + units[i];
   }
 
   private async resetToDefaults(): Promise<void> {
@@ -1542,6 +1707,7 @@ export class SettingsModal {
     if (this.fontSelectDocClick) {
       document.removeEventListener('click', this.fontSelectDocClick);
     }
+    this.cleanupUpdateListeners();
   }
 
   isOpen(): boolean {

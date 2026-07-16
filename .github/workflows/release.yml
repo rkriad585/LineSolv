@@ -33,6 +33,7 @@ jobs:
           VERSION="${{ needs.version.outputs.version }}"
           echo "Creating release for version: ${VERSION}"
           gh release create "${VERSION}" \
+            --target "${{ github.sha }}" \
             --title "LineSolv ${VERSION}" \
             --generate-notes \
             --draft=false \
@@ -69,13 +70,14 @@ jobs:
       - name: Package .deb
         run: |
           VERSION="${{ needs.version.outputs.version }}"
+          DEB_VERSION="${VERSION#v}"
           PKG="linesolv_${VERSION}_amd64"
           mkdir -p "${PKG}/DEBIAN" "${PKG}/usr/bin" "${PKG}/usr/share/applications" "${PKG}/usr/share/icons/hicolor/256x256/apps"
           cp build/bin/LineSolv "${PKG}/usr/bin/linesolv"
           cp build/appicon.png "${PKG}/usr/share/icons/hicolor/256x256/apps/linesolv.png"
           cat > "${PKG}/DEBIAN/control" <<ENDCTRL
           Package: linesolv
-          Version: ${VERSION}
+          Version: ${DEB_VERSION}
           Section: utils
           Priority: optional
           Architecture: amd64
@@ -153,6 +155,7 @@ jobs:
       - name: Package arm64 .app
         run: |
           VERSION="${{ needs.version.outputs.version }}"
+          PLIST_VERSION="${VERSION#v}"
           APP="LineSolv-arm64.app"; rm -rf "${APP}"
           if [ -d build/bin/LineSolv.app ]; then
             cp -R build/bin/LineSolv.app "${APP}"
@@ -169,8 +172,8 @@ jobs:
             <key>CFBundleName</key><string>LineSolv</string>
             <key>CFBundleExecutable</key><string>LineSolv</string>
             <key>CFBundleIdentifier</key><string>com.linesolv.app</string>
-            <key>CFBundleVersion</key><string>${VERSION}</string>
-            <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+            <key>CFBundleVersion</key><string>${PLIST_VERSION}</string>
+            <key>CFBundleShortVersionString</key><string>${PLIST_VERSION}</string>
             <key>CFBundleIconFile</key><string>iconfile</string>
             <key>LSMinimumSystemVersion</key><string>10.13.0</string>
             <key>NSHighResolutionCapable</key><true/>
@@ -206,6 +209,7 @@ jobs:
       - name: Package amd64 .app
         run: |
           VERSION="${{ needs.version.outputs.version }}"
+          PLIST_VERSION="${VERSION#v}"
           APP="LineSolv-amd64.app"; rm -rf "${APP}"
           if [ -d build/bin/LineSolv.app ]; then
             cp -R build/bin/LineSolv.app "${APP}"
@@ -222,8 +226,8 @@ jobs:
             <key>CFBundleName</key><string>LineSolv</string>
             <key>CFBundleExecutable</key><string>LineSolv</string>
             <key>CFBundleIdentifier</key><string>com.linesolv.app</string>
-            <key>CFBundleVersion</key><string>${VERSION}</string>
-            <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+            <key>CFBundleVersion</key><string>${PLIST_VERSION}</string>
+            <key>CFBundleShortVersionString</key><string>${PLIST_VERSION}</string>
             <key>CFBundleIconFile</key><string>iconfile</string>
             <key>LSMinimumSystemVersion</key><string>10.13.0</string>
             <key>NSHighResolutionCapable</key><true/>
@@ -330,5 +334,127 @@ jobs:
             "SHA256SUMS-windows-${VERSION}" \
             --clobber
           echo "Windows upload complete"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  finalize:
+    needs: [version, release, linux, macos, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - name: Combine checksums, sign, build update manifest, finalize notes
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.version.outputs.version }}"
+          REPO="${{ github.repository }}"
+          BASE="https://github.com/${REPO}/releases/download/${VERSION}"
+
+          # --- Pull the per-OS checksum files back down and merge them ---
+          mkdir -p assets && cd assets
+          gh release download "${VERSION}" --pattern "SHA256SUMS-*"
+          cd ..
+          cat assets/SHA256SUMS-* | sort -k2 > "SHA256SUMS-${VERSION}"
+          gh release upload "${VERSION}" "SHA256SUMS-${VERSION}" --clobber
+
+          # --- Sign SHA256SUMS with Ed25519 ---
+          if [ -n "${ED25519_PRIVATE_KEY:-}" ]; then
+            echo "${ED25519_PRIVATE_KEY}" > /tmp/signing_key.pem
+            cat > /tmp/sign.go << 'GOEOF'
+          package main
+
+          import (
+            "crypto/ed25519"
+            "encoding/pem"
+            "fmt"
+            "os"
+          )
+
+          func main() {
+            if len(os.Args) != 3 {
+              fmt.Fprintf(os.Stderr, "usage: sign <key.pem> <file>\n")
+              os.Exit(1)
+            }
+            keyData, err := os.ReadFile(os.Args[1])
+            if err != nil {
+              fmt.Fprintf(os.Stderr, "read key: %v\n", err)
+              os.Exit(1)
+            }
+            block, _ := pem.Decode(keyData)
+            if block == nil {
+              fmt.Fprintf(os.Stderr, "decode PEM: failed\n")
+              os.Exit(1)
+            }
+            priv := ed25519.PrivateKey(block.Bytes)
+            data, err := os.ReadFile(os.Args[2])
+            if err != nil {
+              fmt.Fprintf(os.Stderr, "read data: %v\n", err)
+              os.Exit(1)
+            }
+            sig := ed25519.Sign(priv, data)
+            if err := os.WriteFile(os.Args[2]+".sig", sig, 0644); err != nil {
+              fmt.Fprintf(os.Stderr, "write sig: %v\n", err)
+              os.Exit(1)
+            }
+            fmt.Printf("Signed %s -> %s.sig\n", os.Args[2], os.Args[2])
+          }
+          GOEOF
+            go run /tmp/sign.go /tmp/signing_key.pem "SHA256SUMS-${VERSION}"
+            rm -f /tmp/signing_key.pem /tmp/sign.go
+            gh release upload "${VERSION}" "SHA256SUMS-${VERSION}.sig" --clobber
+            echo "SHA256SUMS signed successfully"
+          else
+            echo "WARNING: ED25519_PRIVATE_KEY not set, skipping signing"
+          fi
+
+          # Exact-match sha lookup (avoids the classic "amd64 matches amd64.dmg" substring bug)
+          sha_for() {
+            awk -v f="$1" '{fn=$NF; sub(/^\*/,"",fn); if (fn==f) {print $1; exit}}' "SHA256SUMS-${VERSION}"
+          }
+
+          # --- Self-update manifest: a stable, small JSON file update clients can poll ---
+          cat > "latest.json" <<EOF
+          {
+            "version": "${VERSION}",
+            "notes_url": "https://github.com/${REPO}/releases/tag/${VERSION}",
+            "platforms": {
+              "linux-amd64": {
+                "url": "${BASE}/LineSolv-${VERSION}-linux-amd64",
+                "sha256": "$(sha_for "LineSolv-${VERSION}-linux-amd64")"
+              },
+              "darwin-arm64": {
+                "url": "${BASE}/LineSolv-${VERSION}-darwin-arm64",
+                "sha256": "$(sha_for "LineSolv-${VERSION}-darwin-arm64")"
+              },
+              "darwin-amd64": {
+                "url": "${BASE}/LineSolv-${VERSION}-darwin-amd64",
+                "sha256": "$(sha_for "LineSolv-${VERSION}-darwin-amd64")"
+              },
+              "windows-amd64": {
+                "url": "${BASE}/LineSolv-${VERSION}-windows-amd64.exe",
+                "sha256": "$(sha_for "LineSolv-${VERSION}-windows-amd64.exe")"
+              }
+            }
+          }
+          EOF
+          gh release upload "${VERSION}" "latest.json" --clobber
+
+          # --- Append a Downloads/verification table to the auto-generated notes ---
+          gh release view "${VERSION}" --json body -q .body > current-notes.md
+          {
+            cat current-notes.md
+            echo
+            echo "## Downloads"
+            echo
+            echo "| File | SHA256 |"
+            echo "|---|---|"
+            while read -r sum file; do
+              echo "| \`${file}\` | \`${sum}\` |"
+            done < "SHA256SUMS-${VERSION}"
+          } > final-notes.md
+          gh release edit "${VERSION}" --notes-file final-notes.md
+          echo "Release notes finalized for ${VERSION}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

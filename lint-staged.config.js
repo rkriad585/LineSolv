@@ -1,6 +1,6 @@
 export default {
   '*.{ts,tsx}': [
-    'frontend/node_modules/.bin/eslint --fix --config frontend/eslint.config.js',
+    'frontend/node_modules/.bin/eslint --fix --config frontend/eslint.config.js --ignore-pattern frontend/wailsjs/**',
     'prettier --write',
   ],
   '*.css': ['prettier --write'],

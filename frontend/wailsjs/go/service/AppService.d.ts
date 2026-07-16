@@ -5,6 +5,8 @@ import {storage} from '../models';
 import {calculator} from '../models';
 import {plugin} from '../models';
 
+export function CancelUpdate():Promise<void>;
+
 export function CheckForUpdate():Promise<service.UpdateInfo>;
 
 export function ClearHistory():Promise<void>;
