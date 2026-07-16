@@ -1,5 +1,5 @@
 import * as serviceBindings from '../../wailsjs/go/service/AppService';
-import {toast} from '../utils/toast';
+import { toast } from '../utils/toast';
 
 interface RemotePlugin {
   name: string;
@@ -29,31 +29,56 @@ interface PluginManifest {
   description: string;
   author: string;
   homepage?: string;
-  functions?: Array<{name: string; description: string; args: number; min_args: number; max_args: number; expression?: string; builtin?: string; examples?: string[]}>;
-  themes?: Array<{id: string; label: string; colors: Record<string, string>}>;
-  variables?: Array<{name: string; description: string; value: number}>;
+  functions?: Array<{
+    name: string;
+    description: string;
+    args: number;
+    min_args: number;
+    max_args: number;
+    expression?: string;
+    builtin?: string;
+    examples?: string[];
+  }>;
+  themes?: Array<{ id: string; label: string; colors: Record<string, string> }>;
+  variables?: Array<{ name: string; description: string; value: number }>;
 }
 
 const PLUGINS_REPO_URL = 'https://raw.githubusercontent.com/rkriad585/linesolv-plugins/main';
 const PLUGINS_INDEX_URL = `${PLUGINS_REPO_URL}/plugins.json`;
 
-const CLOSE_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-const SEARCH_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
-const REFRESH_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
-const DOWNLOAD_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
-const CHECK_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-const TRASH_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
-const UPDATE_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
-const PLUGIN_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
-const BACK_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
-const SPINNER = '<div style="width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;"></div>';
+const CLOSE_ICON =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+const SEARCH_ICON =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+const REFRESH_ICON =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
+const DOWNLOAD_ICON =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+const CHECK_ICON =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const TRASH_ICON =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+const UPDATE_ICON =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
+const PLUGIN_ICON =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
+const BACK_ICON =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+const SPINNER =
+  '<div style="width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;"></div>';
 
 function esc(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-const COPY_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-const CHECK_CIRCLE_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+const COPY_ICON =
+  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+const CHECK_CIRCLE_ICON =
+  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
 
 function md(text: string, codeBlocks?: string[]): string {
   const blocks: string[] = [];
@@ -64,14 +89,29 @@ function md(text: string, codeBlocks?: string[]): string {
   });
 
   processed = processed
-    .replace(/^#### (.+)$/gm, '<h4 style="font-size:14px;font-weight:600;color:var(--text);margin:16px 0 6px;">$1</h4>')
-    .replace(/^### (.+)$/gm, '<h3 style="font-size:15px;font-weight:600;color:var(--text);margin:20px 0 8px;">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 style="font-size:17px;font-weight:600;color:var(--text);margin:24px 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px;">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 style="font-size:20px;font-weight:600;color:var(--text);margin:0 0 12px;">$1</h1>')
+    .replace(
+      /^#### (.+)$/gm,
+      '<h4 style="font-size:14px;font-weight:600;color:var(--text);margin:16px 0 6px;">$1</h4>',
+    )
+    .replace(
+      /^### (.+)$/gm,
+      '<h3 style="font-size:15px;font-weight:600;color:var(--text);margin:20px 0 8px;">$1</h3>',
+    )
+    .replace(
+      /^## (.+)$/gm,
+      '<h2 style="font-size:17px;font-weight:600;color:var(--text);margin:24px 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px;">$1</h2>',
+    )
+    .replace(
+      /^# (.+)$/gm,
+      '<h1 style="font-size:20px;font-weight:600;color:var(--text);margin:0 0 12px;">$1</h1>',
+    )
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/~~(.+?)~~/g, '<del>$1</del>')
-    .replace(/`([^`\n]+)`/g, '<code style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent);font-family:monospace;">$1</code>')
+    .replace(
+      /`([^`\n]+)`/g,
+      '<code style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent);font-family:monospace;">$1</code>',
+    )
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt: string, url: string) => {
       const trimmed = url.trim();
       if (/^https?:\/\//i.test(trimmed)) {
@@ -86,16 +126,44 @@ function md(text: string, codeBlocks?: string[]): string {
       }
       return `[${text}](${url})`;
     })
-    .replace(/^> (.+)$/gm, '<blockquote style="margin:8px 0;padding:8px 16px;border-left:3px solid var(--accent);background:var(--surface-secondary);border-radius:0 6px 6px 0;font-size:13px;color:var(--text-muted);">$1</blockquote>')
-    .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">')
+    .replace(
+      /^> (.+)$/gm,
+      '<blockquote style="margin:8px 0;padding:8px 16px;border-left:3px solid var(--accent);background:var(--surface-secondary);border-radius:0 6px 6px 0;font-size:13px;color:var(--text-muted);">$1</blockquote>',
+    )
+    .replace(
+      /^---$/gm,
+      '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">',
+    )
     .replace(/^\|(.+)\|$/gm, (match) => {
-      const cells = match.split('|').filter(Boolean).map(c => c.trim());
-      if (cells.every(c => /^[-:]+$/.test(c))) return '';
-      return '<tr>' + cells.map(c => `<td style="padding:6px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-muted);">${c.trim()}</td>`).join('') + '</tr>';
+      const cells = match
+        .split('|')
+        .filter(Boolean)
+        .map((c) => c.trim());
+      if (cells.every((c) => /^[-:]+$/.test(c))) return '';
+      return (
+        '<tr>' +
+        cells
+          .map(
+            (c) =>
+              `<td style="padding:6px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-muted);">${c.trim()}</td>`,
+          )
+          .join('') +
+        '</tr>'
+      );
     })
-    .replace(/(<tr>.*<\/tr>\n?)+/gs, (match) => `<table style="width:100%;border-collapse:collapse;margin:8px 0;">${match}</table>`)
-    .replace(/^[-*] (.+)$/gm, '<li style="margin:3px 0;color:var(--text-muted);font-size:13px;">$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li style="margin:3px 0;color:var(--text-muted);font-size:13px;list-style-type:decimal;">$2</li>')
+    .replace(
+      /(<tr>.*<\/tr>\n?)+/gs,
+      (match) =>
+        `<table style="width:100%;border-collapse:collapse;margin:8px 0;">${match}</table>`,
+    )
+    .replace(
+      /^[-*] (.+)$/gm,
+      '<li style="margin:3px 0;color:var(--text-muted);font-size:13px;">$1</li>',
+    )
+    .replace(
+      /^(\d+)\. (.+)$/gm,
+      '<li style="margin:3px 0;color:var(--text-muted);font-size:13px;list-style-type:decimal;">$2</li>',
+    )
     .replace(/(<li[^>]*>.*<\/li>\n?)+/gs, (match) => {
       const isOrdered = /list-style-type:decimal/.test(match);
       const tag = isOrdered ? 'ol' : 'ul';
@@ -103,22 +171,28 @@ function md(text: string, codeBlocks?: string[]): string {
     });
 
   const paragraphs = processed.split(/\n{2,}/);
-  processed = paragraphs.map(p => {
-    p = p.trim();
-    if (!p) return '';
-    if (/^<[a-z]/.test(p) && !/^(<li|<tr|<h[1-6]|<hr|<blockquote)/.test(p)) return p;
-    if (/^__codeblock_\d+__$/.test(p)) return p;
-    if (/^<(li|tr|h[1-6]|hr|blockquote|ul|ol|table|pre|div)/.test(p)) return p;
-    return `<p style="margin:8px 0;line-height:1.7;">${p.replace(/\n/g, '<br>')}</p>`;
-  }).join('\n');
+  processed = paragraphs
+    .map((p) => {
+      p = p.trim();
+      if (!p) return '';
+      if (/^<[a-z]/.test(p) && !/^(<li|<tr|<h[1-6]|<hr|<blockquote)/.test(p)) return p;
+      if (/^__codeblock_\d+__$/.test(p)) return p;
+      if (/^<(li|tr|h[1-6]|hr|blockquote|ul|ol|table|pre|div)/.test(p)) return p;
+      return `<p style="margin:8px 0;line-height:1.7;">${p.replace(/\n/g, '<br>')}</p>`;
+    })
+    .join('\n');
 
   const result = processed.replace(/__codeblock_(\d+)__/g, (_m, i: string) => {
     const idx = parseInt(i);
     const code = blocks[idx];
-    const langMatch = text.match(new RegExp('```(\\w*)\\n' + code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').slice(0, 20)));
+    const langMatch = text.match(
+      new RegExp('```(\\w*)\\n' + code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').slice(0, 20)),
+    );
     const lang = langMatch ? langMatch[1] : '';
     const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const langLabel = lang ? `<span style="position:absolute;top:6px;right:10px;font-size:10px;color:var(--text-subtle);text-transform:uppercase;letter-spacing:0.5px;">${lang}</span>` : '';
+    const langLabel = lang
+      ? `<span style="position:absolute;top:6px;right:10px;font-size:10px;color:var(--text-subtle);text-transform:uppercase;letter-spacing:0.5px;">${lang}</span>`
+      : '';
     return `<div style="position:relative;margin:12px 0;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;"><div style="display:flex;justify-content:flex-end;align-items:center;padding:4px 8px;border-bottom:1px solid var(--border);background:var(--surface-secondary);"><button class="md-copy-btn" data-code="${idx}" style="display:flex;align-items:center;gap:4px;padding:2px 8px;font-size:11px;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:color 0.15s,border-color 0.15s;">${COPY_ICON} Copy</button></div><pre style="margin:0;padding:12px 16px;overflow-x:auto;font-size:12px;line-height:1.6;color:var(--text-muted);font-family:monospace;"><code>${escaped}</code></pre>${langLabel}</div>`;
   });
 
@@ -156,7 +230,7 @@ export class PluginPanel {
     this.el.className = 'lsv-modal-overlay lsv-modal-fullscreen';
     this.el.style.cssText =
       'position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;' +
-      'background:var(--surface);';
+      'background:var(--surface-secondary);';
     this.build();
   }
 
@@ -166,19 +240,28 @@ export class PluginPanel {
       'display:flex;align-items:center;justify-content:space-between;padding:8px 16px;' +
       'background:var(--surface-secondary);border-bottom:1px solid var(--border);--wails-draggable:drag;';
     header.addEventListener('dblclick', (e) => {
-      if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input')) return;
+      if (
+        (e.target as HTMLElement).closest('button') ||
+        (e.target as HTMLElement).closest('input')
+      ) {
+        return;
+      }
       try {
         const rt = window.runtime;
         if (rt) rt.WindowToggleMaximise();
-      } catch { /* ignored */ }
+      } catch {
+        /* ignored */
+      }
     });
 
     this.headerTitleEl = document.createElement('div');
-    this.headerTitleEl.style.cssText = 'display:flex;align-items:center;gap:8px;color:var(--text);font-weight:600;--wails-draggable:drag;';
+    this.headerTitleEl.style.cssText =
+      'display:flex;align-items:center;gap:8px;color:var(--text);font-weight:600;--wails-draggable:drag;';
     this.headerTitleEl.innerHTML = `${PLUGIN_ICON}<span style="font-size:13px;font-weight:600;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;">Plugins</span>`;
 
     this.searchWrapper = document.createElement('div');
-    this.searchWrapper.style.cssText = 'display:flex;align-items:center;gap:8px;--wails-draggable:no-drag;';
+    this.searchWrapper.style.cssText =
+      'display:flex;align-items:center;gap:8px;--wails-draggable:no-drag;';
 
     this.searchInput = document.createElement('input');
     this.searchInput.type = 'text';
@@ -189,7 +272,8 @@ export class PluginPanel {
     this.searchInput.addEventListener('input', () => this.filterPlugins());
 
     const searchIconWrapper = document.createElement('div');
-    searchIconWrapper.style.cssText = 'position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;';
+    searchIconWrapper.style.cssText =
+      'position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;';
     searchIconWrapper.innerHTML = SEARCH_ICON;
 
     const searchContainer = document.createElement('div');
@@ -206,7 +290,9 @@ export class PluginPanel {
         await serviceBindings.ReloadPlugins();
         await this.loadPlugins();
         this.onPluginsChanged?.();
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     });
 
     const closeBtn = document.createElement('button');
@@ -223,13 +309,15 @@ export class PluginPanel {
 
     this.loadingEl = document.createElement('div');
     this.loadingEl.style.cssText = 'text-align:center;padding:60px;color:var(--text-muted);';
-    this.loadingEl.innerHTML = '<div style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;margin:0 auto 12px;"></div>Loading plugins...';
+    this.loadingEl.innerHTML =
+      '<div style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;margin:0 auto 12px;"></div>Loading plugins...';
 
     this.errorEl = document.createElement('div');
     this.errorEl.style.cssText = 'text-align:center;padding:60px;color:var(--error);display:none;';
 
     this.pluginListEl = document.createElement('div');
-    this.pluginListEl.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;';
+    this.pluginListEl.style.cssText =
+      'display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;';
     this.pluginListEl.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest('.plugin-action-btn') as HTMLButtonElement;
       if (btn && !btn.disabled) {
@@ -301,9 +389,11 @@ export class PluginPanel {
   }
 
   private iconBtnStyle(): string {
-    return 'display:flex;align-items:center;justify-content:center;width:28px;height:28px;' +
+    return (
+      'display:flex;align-items:center;justify-content:center;width:28px;height:28px;' +
       'border:none;border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;' +
-      'transition:background 0.15s;--wails-draggable:no-drag;';
+      'transition:background 0.15s;--wails-draggable:no-drag;'
+    );
   }
 
   private handleKeydown = (e: KeyboardEvent): void => {
@@ -361,7 +451,7 @@ export class PluginPanel {
   }
 
   private async showDetail(pluginName: string): Promise<void> {
-    const plugin = this.remotePlugins.find(p => p.name === pluginName);
+    const plugin = this.remotePlugins.find((p) => p.name === pluginName);
     if (!plugin) return;
 
     this.currentDetail = pluginName;
@@ -381,12 +471,13 @@ export class PluginPanel {
 
     this.headerTitleEl.append(backBtn, titleSpan);
 
-    this.detailContent.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-muted);"><div style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;margin:0 auto 12px;"></div>Loading plugin details...</div>';
+    this.detailContent.innerHTML =
+      '<div style="text-align:center;padding:60px;color:var(--text-muted);"><div style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;margin:0 auto 12px;"></div>Loading plugin details...</div>';
 
     try {
       const [manifestResp, readmeResp] = await Promise.all([
         fetch(`${PLUGINS_REPO_URL}/plugins/${plugin.directory}/plugin.json`),
-        fetch(`${PLUGINS_REPO_URL}/plugins/${plugin.directory}/README.md`)
+        fetch(`${PLUGINS_REPO_URL}/plugins/${plugin.directory}/README.md`),
       ]);
 
       let manifest: PluginManifest | null = null;
@@ -401,34 +492,46 @@ export class PluginPanel {
 
       this.renderDetail(plugin, manifest, readme);
     } catch {
-      this.detailContent.innerHTML = '<div style="text-align:center;padding:60px;color:var(--error);">Failed to load plugin details</div>';
+      this.detailContent.innerHTML =
+        '<div style="text-align:center;padding:60px;color:var(--error);">Failed to load plugin details</div>';
     }
   }
 
-  private renderDetail(plugin: RemotePlugin, manifest: PluginManifest | null, readme: string): void {
+  private renderDetail(
+    plugin: RemotePlugin,
+    manifest: PluginManifest | null,
+    readme: string,
+  ): void {
     this.detailContent.innerHTML = '';
 
     const local = this.localPlugins.get(plugin.name);
     const isInstalled = !!local;
-    const hasUpdate = isInstalled && local && this.compareVersions(plugin.version, local.version) > 0;
+    const hasUpdate =
+      isInstalled && local && this.compareVersions(plugin.version, local.version) > 0;
     const isActive = this.activeActions.has(plugin.name);
 
     // Hero section
     const hero = document.createElement('div');
-    hero.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:var(--ui-radius-lg);padding:24px;margin-bottom:20px;';
+    hero.style.cssText =
+      'background:var(--surface-secondary);border:1px solid var(--border);border-radius:var(--ui-radius-lg);padding:24px;margin-bottom:20px;';
 
     const nameRow = document.createElement('div');
-    nameRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;';
-    nameRow.innerHTML = `<span style="font-size:22px;font-weight:700;color:var(--text)">${esc(plugin.name)}</span>` +
+    nameRow.style.cssText =
+      'display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;';
+    nameRow.innerHTML =
+      `<span style="font-size:22px;font-weight:700;color:var(--text)">${esc(plugin.name)}</span>` +
       `<span style="font-size:12px;padding:3px 10px;border-radius:10px;background:var(--accent);color:var(--surface);font-weight:500">${esc(plugin.type)}</span>` +
-      (hasUpdate ? `<span style="font-size:12px;padding:3px 10px;border-radius:10px;background:var(--error);color:white;font-weight:500">Update Available</span>` : '');
+      (hasUpdate
+        ? `<span style="font-size:12px;padding:3px 10px;border-radius:10px;background:var(--error);color:white;font-weight:500">Update Available</span>`
+        : '');
 
     const meta = document.createElement('div');
     meta.style.cssText = 'font-size:13px;color:var(--text-muted);margin-bottom:8px;';
     meta.textContent = `v${plugin.version} by ${plugin.author}`;
 
     const desc = document.createElement('div');
-    desc.style.cssText = 'font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:12px;';
+    desc.style.cssText =
+      'font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:12px;';
     desc.textContent = plugin.description;
 
     hero.append(nameRow, meta, desc);
@@ -438,7 +541,8 @@ export class PluginPanel {
       link.href = plugin.homepage;
       link.target = '_blank';
       link.textContent = plugin.homepage;
-      link.style.cssText = 'font-size:12px;color:var(--accent);text-decoration:none;display:inline-block;margin-bottom:12px;';
+      link.style.cssText =
+        'font-size:12px;color:var(--accent);text-decoration:none;display:inline-block;margin-bottom:12px;';
       hero.appendChild(link);
     }
 
@@ -447,7 +551,8 @@ export class PluginPanel {
       tagsDiv.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;';
       for (const t of plugin.tags) {
         const span = document.createElement('span');
-        span.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:4px;background:var(--surface);color:var(--text-subtle);';
+        span.style.cssText =
+          'font-size:11px;padding:3px 10px;border-radius:4px;background:var(--surface);color:var(--text-subtle);';
         span.textContent = t;
         tagsDiv.appendChild(span);
       }
@@ -462,7 +567,8 @@ export class PluginPanel {
       const toggle = document.createElement('div');
       toggle.className = 'plugin-toggle';
       toggle.dataset.plugin = plugin.name;
-      toggle.style.cssText = 'cursor:pointer;position:relative;width:40px;height:22px;flex-shrink:0;';
+      toggle.style.cssText =
+        'cursor:pointer;position:relative;width:40px;height:22px;flex-shrink:0;';
       const track = document.createElement('div');
       track.style.cssText = `position:absolute;inset:0;border-radius:11px;transition:background 0.2s;${local.enabled ? 'background:var(--accent);' : 'background:var(--text-subtle);'}`;
       const thumb = document.createElement('div');
@@ -477,7 +583,8 @@ export class PluginPanel {
       installBtn.dataset.action = 'install';
       installBtn.dataset.plugin = plugin.name;
       installBtn.disabled = isActive;
-      installBtn.style.cssText = 'flex:1;padding:10px 16px;background:var(--accent);color:var(--surface);border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;';
+      installBtn.style.cssText =
+        'flex:1;padding:10px 16px;background:var(--accent);color:var(--surface);border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;';
       installBtn.innerHTML = isActive ? `${SPINNER} Installing...` : `${DOWNLOAD_ICON} Install`;
       actionsDiv.appendChild(installBtn);
     } else if (hasUpdate) {
@@ -486,7 +593,8 @@ export class PluginPanel {
       updateBtn.dataset.action = 'update';
       updateBtn.dataset.plugin = plugin.name;
       updateBtn.disabled = isActive;
-      updateBtn.style.cssText = 'flex:1;padding:10px 16px;background:var(--accent);color:var(--surface);border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;';
+      updateBtn.style.cssText =
+        'flex:1;padding:10px 16px;background:var(--accent);color:var(--surface);border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;';
       updateBtn.innerHTML = isActive ? `${SPINNER} Updating...` : `${UPDATE_ICON} Update`;
       actionsDiv.appendChild(updateBtn);
 
@@ -495,12 +603,14 @@ export class PluginPanel {
       removeBtn.dataset.action = 'remove';
       removeBtn.dataset.plugin = plugin.name;
       removeBtn.disabled = isActive;
-      removeBtn.style.cssText = 'padding:10px 16px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;';
+      removeBtn.style.cssText =
+        'padding:10px 16px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;';
       removeBtn.innerHTML = `${TRASH_ICON} Remove`;
       actionsDiv.appendChild(removeBtn);
     } else {
       const installedBadge = document.createElement('div');
-      installedBadge.style.cssText = 'flex:1;padding:10px 16px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:6px;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;';
+      installedBadge.style.cssText =
+        'flex:1;padding:10px 16px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:6px;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;';
       installedBadge.innerHTML = `${CHECK_ICON} Installed`;
       actionsDiv.appendChild(installedBadge);
 
@@ -509,7 +619,8 @@ export class PluginPanel {
       removeBtn.dataset.action = 'remove';
       removeBtn.dataset.plugin = plugin.name;
       removeBtn.disabled = isActive;
-      removeBtn.style.cssText = 'padding:10px 16px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;';
+      removeBtn.style.cssText =
+        'padding:10px 16px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;';
       removeBtn.innerHTML = `${TRASH_ICON} Remove`;
       actionsDiv.appendChild(removeBtn);
     }
@@ -521,34 +632,41 @@ export class PluginPanel {
     if (manifest) {
       if (manifest.functions && manifest.functions.length > 0) {
         const section = this.createSection('Functions');
-        const table = this.createTable(['Name', 'Description', 'Args', 'Type'], manifest.functions.map(fn => [
-          fn.name,
-          fn.description,
-          fn.max_args === -1 ? `${fn.min_args}+` : `${fn.min_args}`,
-          fn.builtin ? `builtin: ${fn.builtin}` : fn.expression ? `expr: ${fn.expression}` : '-'
-        ]));
+        const table = this.createTable(
+          ['Name', 'Description', 'Args', 'Type'],
+          manifest.functions.map((fn) => [
+            fn.name,
+            fn.description,
+            fn.max_args === -1 ? `${fn.min_args}+` : `${fn.min_args}`,
+            fn.builtin ? `builtin: ${fn.builtin}` : fn.expression ? `expr: ${fn.expression}` : '-',
+          ]),
+        );
         section.appendChild(table);
-        if (manifest.functions.some(fn => fn.examples && fn.examples.length > 0)) {
+        if (manifest.functions.some((fn) => fn.examples && fn.examples.length > 0)) {
           const exDiv = document.createElement('div');
           exDiv.style.cssText = 'margin-top:12px;';
           const exTitle = document.createElement('div');
-          exTitle.style.cssText = 'font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;';
+          exTitle.style.cssText =
+            'font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;';
           exTitle.textContent = 'Examples';
           exDiv.appendChild(exTitle);
           for (const fn of manifest.functions) {
             if (fn.examples && fn.examples.length > 0) {
               for (const ex of fn.examples) {
                 const row = document.createElement('div');
-                row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:4px 0;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-family:monospace;font-size:12px;color:var(--text-muted);';
+                row.style.cssText =
+                  'display:flex;align-items:center;gap:8px;margin:4px 0;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-family:monospace;font-size:12px;color:var(--text-muted);';
                 const code = document.createElement('span');
-                code.style.cssText = 'flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+                code.style.cssText =
+                  'flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
                 code.textContent = ex;
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'example-copy-btn';
                 copyBtn.dataset.code = ex;
                 copyBtn.innerHTML = COPY_ICON;
                 copyBtn.title = 'Copy';
-                copyBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;width:24px;height:24px;border:none;border-radius:4px;background:transparent;color:var(--text-subtle);cursor:pointer;flex-shrink:0;transition:color 0.15s,background 0.15s;';
+                copyBtn.style.cssText =
+                  'display:flex;align-items:center;justify-content:center;width:24px;height:24px;border:none;border-radius:4px;background:transparent;color:var(--text-subtle);cursor:pointer;flex-shrink:0;transition:color 0.15s,background 0.15s;';
                 copyBtn.addEventListener('click', (ev) => {
                   ev.stopPropagation();
                   navigator.clipboard.writeText(ex).then(() => {
@@ -572,11 +690,10 @@ export class PluginPanel {
 
       if (manifest.variables && manifest.variables.length > 0) {
         const section = this.createSection('Variables');
-        const table = this.createTable(['Name', 'Description', 'Value'], manifest.variables.map(v => [
-          v.name,
-          v.description,
-          String(v.value)
-        ]));
+        const table = this.createTable(
+          ['Name', 'Description', 'Value'],
+          manifest.variables.map((v) => [v.name, v.description, String(v.value)]),
+        );
         section.appendChild(table);
         this.detailContent.appendChild(section);
       }
@@ -585,7 +702,8 @@ export class PluginPanel {
         const section = this.createSection('Themes');
         for (const theme of manifest.themes) {
           const card = document.createElement('div');
-          card.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;';
+          card.style.cssText =
+            'background:var(--surface-secondary);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;';
           const swatch = document.createElement('div');
           swatch.style.cssText = `height:40px;border-radius:6px;margin-bottom:8px;background:${theme.colors['--surface'] || '#18181b'};display:flex;align-items:center;justify-content:center;gap:12px;padding:0 16px;`;
           const accent = document.createElement('span');
@@ -608,9 +726,11 @@ export class PluginPanel {
     // README section
     if (readme) {
       const readmeSection = document.createElement('div');
-      readmeSection.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:12px;padding:24px;margin-top:20px;';
+      readmeSection.style.cssText =
+        'background:var(--surface-secondary);border:1px solid var(--border);border-radius:12px;padding:24px;margin-top:20px;';
       const readmeTitle = document.createElement('div');
-      readmeTitle.style.cssText = 'font-size:17px;font-weight:600;color:var(--text);margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px;';
+      readmeTitle.style.cssText =
+        'font-size:17px;font-weight:600;color:var(--text);margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px;';
       readmeTitle.textContent = 'Documentation';
       readmeSection.appendChild(readmeTitle);
       const readmeBody = document.createElement('div');
@@ -623,9 +743,11 @@ export class PluginPanel {
 
   private createSection(title: string): HTMLElement {
     const section = document.createElement('div');
-    section.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:var(--ui-radius-lg);padding:20px;margin-top:16px;';
+    section.style.cssText =
+      'background:var(--surface-secondary);border:1px solid var(--border);border-radius:var(--ui-radius-lg);padding:20px;margin-top:16px;';
     const titleEl = document.createElement('div');
-    titleEl.style.cssText = 'font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:6px;';
+    titleEl.style.cssText =
+      'font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:6px;';
     titleEl.textContent = title;
     section.appendChild(titleEl);
     return section;
@@ -638,7 +760,8 @@ export class PluginPanel {
     const headerRow = document.createElement('tr');
     for (const h of headers) {
       const th = document.createElement('th');
-      th.style.cssText = 'text-align:left;padding:6px 10px;color:var(--text-muted);border-bottom:1px solid var(--border);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;';
+      th.style.cssText =
+        'text-align:left;padding:6px 10px;color:var(--text-muted);border-bottom:1px solid var(--border);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;';
       th.textContent = h;
       headerRow.appendChild(th);
     }
@@ -649,7 +772,8 @@ export class PluginPanel {
       const tr = document.createElement('tr');
       for (const cell of row) {
         const td = document.createElement('td');
-        td.style.cssText = 'padding:6px 10px;color:var(--text-muted);border-bottom:1px solid var(--border);';
+        td.style.cssText =
+          'padding:6px 10px;color:var(--text-muted);border-bottom:1px solid var(--border);';
         td.textContent = cell;
         tr.appendChild(td);
       }
@@ -668,7 +792,7 @@ export class PluginPanel {
     try {
       const [remoteResponse, localPlugins] = await Promise.all([
         fetch(PLUGINS_INDEX_URL),
-        serviceBindings.GetPlugins()
+        serviceBindings.GetPlugins(),
       ]);
 
       if (!remoteResponse.ok) throw new Error('Failed to fetch plugin list');
@@ -687,7 +811,7 @@ export class PluginPanel {
             functions: p.functions ? p.functions.length : 0,
             themes: p.themes ? p.themes.length : 0,
             variables: p.variables ? p.variables.length : 0,
-            error: p.error
+            error: p.error,
           });
         }
       }
@@ -703,7 +827,7 @@ export class PluginPanel {
         <div style="font-size:13px;opacity:0.7">${msg}</div>
         <button style="margin-top:16px;padding:8px 16px;background:var(--accent);color:var(--surface);border:none;border-radius:6px;cursor:pointer;font-weight:500" onclick="this.closest('#plugin-viewer').dispatchEvent(new CustomEvent('plugin-retry'))">Retry</button>
       `;
-      this.el.addEventListener('plugin-retry', () => this.loadPlugins(), {once: true});
+      this.el.addEventListener('plugin-retry', () => this.loadPlugins(), { once: true });
     }
   }
 
@@ -732,11 +856,12 @@ export class PluginPanel {
   private filterRemotePlugins(): RemotePlugin[] {
     if (!this.searchQuery) return this.remotePlugins;
     const query = this.searchQuery.toLowerCase();
-    return this.remotePlugins.filter(p =>
-      p.name.toLowerCase().includes(query) ||
-      p.description.toLowerCase().includes(query) ||
-      p.author.toLowerCase().includes(query) ||
-      p.tags.some(t => t.toLowerCase().includes(query))
+    return this.remotePlugins.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        p.description.toLowerCase().includes(query) ||
+        p.author.toLowerCase().includes(query) ||
+        p.tags.some((t) => t.toLowerCase().includes(query)),
     );
   }
 
@@ -749,13 +874,19 @@ export class PluginPanel {
     const card = document.createElement('div');
     card.className = 'plugin-card';
     card.dataset.plugin = plugin.name;
-    card.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:var(--ui-radius-md);padding:16px;display:flex;flex-direction:column;gap:12px;cursor:pointer;transition:border-color 0.15s;';
-    card.addEventListener('mouseenter', () => { card.style.borderColor = 'var(--accent)'; });
-    card.addEventListener('mouseleave', () => { card.style.borderColor = 'var(--border)'; });
+    card.style.cssText =
+      'background:var(--surface-secondary);border:1px solid var(--border);border-radius:var(--ui-radius-md);padding:16px;display:flex;flex-direction:column;gap:12px;cursor:pointer;transition:border-color 0.15s;';
+    card.addEventListener('mouseenter', () => {
+      card.style.borderColor = 'var(--accent)';
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.borderColor = 'var(--border)';
+    });
 
     const local = this.localPlugins.get(plugin.name);
     const isInstalled = !!local;
-    const hasUpdate = isInstalled && local && this.compareVersions(plugin.version, local.version) > 0;
+    const hasUpdate =
+      isInstalled && local && this.compareVersions(plugin.version, local.version) > 0;
     const isActive = this.activeActions.has(plugin.name);
     const hasError = local && local.error;
 
@@ -766,11 +897,17 @@ export class PluginPanel {
     infoDiv.style.cssText = 'flex:1;';
 
     const nameRow = document.createElement('div');
-    nameRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;';
-    nameRow.innerHTML = `<span style="font-size:16px;font-weight:600;color:var(--text)">${esc(plugin.name)}</span>` +
+    nameRow.style.cssText =
+      'display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;';
+    nameRow.innerHTML =
+      `<span style="font-size:16px;font-weight:600;color:var(--text)">${esc(plugin.name)}</span>` +
       `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--accent);color:var(--surface);font-weight:500">${esc(plugin.type)}</span>` +
-      (hasUpdate ? `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--error);color:white;font-weight:500">Update Available</span>` : '') +
-      (hasError ? `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--error);color:white;font-weight:500">Error</span>` : '');
+      (hasUpdate
+        ? `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--error);color:white;font-weight:500">Update Available</span>`
+        : '') +
+      (hasError
+        ? `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--error);color:white;font-weight:500">Error</span>`
+        : '');
 
     const meta = document.createElement('div');
     meta.style.cssText = 'font-size:12px;color:var(--text-muted);margin-bottom:4px;';
@@ -806,7 +943,8 @@ export class PluginPanel {
       const toggle = document.createElement('div');
       toggle.className = 'plugin-toggle';
       toggle.dataset.plugin = plugin.name;
-      toggle.style.cssText = 'cursor:pointer;position:relative;width:40px;height:22px;flex-shrink:0;margin-top:2px;';
+      toggle.style.cssText =
+        'cursor:pointer;position:relative;width:40px;height:22px;flex-shrink:0;margin-top:2px;';
       const track = document.createElement('div');
       track.style.cssText = `position:absolute;inset:0;border-radius:11px;transition:background 0.2s;${local.enabled ? 'background:var(--accent);' : 'background:var(--text-subtle);'}`;
       const thumb = document.createElement('div');
@@ -821,7 +959,8 @@ export class PluginPanel {
     if (plugin.tags.length) {
       for (const t of plugin.tags) {
         const span = document.createElement('span');
-        span.style.cssText = 'font-size:11px;padding:2px 8px;border-radius:4px;background:var(--surface);color:var(--text-subtle);';
+        span.style.cssText =
+          'font-size:11px;padding:2px 8px;border-radius:4px;background:var(--surface);color:var(--text-subtle);';
         span.textContent = t;
         tagsDiv.appendChild(span);
       }
@@ -836,7 +975,8 @@ export class PluginPanel {
       installBtn.dataset.action = 'install';
       installBtn.dataset.plugin = plugin.name;
       installBtn.disabled = isActive;
-      installBtn.style.cssText = 'flex:1;padding:8px 12px;background:var(--accent);color:var(--surface);border:none;border-radius:6px;cursor:pointer;font-weight:500;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.15s;';
+      installBtn.style.cssText =
+        'flex:1;padding:8px 12px;background:var(--accent);color:var(--surface);border:none;border-radius:6px;cursor:pointer;font-weight:500;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.15s;';
       installBtn.innerHTML = isActive ? `${SPINNER} Installing...` : `${DOWNLOAD_ICON} Install`;
       actionsDiv.appendChild(installBtn);
     } else if (hasUpdate) {
@@ -845,7 +985,8 @@ export class PluginPanel {
       updateBtn.dataset.action = 'update';
       updateBtn.dataset.plugin = plugin.name;
       updateBtn.disabled = isActive;
-      updateBtn.style.cssText = 'flex:1;padding:8px 12px;background:var(--accent);color:var(--surface);border:none;border-radius:6px;cursor:pointer;font-weight:500;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.15s;';
+      updateBtn.style.cssText =
+        'flex:1;padding:8px 12px;background:var(--accent);color:var(--surface);border:none;border-radius:6px;cursor:pointer;font-weight:500;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.15s;';
       updateBtn.innerHTML = isActive ? `${SPINNER} Updating...` : `${UPDATE_ICON} Update`;
       actionsDiv.appendChild(updateBtn);
 
@@ -854,12 +995,14 @@ export class PluginPanel {
       removeBtn.dataset.action = 'remove';
       removeBtn.dataset.plugin = plugin.name;
       removeBtn.disabled = isActive;
-      removeBtn.style.cssText = 'padding:8px 12px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;font-weight:500;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.15s;';
+      removeBtn.style.cssText =
+        'padding:8px 12px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;font-weight:500;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.15s;';
       removeBtn.innerHTML = `${TRASH_ICON} Remove`;
       actionsDiv.appendChild(removeBtn);
     } else {
       const installedBadge = document.createElement('div');
-      installedBadge.style.cssText = 'flex:1;padding:8px 12px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:6px;font-weight:500;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;';
+      installedBadge.style.cssText =
+        'flex:1;padding:8px 12px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:6px;font-weight:500;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;';
       installedBadge.innerHTML = `${CHECK_ICON} Installed`;
       actionsDiv.appendChild(installedBadge);
 
@@ -868,7 +1011,8 @@ export class PluginPanel {
       removeBtn.dataset.action = 'remove';
       removeBtn.dataset.plugin = plugin.name;
       removeBtn.disabled = isActive;
-      removeBtn.style.cssText = 'padding:8px 12px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;font-weight:500;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.15s;';
+      removeBtn.style.cssText =
+        'padding:8px 12px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;font-weight:500;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.15s;';
       removeBtn.innerHTML = `${TRASH_ICON} Remove`;
       actionsDiv.appendChild(removeBtn);
     }
@@ -890,7 +1034,7 @@ export class PluginPanel {
   }
 
   private async handleAction(action: string, pluginName: string): Promise<void> {
-    const plugin = this.remotePlugins.find(p => p.name === pluginName);
+    const plugin = this.remotePlugins.find((p) => p.name === pluginName);
     if (!plugin) return;
 
     if (action === 'remove') {
@@ -920,7 +1064,10 @@ export class PluginPanel {
           break;
       }
     } catch (e) {
-      toast.show(`Failed to ${action} plugin: ${e instanceof Error ? e.message : 'Unknown error'}`, 'error');
+      toast.show(
+        `Failed to ${action} plugin: ${e instanceof Error ? e.message : 'Unknown error'}`,
+        'error',
+      );
     } finally {
       this.activeActions.delete(pluginName);
       await this.loadPlugins();
@@ -943,24 +1090,30 @@ export class PluginPanel {
       }
       this.onPluginsChanged?.();
     } catch (e) {
-      toast.show(`Failed to toggle plugin: ${e instanceof Error ? e.message : 'Unknown error'}`, 'error');
+      toast.show(
+        `Failed to toggle plugin: ${e instanceof Error ? e.message : 'Unknown error'}`,
+        'error',
+      );
     }
   }
 
   private confirmRemove(name: string): Promise<boolean> {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+      overlay.style.cssText =
+        'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
 
       const dialog = document.createElement('div');
-      dialog.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:360px;width:90%;';
+      dialog.style.cssText =
+        'background:var(--surface-secondary);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:360px;width:90%;';
 
       const title = document.createElement('div');
       title.style.cssText = 'font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;';
       title.textContent = 'Remove Plugin';
 
       const msg = document.createElement('div');
-      msg.style.cssText = 'font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;';
+      msg.style.cssText =
+        'font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;';
       msg.textContent = `Are you sure you want to remove "${name}"? This will delete the plugin from your system.`;
 
       const btns = document.createElement('div');
@@ -968,15 +1121,28 @@ export class PluginPanel {
 
       const cancelBtn = document.createElement('button');
       cancelBtn.textContent = 'Cancel';
-      cancelBtn.style.cssText = 'padding:8px 16px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:13px;';
+      cancelBtn.style.cssText =
+        'padding:8px 16px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:13px;';
 
       const removeBtn = document.createElement('button');
       removeBtn.textContent = 'Remove';
-      removeBtn.style.cssText = 'padding:8px 16px;background:var(--error);color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;';
+      removeBtn.style.cssText =
+        'padding:8px 16px;background:var(--error);color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;';
 
-      cancelBtn.addEventListener('click', () => { overlay.remove(); resolve(false); });
-      removeBtn.addEventListener('click', () => { overlay.remove(); resolve(true); });
-      overlay.addEventListener('click', (e) => { if (e.target === overlay) { overlay.remove(); resolve(false); } });
+      cancelBtn.addEventListener('click', () => {
+        overlay.remove();
+        resolve(false);
+      });
+      removeBtn.addEventListener('click', () => {
+        overlay.remove();
+        resolve(true);
+      });
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.remove();
+          resolve(false);
+        }
+      });
 
       btns.append(cancelBtn, removeBtn);
       dialog.append(title, msg, btns);

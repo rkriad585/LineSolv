@@ -1,5 +1,5 @@
 import * as serviceBindings from '../../wailsjs/go/service/AppService';
-import {escapeHtml} from '../utils/html';
+import { escapeHtml } from '../utils/html';
 
 function renderMarkdown(md: string): string {
   const lines = md.split('\n');
@@ -11,8 +11,11 @@ function renderMarkdown(md: string): string {
 
   function flushTable(): void {
     if (tableBuf.length === 0) return;
-    const rows = tableBuf.map(r => {
-      const cells = r.split('|').filter(c => c.trim()).map(c => `<td>${inlineMd(c.trim())}</td>`);
+    const rows = tableBuf.map((r) => {
+      const cells = r
+        .split('|')
+        .filter((c) => c.trim())
+        .map((c) => `<td>${inlineMd(c.trim())}</td>`);
       return `<tr>${cells.join('')}</tr>`;
     });
     out.push(`<table>${rows.join('')}</table>`);
@@ -135,7 +138,8 @@ function inlineMd(s: string): string {
   return r;
 }
 
-const LINE_SOLV_LOGO = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
+const LINE_SOLV_LOGO =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
 
 export class DocsViewer {
   readonly el: HTMLDivElement;
@@ -155,7 +159,7 @@ export class DocsViewer {
     this.el.className = 'lsv-modal-overlay lsv-modal-fullscreen';
     this.el.style.cssText =
       'position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;' +
-      'background:var(--surface);';
+      'background:var(--surface-secondary);';
 
     const header = document.createElement('div');
     header.style.cssText =
@@ -167,7 +171,9 @@ export class DocsViewer {
       try {
         const rt = window.runtime;
         if (rt) rt.WindowToggleMaximise();
-      } catch { /* ignored */ }
+      } catch {
+        /* ignored */
+      }
     });
 
     const titleRow = document.createElement('div');
@@ -175,14 +181,15 @@ export class DocsViewer {
     titleRow.innerHTML = `${LINE_SOLV_LOGO}<span style="font-size:13px;font-weight:600;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;">Documentation</span>`;
 
     const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    closeBtn.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     closeBtn.title = 'Close (Escape)';
     closeBtn.style.cssText =
       'display:flex;align-items:center;justify-content:center;width:26px;height:26px;' +
       'border:none;border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;' +
       '--wails-draggable:no-drag;';
-    closeBtn.addEventListener('mouseenter', () => closeBtn.style.background = 'var(--border)');
-    closeBtn.addEventListener('mouseleave', () => closeBtn.style.background = 'transparent');
+    closeBtn.addEventListener('mouseenter', () => (closeBtn.style.background = 'var(--border)'));
+    closeBtn.addEventListener('mouseleave', () => (closeBtn.style.background = 'transparent'));
     closeBtn.addEventListener('click', () => this.close());
     header.append(titleRow, closeBtn);
 
@@ -190,7 +197,8 @@ export class DocsViewer {
     body.style.cssText = 'display:flex;flex:1;min-height:0;';
 
     const sidebar = document.createElement('div');
-    sidebar.style.cssText = 'width:200px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--surface-secondary);';
+    sidebar.style.cssText =
+      'width:200px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--surface-secondary);';
 
     const searchWrap = document.createElement('div');
     searchWrap.style.cssText = 'position:relative;padding:8px 8px 0;--wails-draggable:no-drag;';
@@ -203,8 +211,10 @@ export class DocsViewer {
       'font-size:12px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box;';
 
     const searchIcon = document.createElement('span');
-    searchIcon.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
-    searchIcon.style.cssText = 'position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;';
+    searchIcon.innerHTML =
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+    searchIcon.style.cssText =
+      'position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;';
 
     searchWrap.append(searchIcon, this.searchInput);
 
@@ -242,11 +252,12 @@ export class DocsViewer {
       this.docNames = names;
       this.renderTabs();
       if (names.length > 0) {
-        const defaultDoc = names.find(n => n === 'user-guide.md') || names[0];
+        const defaultDoc = names.find((n) => n === 'user-guide.md') || names[0];
         await this.selectTab(defaultDoc);
       }
     } catch {
-      this.contentEl.innerHTML = '<p style="color:var(--error);padding:20px;">Failed to load documentation.</p>';
+      this.contentEl.innerHTML =
+        '<p style="color:var(--error);padding:20px;">Failed to load documentation.</p>';
     }
 
     if (this.searchInput) {
@@ -297,7 +308,10 @@ export class DocsViewer {
     this.tabsEl.innerHTML = '';
     this.tabButtons.clear();
     for (const name of this.docNames) {
-      const display = name.replace(/\.md$/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const display = name
+        .replace(/\.md$/, '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
       const btn = document.createElement('button');
       btn.textContent = display;
       btn.title = name;
@@ -342,10 +356,12 @@ export class DocsViewer {
       if (content) {
         this.contentEl.innerHTML = renderMarkdown(content);
       } else {
-        this.contentEl.innerHTML = '<p style="color:var(--text-muted);padding:20px;">Document not found.</p>';
+        this.contentEl.innerHTML =
+          '<p style="color:var(--text-muted);padding:20px;">Document not found.</p>';
       }
     } catch {
-      this.contentEl.innerHTML = '<p style="color:var(--error);padding:20px;">Failed to load document.</p>';
+      this.contentEl.innerHTML =
+        '<p style="color:var(--error);padding:20px;">Failed to load document.</p>';
     }
   }
 }

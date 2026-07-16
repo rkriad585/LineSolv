@@ -50,6 +50,7 @@ export interface SettingsData {
   line_wrap_enabled: string;
   ui_style: string;
   theme_manually_set: string;
+  noise: string;
 }
 
 export interface AutocompleteItem {

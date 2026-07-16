@@ -16,6 +16,7 @@ export interface SettingsState {
   result_panel_enabled: boolean;
   line_wrap_enabled: boolean;
   theme_manually_set: boolean;
+  noise: number;
 }
 
 type SettingsListener = (state: SettingsState) => void;
@@ -34,6 +35,7 @@ const DEFAULTS: SettingsState = {
   result_panel_enabled: true,
   line_wrap_enabled: true,
   theme_manually_set: false,
+  noise: 0,
 };
 
 function toBool(v: string | undefined, def: boolean): boolean {
@@ -62,6 +64,7 @@ function fromStore(s: SettingsState): SettingsData {
     result_panel_enabled: String(s.result_panel_enabled),
     line_wrap_enabled: String(s.line_wrap_enabled),
     theme_manually_set: String(s.theme_manually_set),
+    noise: String(s.noise),
   };
 }
 
@@ -80,6 +83,7 @@ function toStore(d: SettingsData): SettingsState {
     result_panel_enabled: toBool(d.result_panel_enabled, true),
     line_wrap_enabled: toBool(d.line_wrap_enabled, true),
     theme_manually_set: toBool(d.theme_manually_set, false),
+    noise: toFloat(d.noise, 0),
   };
 }
 
@@ -95,7 +99,7 @@ export class SettingsStore {
   onChanged(fn: SettingsListener): () => void {
     this.listeners.push(fn);
     return () => {
-      this.listeners = this.listeners.filter(l => l !== fn);
+      this.listeners = this.listeners.filter((l) => l !== fn);
     };
   }
 

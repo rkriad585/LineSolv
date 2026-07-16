@@ -32,8 +32,6 @@ const THEMES = [
   { id: 'lavender', label: 'Lavender', bg: '#1a1528', accent: '#a78bfa', text: '#eee8ff' },
   { id: 'sage', label: 'Sage', bg: '#0f1a14', accent: '#34d399', text: '#e8f5ec' },
   { id: 'warm-light', label: 'Warm Light', bg: '#1a1510', accent: '#fbbf24', text: '#f5efe8' },
-  { id: 'claude-dark', label: 'Claude Dark', bg: '#141413', accent: '#c96442', text: '#f4f3ee' },
-  { id: 'claude-light', label: 'Claude Light', bg: '#f5f4ed', accent: '#c96442', text: '#141413' },
   {
     id: 'blue-trust-dark',
     label: 'Blue Trust Dark',
@@ -123,25 +121,18 @@ const THEMES = [
 const STYLES = [
   { id: 'default', label: 'Default', desc: 'Flat, clean, minimal', radius: '8px', shadow: 'none' },
   {
-    id: 'nothing',
-    label: 'Nothing',
-    desc: 'Monochrome, industrial, Swiss',
-    radius: '4px',
-    shadow: 'none',
-  },
-  {
     id: 'glass',
     label: 'Liquid Glass',
-    desc: 'Frosted glass, translucent',
-    radius: '16px',
-    shadow: '0 4px 16px rgba(0,0,0,0.15)',
+    desc: 'Apple Liquid Glass, refraction, specular highlights',
+    radius: '22px',
+    shadow: '0 8px 32px rgba(0,0,0,0.18), inset 0 2px 4px -2px rgba(255,255,255,0.18)',
   },
   {
     id: 'material',
     label: 'Material 3',
-    desc: 'Rounded, tinted, elevation',
+    desc: 'Dynamic color, tonal elevation, state layers',
     radius: '12px',
-    shadow: '0 2px 6px rgba(0,0,0,0.15)',
+    shadow: '0 1px 2px rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15)',
   },
   {
     id: 'alivated',
@@ -157,23 +148,14 @@ const STYLES = [
     radius: '4px',
     shadow: '0 0 8px var(--accent)',
   },
-  {
-    id: 'claude',
-    label: 'Claude Code',
-    desc: 'Clean, warm, Anthropic-inspired',
-    radius: '10px',
-    shadow: '0 2px 8px rgba(0,0,0,0.1)',
-  },
 ];
 
 const STYLE_THEME_DEFAULTS: Record<string, string> = {
   default: 'dark',
-  nothing: 'mono',
   glass: 'blue-trust-dark',
   material: 'midnight',
   alivated: 'warm-light',
   neon: 'neon',
-  claude: 'claude-dark',
 };
 
 const EDIT_ICON =
@@ -225,6 +207,8 @@ export class SettingsModal {
   private shortcutKbds: Map<string, HTMLElement> = new Map();
   private opacityInput!: HTMLInputElement;
   private opacityValueEl!: HTMLSpanElement;
+  private noiseInput!: HTMLInputElement;
+  private noiseValueEl!: HTMLSpanElement;
   private animationsToggle!: HTMLInputElement;
   private animationsTrack!: HTMLDivElement;
   private animationsThumb!: HTMLDivElement;
@@ -793,35 +777,64 @@ export class SettingsModal {
     panel.appendChild(this.sectionHeader('Appearance'));
 
     const opacityRow = document.createElement('div');
-    opacityRow.style.cssText =
-      'display:flex;align-items:center;justify-content:space-between;padding:9px 0;';
-    const opacityLeft = document.createElement('div');
-    opacityLeft.style.cssText = 'display:flex;flex-direction:column;gap:1px;';
+    opacityRow.style.cssText = 'padding:9px 0;';
+
+    const opacityTop = document.createElement('div');
+    opacityTop.style.cssText =
+      'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
+
     const opacityLabel = document.createElement('span');
-    opacityLabel.textContent = 'Opacity';
+    opacityLabel.textContent = 'Transparency';
     opacityLabel.style.cssText = 'font-size:13px;color:var(--text);user-select:none;';
-    const opacityDesc = document.createElement('span');
-    opacityDesc.textContent = 'Window transparency level';
-    opacityDesc.style.cssText = 'font-size:11px;color:var(--text-muted);user-select:none;';
-    opacityLeft.append(opacityLabel, opacityDesc);
-    const opacityRight = document.createElement('div');
-    opacityRight.style.cssText = 'display:flex;align-items:center;gap:8px;';
+
+    this.opacityValueEl = document.createElement('span');
+    this.opacityValueEl.textContent = '95%';
+    this.opacityValueEl.style.cssText =
+      'font-size:12px;color:var(--text-muted);min-width:28px;text-align:right;';
+    opacityTop.append(opacityLabel, this.opacityValueEl);
+
     this.opacityInput = document.createElement('input');
     this.opacityInput.type = 'range';
     this.opacityInput.min = '0.3';
     this.opacityInput.max = '1';
     this.opacityInput.step = '0.05';
     this.opacityInput.value = '0.95';
-    this.opacityInput.style.cssText = 'width:100px;accent-color:var(--accent);cursor:pointer;';
-    this.opacityValueEl = document.createElement('span');
-    this.opacityValueEl.textContent = '95%';
-    this.opacityValueEl.style.cssText =
-      'font-size:12px;color:var(--text-muted);min-width:32px;text-align:right;';
+    this.opacityInput.style.cssText =
+      'width:100%;accent-color:var(--accent);cursor:pointer;margin:0;';
     this.opacityInput.addEventListener('input', () => {
       this.opacityValueEl.textContent = Math.round(parseFloat(this.opacityInput.value) * 100) + '%';
     });
-    opacityRight.append(this.opacityInput, this.opacityValueEl);
-    opacityRow.append(opacityLeft, opacityRight);
+    opacityRow.append(opacityTop, this.opacityInput);
+
+    const noiseRow = document.createElement('div');
+    noiseRow.style.cssText = 'padding:9px 0;';
+
+    const noiseTop = document.createElement('div');
+    noiseTop.style.cssText =
+      'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
+
+    const noiseLabel = document.createElement('span');
+    noiseLabel.textContent = 'Background Noise';
+    noiseLabel.style.cssText = 'font-size:13px;color:var(--text);user-select:none;';
+
+    this.noiseValueEl = document.createElement('span');
+    this.noiseValueEl.textContent = '0%';
+    this.noiseValueEl.style.cssText =
+      'font-size:12px;color:var(--text-muted);min-width:28px;text-align:right;';
+    noiseTop.append(noiseLabel, this.noiseValueEl);
+
+    this.noiseInput = document.createElement('input');
+    this.noiseInput.type = 'range';
+    this.noiseInput.min = '0';
+    this.noiseInput.max = '100';
+    this.noiseInput.step = '5';
+    this.noiseInput.value = '0';
+    this.noiseInput.style.cssText =
+      'width:100%;accent-color:var(--accent);cursor:pointer;margin:0;';
+    this.noiseInput.addEventListener('input', () => {
+      this.noiseValueEl.textContent = this.noiseInput.value + '%';
+    });
+    noiseRow.append(noiseTop, this.noiseInput);
 
     const animationsRow = this.toggleRow(
       'Animations',
@@ -832,7 +845,7 @@ export class SettingsModal {
     this.animationsTrack = animationsRow.track;
     this.animationsThumb = animationsRow.thumb;
 
-    panel.append(opacityRow, animationsRow.el);
+    panel.append(opacityRow, noiseRow, animationsRow.el);
 
     // --- Behavior section ---
     panel.appendChild(this.sectionHeader('Behavior'));
@@ -894,6 +907,7 @@ export class SettingsModal {
     this.toastToggle.addEventListener('change', () => this.applyAll());
     this.animationsToggle.addEventListener('change', () => this.applyAll());
     this.opacityInput.addEventListener('input', () => this.applyAll());
+    this.noiseInput.addEventListener('input', () => this.applyAll());
     this.fontSizeInput.addEventListener('input', () => this.applyAll());
     this.fontFamilySelect.addEventListener('change', () => this.applyAll());
   }
@@ -1302,6 +1316,8 @@ export class SettingsModal {
       "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     this.opacityInput.value = '0.95';
     this.opacityValueEl.textContent = '95%';
+    this.noiseInput.value = '0';
+    this.noiseValueEl.textContent = '0%';
     this.animationsToggle.checked = true;
     this.toastToggle.checked = true;
     this.autocompleteToggle.checked = true;
@@ -1348,6 +1364,7 @@ export class SettingsModal {
       line_numbers_enabled: this.lineNumbersToggle.checked,
       result_panel_enabled: this.resultPanelToggle.checked,
       line_wrap_enabled: this.lineWrapToggle.checked,
+      noise: parseInt(this.noiseInput.value) || 0,
     });
   }
 
@@ -1382,6 +1399,9 @@ export class SettingsModal {
       const opacity = state.opacity || 0.95;
       this.opacityInput.value = String(opacity);
       this.opacityValueEl.textContent = Math.round(opacity * 100) + '%';
+      const noise = state.noise || 0;
+      this.noiseInput.value = String(noise);
+      this.noiseValueEl.textContent = noise + '%';
       this.animationsToggle.checked = state.animations_enabled;
       this.toastToggle.checked = state.toast_enabled;
       this.autocompleteToggle.checked = state.autocomplete_enabled;

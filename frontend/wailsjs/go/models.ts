@@ -278,6 +278,7 @@ export namespace service {
 	    line_wrap_enabled: string;
 	    ui_style: string;
 	    theme_manually_set: string;
+	    noise: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SettingsData(source);
@@ -298,6 +299,7 @@ export namespace service {
 	        this.line_wrap_enabled = source["line_wrap_enabled"];
 	        this.ui_style = source["ui_style"];
 	        this.theme_manually_set = source["theme_manually_set"];
+	        this.noise = source["noise"];
 	    }
 	}
 

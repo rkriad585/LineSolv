@@ -456,6 +456,7 @@ type SettingsData struct {
 	LineWrapEnabled     string `json:"line_wrap_enabled"`
 	UIStyle             string `json:"ui_style"`
 	ThemeManuallySet    string `json:"theme_manually_set"`
+	Noise               string `json:"noise"`
 }
 
 func (s *AppService) GetSettings() (*SettingsData, error) {
@@ -477,6 +478,7 @@ func (s *AppService) GetSettings() (*SettingsData, error) {
 		LineWrapEnabled:     cfg.Settings.LineWrapEnabled,
 		UIStyle:             cfg.Settings.UIStyle,
 		ThemeManuallySet:    cfg.Settings.ThemeManuallySet,
+		Noise:               cfg.Settings.Noise,
 	}, nil
 }
 
@@ -498,6 +500,7 @@ func (s *AppService) SaveSettings(settings *SettingsData) error {
 	cfg.Settings.LineWrapEnabled = settings.LineWrapEnabled
 	cfg.Settings.UIStyle = settings.UIStyle
 	cfg.Settings.ThemeManuallySet = settings.ThemeManuallySet
+	cfg.Settings.Noise = settings.Noise
 	return storage.SaveConfig(cfg)
 }
 

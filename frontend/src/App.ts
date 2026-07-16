@@ -42,8 +42,6 @@ const BUILTIN_THEMES = [
   'lavender',
   'sage',
   'warm-light',
-  'claude-dark',
-  'claude-light',
   'blue-trust-dark',
   'blue-trust-light',
   'orange-energy-dark',
@@ -62,12 +60,10 @@ let pluginThemeIds: string[] = [];
 
 const STYLES = [
   { id: 'default', label: 'Default', desc: 'Flat, clean, minimal' },
-  { id: 'nothing', label: 'Nothing', desc: 'Monochrome, industrial, Swiss' },
   { id: 'glass', label: 'Liquid Glass', desc: 'Frosted glass, translucent' },
   { id: 'material', label: 'Material 3', desc: 'Rounded, tinted, elevation' },
   { id: 'alivated', label: 'Alivated', desc: 'Soft, warm, neumorphic' },
   { id: 'neon', label: 'Neon', desc: 'Cyberpunk, glowing borders' },
-  { id: 'claude', label: 'Claude Code', desc: 'Clean, warm, Anthropic-inspired' },
 ];
 
 let currentStyle = 'default';
@@ -77,7 +73,6 @@ function applyUiStyle(style: string): void {
   currentStyle = valid ? style : 'default';
   document.documentElement.classList.remove(
     'style-default',
-    'style-nothing',
     'style-glass',
     'style-material',
     'style-alivated',
@@ -147,12 +142,18 @@ function applySurfaceOpacity(opacity: number): void {
   root.style.removeProperty('--surface');
   root.style.removeProperty('--surface-secondary');
   root.style.removeProperty('--note-bg');
+  root.style.removeProperty('--border');
+  root.style.removeProperty('--surface-transparency');
   document.body.style.background = '';
+  root.classList.remove('surface-translucent');
 
   if (opacity >= 1) return;
 
+  root.classList.add('surface-translucent');
+  root.style.setProperty('--surface-transparency', String(opacity));
+
   // Read CSS variable values from the class-based theme rules (not inline)
-  const props = ['--surface', '--surface-secondary', '--note-bg'];
+  const props = ['--surface', '--surface-secondary', '--note-bg', '--border'];
   const baseSurface = getComputedStyle(root).getPropertyValue('--surface').trim();
   const baseRgb = parseColor(baseSurface) || [24, 24, 27];
 
@@ -167,6 +168,17 @@ function applySurfaceOpacity(opacity: number): void {
   }
 }
 
+function applyNoise(intensity: number): void {
+  const root = document.documentElement;
+  if (intensity > 0) {
+    root.classList.add('noise-active');
+    root.style.setProperty('--noise-intensity', String(intensity / 100));
+  } else {
+    root.classList.remove('noise-active');
+    root.style.removeProperty('--noise-intensity');
+  }
+}
+
 function applySettingsState(s: {
   theme: string;
   ui_style: string;
@@ -176,6 +188,7 @@ function applySettingsState(s: {
   animations_enabled: boolean;
   toast_enabled: boolean;
   line_numbers_enabled: boolean;
+  noise: number;
 }): void {
   applyTheme(s.theme || 'dark');
   applyUiStyle(s.ui_style || 'default');
@@ -191,6 +204,7 @@ function applySettingsState(s: {
     document.documentElement.classList.add('animations-disabled');
   }
   Toast.enabled = s.toast_enabled;
+  applyNoise(s.noise);
 }
 
 /** Mount the LineSolv application into a root element. */
@@ -216,6 +230,20 @@ export function renderApp(root: HTMLElement): void {
   const splashStyle = document.createElement('style');
   splashStyle.textContent = `@keyframes splash-slide { 0%{transform:translateX(-100%)} 50%{transform:translateX(150%)} 100%{transform:translateX(-100%)} }`;
   document.head.appendChild(splashStyle);
+
+  // Inject SVG refraction filter for Liquid Glass style
+  const svgFilter = document.createElement('div');
+  svgFilter.innerHTML =
+    `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden">` +
+    `<defs>` +
+    `<filter id="liquid-refraction" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">` +
+    `<feTurbulence type="fractalNoise" baseFrequency="0.012 0.035" numOctaves="2" seed="7" result="noise"/>` +
+    `<feGaussianBlur in="noise" stdDeviation="2" result="blurred"/>` +
+    `<feDisplacementMap in="SourceGraphic" in2="blurred" scale="-15" xChannelSelector="R" yChannelSelector="G"/>` +
+    `</filter>` +
+    `</defs>` +
+    `</svg>`;
+  document.body.appendChild(svgFilter);
 
   const store = new CalculatorStore();
   const notesMgr = new NotesManager();

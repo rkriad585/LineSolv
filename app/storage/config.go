@@ -33,6 +33,7 @@ type Config struct {
 		LineWrapEnabled     string `toml:"line_wrap_enabled"`
 		UIStyle             string `toml:"ui_style"`
 		ThemeManuallySet    string `toml:"theme_manually_set"`
+		Noise               string `toml:"noise"`
 	} `toml:"settings"`
 }
 
@@ -59,6 +60,7 @@ func DefaultConfig() *Config {
 	c.Settings.LineWrapEnabled = "true"
 	c.Settings.UIStyle = "default"
 	c.Settings.ThemeManuallySet = "false"
+	c.Settings.Noise = "0"
 	return c
 }
 
@@ -122,6 +124,7 @@ func SaveConfig(cfg *Config) error {
 	fmt.Fprintf(&buf, "line_wrap_enabled = %q\n", cfg.Settings.LineWrapEnabled)
 	fmt.Fprintf(&buf, "ui_style = %q\n", cfg.Settings.UIStyle)
 	fmt.Fprintf(&buf, "theme_manually_set = %q\n", cfg.Settings.ThemeManuallySet)
+	fmt.Fprintf(&buf, "noise = %q\n", cfg.Settings.Noise)
 
 	// Atomic write: write to temp file, then rename
 	tmp := dir + ".tmp"
@@ -226,6 +229,8 @@ func parseConfigTOML(data string, cfg *Config) {
 				cfg.Settings.UIStyle = val
 			case "theme_manually_set":
 				cfg.Settings.ThemeManuallySet = val
+			case "noise":
+				cfg.Settings.Noise = val
 			}
 		default:
 			switch key {
