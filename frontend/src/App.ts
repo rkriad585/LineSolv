@@ -19,6 +19,7 @@ import { GraphPanel } from './components/GraphPanel';
 import { PluginPanel } from './components/PluginPanel';
 import { ContextMenu } from './components/ContextMenu';
 import { AutocompletePopup } from './components/AutocompletePopup';
+import { Icons } from './components/Icons';
 import type { ContextMenuItem } from './types';
 import { buildLineResults } from './utils/format';
 import { installGlobalShortcuts, toggleFullscreen } from './utils/shortcuts';
@@ -216,10 +217,7 @@ export function renderApp(root: HTMLElement): void {
     'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;' +
     'background:var(--surface);transition:opacity 0.4s ease-out;';
   splash.innerHTML =
-    `<svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">` +
-    `<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/>` +
-    `<line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/>` +
-    `<line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>` +
+    `${Icons.logo(72, 72)}` +
     `<div style="margin-top:16px;font-size:18px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted)">LineSolv</div>` +
     `<div style="margin-top:20px;width:220px;height:4px;border-radius:2px;background:var(--border);overflow:hidden;">` +
     `<div id="splash-bar" style="width:40%;height:100%;border-radius:2px;background:var(--accent);animation:splash-slide 1.2s ease-in-out infinite;"></div>` +
@@ -402,7 +400,7 @@ export function renderApp(root: HTMLElement): void {
 
   function refreshNotesUI(): void {
     notesPanel.render(
-      notesMgr.getNotes(),
+      notesMgr.buildTree(),
       notesMgr.getActiveId(),
       notesMgr.getSortField(),
       notesMgr.getSortDir(),
@@ -420,7 +418,7 @@ export function renderApp(root: HTMLElement): void {
   async function loadNotes(): Promise<void> {
     try {
       const notes = await serviceBindings.GetAllNotes();
-      if (notes.length === 0) {
+      if (!notes || notes.length === 0) {
         const note = await serviceBindings.CreateNote();
         // Seed the first note with welcome content
         await serviceBindings.SaveNoteContent(note.id, WELCOME_CONTENT);
@@ -432,13 +430,22 @@ export function renderApp(root: HTMLElement): void {
         const savedId = localStorage.getItem(LS_ACTIVE_KEY);
         const activeId = savedId && notes.some((n) => n.id === savedId) ? savedId : notes[0].id;
         notesMgr.load(notes, activeId);
-        const content = notesMgr.activeNote().content;
+        const content = notesMgr.activeNote()?.content ?? '';
         input.text = content || WELCOME_CONTENT;
       }
       notesLoaded = true;
       refreshNotesUI();
     } catch {
       /* runtime not ready — will use fallback */
+    }
+  }
+
+  async function loadFolders(): Promise<void> {
+    try {
+      const folders = await serviceBindings.GetAllFolders();
+      notesMgr.loadFolders(folders);
+    } catch {
+      /* runtime not ready */
     }
   }
 
@@ -452,9 +459,11 @@ export function renderApp(root: HTMLElement): void {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       position: 0,
+      folderId: '',
     };
     notesMgr.load([fallback], fallback.id);
     input.text = fallback.content;
+    lastSavedContent = fallback.content;
     refreshNotesUI();
     // Try to persist via backend so it survives restart
     (async () => {
@@ -473,6 +482,7 @@ export function renderApp(root: HTMLElement): void {
         note.content = WELCOME_CONTENT;
         notesMgr.load([note], note.id);
         localStorage.setItem(LS_ACTIVE_KEY, note.id);
+        lastSavedContent = WELCOME_CONTENT;
         refreshNotesUI();
       } catch {
         /* backend still not ready, keep in-memory fallback */
@@ -485,10 +495,15 @@ export function renderApp(root: HTMLElement): void {
     if (pluginPanel.isOpen()) pluginPanel.close();
     try {
       const note = await serviceBindings.CreateNote();
+      if (!note) {
+        toast.show('Failed to create note', 'error');
+        return;
+      }
       notesMgr.addNote(note);
       input.text = '';
       lastSavedContent = '';
       refreshNotesUI();
+      if (!notesPanel.isOpen()) notesPanel.open();
       clearAndEval();
       input.textarea.focus();
       toast.show('Note created', 'success');
@@ -511,13 +526,7 @@ export function renderApp(root: HTMLElement): void {
   const confirmDialog = new ConfirmDialog();
 
   async function handleDeleteNote(id: string): Promise<void> {
-    let skip = false;
-    try {
-      skip = await serviceBindings.GetDeleteWithoutConfirm();
-    } catch {
-      /* ignore */
-    }
-    if (skip) {
+    if (!settingsStore.getState().confirm_dialog) {
       doDelete(id);
       return;
     }
@@ -528,11 +537,7 @@ export function renderApp(root: HTMLElement): void {
       async (result) => {
         if (result.confirmed) {
           if (result.remember) {
-            try {
-              await serviceBindings.SetDeleteWithoutConfirm(true);
-            } catch {
-              toast.show('Failed to save preference', 'error');
-            }
+            settingsStore.update({ confirm_dialog: false });
           }
           doDelete(id);
         }
@@ -547,7 +552,8 @@ export function renderApp(root: HTMLElement): void {
       notesMgr.removeNote(id);
       notesPanel.setDirty(id, false);
       if (wasActive && notesMgr.activeNote()) {
-        input.text = notesMgr.activeNote().content;
+        input.text = notesMgr.activeNote()!.content;
+        lastSavedContent = input.text;
       }
       refreshNotesUI();
       if (notesMgr.getNotes().length === 0) {
@@ -579,6 +585,7 @@ export function renderApp(root: HTMLElement): void {
       notesMgr.addNote(note);
       notesMgr.switchNote(note.id);
       input.text = note.content;
+      lastSavedContent = note.content;
       refreshNotesUI();
       clearAndEval();
       toast.show('Note imported', 'success');
@@ -595,6 +602,85 @@ export function renderApp(root: HTMLElement): void {
       () => toast.show('Copied to clipboard', 'info'),
       () => {},
     );
+  }
+
+  // --- Folder operations ---
+
+  async function handleNewNoteInFolder(folderId: string): Promise<void> {
+    if (docsViewer.isOpen()) docsViewer.close();
+    if (pluginPanel.isOpen()) pluginPanel.close();
+    try {
+      const note = await serviceBindings.CreateNoteInFolder(folderId);
+      if (!note) {
+        toast.show('Failed to create note', 'error');
+        return;
+      }
+      notesMgr.addNote(note);
+      notesMgr.expandFolder(folderId);
+      input.text = '';
+      lastSavedContent = '';
+      refreshNotesUI();
+      if (!notesPanel.isOpen()) notesPanel.open();
+      clearAndEval();
+      input.textarea.focus();
+      toast.show('Note created', 'success');
+    } catch {
+      toast.show('Failed to create note', 'error');
+    }
+  }
+
+  async function handleNewFolder(parentId: string): Promise<void> {
+    try {
+      const folder = await serviceBindings.CreateFolder('New Folder', parentId);
+      notesMgr.addFolder(folder);
+      notesMgr.expandFolder(parentId);
+      refreshNotesUI();
+    } catch {
+      toast.show('Failed to create folder', 'error');
+    }
+  }
+
+  async function handleRenameFolder(id: string, name: string): Promise<void> {
+    try {
+      await serviceBindings.RenameFolder(id, name);
+      notesMgr.renameFolder(id, name);
+      refreshNotesUI();
+    } catch {
+      toast.show('Failed to rename folder', 'error');
+    }
+  }
+
+  async function handleDeleteFolder(id: string): Promise<void> {
+    if (!settingsStore.getState().confirm_dialog) {
+      doDeleteFolder(id);
+      return;
+    }
+    confirmDialog.show(
+      'Delete Folder',
+      'Are you sure you want to delete this folder? Notes inside will be moved to the root.',
+      'Delete',
+      async (result) => {
+        if (result.confirmed) {
+          if (result.remember) {
+            settingsStore.update({ confirm_dialog: false });
+          }
+          doDeleteFolder(id);
+        }
+      },
+    );
+  }
+
+  async function doDeleteFolder(id: string): Promise<void> {
+    try {
+      await serviceBindings.DeleteFolder(id);
+      notesMgr.removeFolder(id);
+      const notes = await serviceBindings.GetAllNotes();
+      notesMgr.load(notes, notesMgr.getActiveId());
+      refreshNotesUI();
+      toast.show('Folder deleted', 'info');
+    } catch {
+      toast.show('Failed to delete folder', 'error');
+    }
   }
 
   // --- Shortcut callbacks ---
@@ -644,7 +730,7 @@ export function renderApp(root: HTMLElement): void {
         shortcutModal.close();
       } else if (input.text.trim()) {
         input.text = '';
-        if (notesMgr.activeNote()) notesMgr.activeNote().content = '';
+        if (notesMgr.activeNote()) notesMgr.activeNote()!.content = '';
         lastSavedContent = '';
         forceEval();
       } else if (notesPanel.isOpen()) {
@@ -665,8 +751,8 @@ export function renderApp(root: HTMLElement): void {
       scheduleEval();
       throttledUpdateAutocomplete();
       if (notesMgr.activeNote()) {
-        notesMgr.activeNote().content = input.text;
-        scheduleSaveContent(notesMgr.activeNote().id, input.text);
+        notesMgr.activeNote()!.content = input.text;
+        scheduleSaveContent(notesMgr.activeNote()!.id, input.text);
         if (input.text !== lastSavedContent) {
           setNoteDirty(true);
         }
@@ -735,11 +821,7 @@ export function renderApp(root: HTMLElement): void {
         rows += `<tr><td class="print-line">${escapeHtml(lines[i]) || '\u00A0'}</td><td class="print-result">${escapeHtml(result) || '\u00A0'}</td></tr>`;
       }
 
-      const watermarkSvg =
-        '<svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/>' +
-        '<line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>' +
-        '<line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/>' +
-        '<line x1="10" y1="15" x2="14" y2="15"/></svg>';
+      const watermarkSvg = Icons.logo(18, 18);
 
       const printDoc = `<!DOCTYPE html><html><head><meta charset="utf-8">
 <style>
@@ -811,12 +893,14 @@ export function renderApp(root: HTMLElement): void {
       saveContentTimer = null;
       const oldNote = notesMgr.activeNote();
       if (oldNote && lastSavedContent !== input.text) {
-        serviceBindings.SaveNoteContent(oldNote.id, input.text).catch(() => {});
+        serviceBindings.SaveNoteContent(oldNote.id, input.text).catch(() => {
+          toast.show('Failed to save note', 'error');
+        });
         lastSavedContent = input.text;
       }
     }
     if (!notesMgr.switchNote(id)) return;
-    const content = notesMgr.activeNote().content;
+    const content = notesMgr.activeNote()?.content ?? '';
     input.text = content;
     lastSavedContent = content;
     const activeId = notesMgr.getActiveId();
@@ -834,6 +918,15 @@ export function renderApp(root: HTMLElement): void {
     exportNote: handleExportNote,
     share: handleShareNote,
     importNote: handleImportNote,
+    newNoteInFolder: handleNewNoteInFolder,
+    newFolder: handleNewFolder,
+    renameFolder: handleRenameFolder,
+    deleteFolder: handleDeleteFolder,
+    toggleFolder: (id: string) => {
+      notesMgr.toggleFolder(id);
+      refreshNotesUI();
+    },
+    isFolderExpanded: (id: string) => notesMgr.isFolderExpanded(id),
     sort: (field: SortField, dir: SortDir) => {
       notesMgr.setSort(field, dir);
       refreshNotesUI();
@@ -1044,7 +1137,7 @@ export function renderApp(root: HTMLElement): void {
     const items: ContextMenuItem[] = [
       {
         label: 'Cut',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>',
+        icon: Icons.scissors(),
         shortcut: mod + '+X',
         action: () => {
           const ta = input.textarea;
@@ -1061,7 +1154,7 @@ export function renderApp(root: HTMLElement): void {
       },
       {
         label: 'Copy',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+        icon: Icons.copy(),
         shortcut: mod + '+C',
         action: () => {
           const ta = input.textarea;
@@ -1072,7 +1165,7 @@ export function renderApp(root: HTMLElement): void {
       },
       {
         label: 'Paste',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>',
+        icon: Icons.paste(),
         shortcut: mod + '+V',
         action: () => {
           navigator.clipboard
@@ -1083,12 +1176,14 @@ export function renderApp(root: HTMLElement): void {
               ta.setRangeText(text, start, ta.selectionEnd, 'end');
               ta.dispatchEvent(new Event('input', { bubbles: true }));
             })
-            .catch(() => {});
+            .catch(() => {
+              toast.show('Failed to paste from clipboard', 'error');
+            });
         },
       },
       {
         label: 'Select All',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+        icon: Icons.checkSquare(),
         shortcut: mod + '+A',
         action: () => {
           input.textarea.select();
@@ -1097,14 +1192,14 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'Format Expression',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+        icon: Icons.code(),
         shortcut: mod + '+F',
         action: () => scheduleEval(),
         disabled: !hasText,
       },
       {
         label: 'Clear Line',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+        icon: Icons.trash(),
         action: () => {
           input.text = '';
           forceEval();
@@ -1114,7 +1209,7 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'New Note',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
+        icon: Icons.filePlus(),
         shortcut: mod + '+N',
         action: handleNewNote,
       },
@@ -1124,15 +1219,12 @@ export function renderApp(root: HTMLElement): void {
       const activeId = notesMgr.getActiveId();
       const switchChildren: ContextMenuItem[] = notes.map((n) => ({
         label: n.name || 'Untitled',
-        icon:
-          n.id === activeId
-            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-            : undefined,
+        icon: n.id === activeId ? Icons.check() : undefined,
         action: () => switchNote(n.id),
       }));
       items.push({
         label: 'Switch Note',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+        icon: Icons.folder(),
         children: switchChildren,
       });
     }
@@ -1141,21 +1233,21 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'Panels',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
+        icon: Icons.layout(),
         children: [
           {
             label: 'Docs',
-            icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+            icon: Icons.fileText(),
             action: shortcuts.onToggleDocs,
           },
           {
             label: 'Plugins',
-            icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/><circle cx="12" cy="12" r="3"/></svg>',
+            icon: Icons.gear(),
             action: shortcuts.onTogglePlugins,
           },
           {
             label: 'Settings',
-            icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+            icon: Icons.info(),
             action: shortcuts.onToggleSettings,
           },
         ],
@@ -1163,7 +1255,7 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'About LineSolv',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+        icon: Icons.helpCircle(),
         action: () => {
           settingsModal.open('About');
         },
@@ -1183,7 +1275,7 @@ export function renderApp(root: HTMLElement): void {
     const items: ContextMenuItem[] = [
       {
         label: 'Select All',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+        icon: Icons.checkSquare(),
         shortcut: mod + '+A',
         action: () => {
           const range = document.createRange();
@@ -1196,7 +1288,7 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'New Note',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
+        icon: Icons.filePlus(),
         shortcut: mod + '+N',
         action: handleNewNote,
       },
@@ -1205,15 +1297,12 @@ export function renderApp(root: HTMLElement): void {
     if (notes.length > 1) {
       const switchChildren: ContextMenuItem[] = notes.map((n) => ({
         label: n.name || 'Untitled',
-        icon:
-          n.id === activeId
-            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-            : undefined,
+        icon: n.id === activeId ? Icons.check() : undefined,
         action: () => switchNote(n.id),
       }));
       items.push({
         label: 'Switch Note',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+        icon: Icons.folder(),
         children: switchChildren,
       });
     }
@@ -1222,7 +1311,7 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'Panels',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
+        icon: Icons.layout(),
         children: [
           { label: 'Docs', action: shortcuts.onToggleDocs },
           { label: 'Plugins', action: shortcuts.onTogglePlugins },
@@ -1232,7 +1321,7 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'About LineSolv',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+        icon: Icons.info(),
         action: () => {
           settingsModal.open('About');
         },
@@ -1240,7 +1329,7 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'Select text, then press ' + mod + '+C to copy',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        icon: Icons.helpCircle(),
         disabled: true,
       },
     );
@@ -1258,7 +1347,7 @@ export function renderApp(root: HTMLElement): void {
     const items: ContextMenuItem[] = [
       {
         label: 'Select All',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+        icon: Icons.checkSquare(),
         shortcut: mod + '+A',
         action: () => {
           const range = document.createRange();
@@ -1271,7 +1360,7 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'New Note',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
+        icon: Icons.filePlus(),
         shortcut: mod + '+N',
         action: handleNewNote,
       },
@@ -1280,15 +1369,12 @@ export function renderApp(root: HTMLElement): void {
     if (notes.length > 1) {
       const switchChildren: ContextMenuItem[] = notes.map((n) => ({
         label: n.name || 'Untitled',
-        icon:
-          n.id === activeId
-            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-            : undefined,
+        icon: n.id === activeId ? Icons.check() : undefined,
         action: () => switchNote(n.id),
       }));
       items.push({
         label: 'Switch Note',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+        icon: Icons.folder(),
         children: switchChildren,
       });
     }
@@ -1297,7 +1383,7 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'Panels',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
+        icon: Icons.layout(),
         children: [
           { label: 'Docs', action: shortcuts.onToggleDocs },
           { label: 'Plugins', action: shortcuts.onTogglePlugins },
@@ -1307,7 +1393,7 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'About LineSolv',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+        icon: Icons.info(),
         action: () => {
           settingsModal.open('About');
         },
@@ -1315,7 +1401,7 @@ export function renderApp(root: HTMLElement): void {
       { separator: true },
       {
         label: 'Select text, then press ' + mod + '+C to copy',
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        icon: Icons.helpCircle(),
         disabled: true,
       },
     );
@@ -1338,11 +1424,24 @@ export function renderApp(root: HTMLElement): void {
   input.textarea.focus();
   store.setEvalState('idle');
 
+  // Safety: force-dismiss splash after 5 seconds if init() hangs
+  const splashSafetyTimeout = setTimeout(() => {
+    if (splash.parentElement) {
+      splash.style.opacity = '0';
+      setTimeout(() => {
+        splash.remove();
+        splashStyle.remove();
+      }, 450);
+    }
+  }, 5000);
+
   (async function init() {
     for (let i = 0; i < 20; i++) {
       try {
         await serviceBindings.EvaluateAll(input.text);
         await loadNotes();
+        await loadFolders();
+        refreshNotesUI();
         break;
       } catch {
         await new Promise((r) => setTimeout(r, 100));
@@ -1370,6 +1469,7 @@ export function renderApp(root: HTMLElement): void {
       /* ignore */
     }
     // Reveal app — fade out splash screen
+    clearTimeout(splashSafetyTimeout);
     splash.style.opacity = '0';
     setTimeout(() => {
       splash.remove();
