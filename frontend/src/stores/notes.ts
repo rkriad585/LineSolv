@@ -159,6 +159,13 @@ export class NotesManager {
     return true;
   }
 
+  updateNoteIcon(id: string, icon: string): boolean {
+    const note = this.notes.find((n) => n.id === id);
+    if (!note) return false;
+    note.icon = icon;
+    return true;
+  }
+
   moveFolder(folderId: string, newParentId: string): boolean {
     const folder = this.folders.find((f) => f.id === folderId);
     if (!folder) return false;
@@ -168,6 +175,51 @@ export class NotesManager {
 
   getFolder(id: string): Folder | undefined {
     return this.folders.find((f) => f.id === id);
+  }
+
+  // ── Reordering ────────────────────────────────────────────────
+
+  reorderNotes(noteIds: string[]): void {
+    const map = new Map(this.notes.map((n) => [n.id, n]));
+    this.notes = noteIds.map((id) => map.get(id)).filter((n): n is Note => !!n);
+  }
+
+  reorderFolders(folderIds: string[]): void {
+    const map = new Map(this.folders.map((f) => [f.id, f]));
+    this.folders = folderIds.map((id) => map.get(id)).filter((f): f is Folder => !!f);
+  }
+
+  // ── Duplicating ───────────────────────────────────────────────
+
+  duplicateNote(id: string): Note | undefined {
+    const note = this.notes.find((n) => n.id === id);
+    if (!note) return undefined;
+    const copy: Note = {
+      id: '',
+      name: note.name + ' (copy)',
+      content: note.content,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      position: note.position,
+      folderId: note.folderId,
+      icon: note.icon,
+    };
+    return copy;
+  }
+
+  duplicateFolder(id: string): Folder | undefined {
+    const folder = this.folders.find((f) => f.id === id);
+    if (!folder) return undefined;
+    const copy: Folder = {
+      id: '',
+      name: folder.name + ' (copy)',
+      parentId: folder.parentId,
+      icon: folder.icon,
+      position: folder.position,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    return copy;
   }
 
   // ── Expanded state ───────────────────────────────────────────────

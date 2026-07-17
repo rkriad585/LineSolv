@@ -10,8 +10,20 @@ export function ClearVariables() {
   return window['go']['service']['AppService']['ClearVariables']();
 }
 
+export function CreateFolder(arg1, arg2) {
+  return window['go']['service']['AppService']['CreateFolder'](arg1, arg2);
+}
+
 export function CreateNote() {
   return window['go']['service']['AppService']['CreateNote']();
+}
+
+export function CreateNoteInFolder(arg1) {
+  return window['go']['service']['AppService']['CreateNoteInFolder'](arg1);
+}
+
+export function DeleteFolder(arg1) {
+  return window['go']['service']['AppService']['DeleteFolder'](arg1);
 }
 
 export function DeleteNote(arg1) {
@@ -36,6 +48,10 @@ export function ExportNote(arg1, arg2) {
 
 export function ExportNoteToFile(arg1, arg2) {
   return window['go']['service']['AppService']['ExportNoteToFile'](arg1, arg2);
+}
+
+export function GetAllFolders() {
+  return window['go']['service']['AppService']['GetAllFolders']();
 }
 
 export function GetAllNotes() {
@@ -114,6 +130,14 @@ export function InstallPlugin(arg1, arg2, arg3) {
   return window['go']['service']['AppService']['InstallPlugin'](arg1, arg2, arg3);
 }
 
+export function MoveFolder(arg1, arg2) {
+  return window['go']['service']['AppService']['MoveFolder'](arg1, arg2);
+}
+
+export function MoveNoteToFolder(arg1, arg2) {
+  return window['go']['service']['AppService']['MoveNoteToFolder'](arg1, arg2);
+}
+
 export function ReloadPlugins() {
   return window['go']['service']['AppService']['ReloadPlugins']();
 }
@@ -122,8 +146,16 @@ export function RemovePlugin(arg1, arg2) {
   return window['go']['service']['AppService']['RemovePlugin'](arg1, arg2);
 }
 
+export function RenameFolder(arg1, arg2) {
+  return window['go']['service']['AppService']['RenameFolder'](arg1, arg2);
+}
+
 export function RenameNote(arg1, arg2) {
   return window['go']['service']['AppService']['RenameNote'](arg1, arg2);
+}
+
+export function ReorderFolders(arg1) {
+  return window['go']['service']['AppService']['ReorderFolders'](arg1);
 }
 
 export function ReorderNotes(arg1) {
@@ -150,6 +182,18 @@ export function SetPluginEnabled(arg1, arg2) {
   return window['go']['service']['AppService']['SetPluginEnabled'](arg1, arg2);
 }
 
+export function UniqueFolderName(arg1) {
+  return window['go']['service']['AppService']['UniqueFolderName'](arg1);
+}
+
 export function UpdateCurrencyRates() {
   return window['go']['service']['AppService']['UpdateCurrencyRates']();
+}
+
+export function UpdateFolderIcon(arg1, arg2) {
+  return window['go']['service']['AppService']['UpdateFolderIcon'](arg1, arg2);
+}
+
+export function UpdateNoteIcon(arg1, arg2) {
+  return window['go']['service']['AppService']['UpdateNoteIcon'](arg1, arg2);
 }

@@ -1,5 +1,5 @@
 import type { ShortcutMap } from './utils/shortcuts';
-import type { AppCallbacks, Note } from './types';
+import type { AppCallbacks, Note, Folder } from './types';
 import { CalculatorStore } from './stores/calculator';
 import { NotesManager, type SortField, type SortDir } from './stores/notes';
 import { SettingsStore } from './stores/settings';
@@ -460,6 +460,7 @@ export function renderApp(root: HTMLElement): void {
       updatedAt: Date.now(),
       position: 0,
       folderId: '',
+      icon: 'document',
     };
     notesMgr.load([fallback], fallback.id);
     input.text = fallback.content;
@@ -631,7 +632,8 @@ export function renderApp(root: HTMLElement): void {
 
   async function handleNewFolder(parentId: string): Promise<void> {
     try {
-      const folder = await serviceBindings.CreateFolder('New Folder', parentId);
+      const name = await serviceBindings.UniqueFolderName(parentId);
+      const folder = await serviceBindings.CreateFolder(name, parentId);
       notesMgr.addFolder(folder);
       notesMgr.expandFolder(parentId);
       refreshNotesUI();
@@ -931,6 +933,76 @@ export function renderApp(root: HTMLElement): void {
       notesMgr.setSort(field, dir);
       refreshNotesUI();
     },
+    moveNoteToFolder: async (noteId: string, folderId: string) => {
+      try {
+        await serviceBindings.MoveNoteToFolder(noteId, folderId);
+        notesMgr.moveNoteToFolder(noteId, folderId);
+        refreshNotesUI();
+      } catch (e) {
+        toast.show('Failed to move note: ' + (e instanceof Error ? e.message : e), 'error');
+      }
+    },
+    moveFolder: async (folderId: string, newParentId: string) => {
+      try {
+        await serviceBindings.MoveFolder(folderId, newParentId);
+        notesMgr.moveFolder(folderId, newParentId);
+        const folders = await serviceBindings.GetAllFolders();
+        notesMgr.loadFolders(folders as Folder[]);
+        refreshNotesUI();
+      } catch (e) {
+        toast.show('Failed to move folder: ' + (e instanceof Error ? e.message : e), 'error');
+      }
+    },
+    updateFolderIcon: async (folderId: string, icon: string) => {
+      try {
+        await serviceBindings.UpdateFolderIcon(folderId, icon);
+        notesMgr.updateFolderIcon(folderId, icon);
+        refreshNotesUI();
+      } catch (e) {
+        toast.show('Failed to update icon: ' + (e instanceof Error ? e.message : e), 'error');
+      }
+    },
+    updateNoteIcon: async (noteId: string, icon: string) => {
+      try {
+        await serviceBindings.UpdateNoteIcon(noteId, icon);
+        notesMgr.updateNoteIcon(noteId, icon);
+        refreshNotesUI();
+      } catch (e) {
+        toast.show('Failed to update icon: ' + (e instanceof Error ? e.message : e), 'error');
+      }
+    },
+    duplicateNote: async (noteId: string) => {
+      try {
+        const tmpl = notesMgr.duplicateNote(noteId);
+        if (!tmpl) return;
+        const created = await serviceBindings.CreateNote();
+        await serviceBindings.SaveNoteContent(created.id, tmpl.content);
+        if (tmpl.folderId) {
+          await serviceBindings.MoveNoteToFolder(created.id, tmpl.folderId);
+        }
+        notesMgr.addNote({ ...created, content: tmpl.content, folderId: tmpl.folderId });
+        refreshNotesUI();
+      } catch (e) {
+        toast.show('Failed to duplicate note: ' + (e instanceof Error ? e.message : e), 'error');
+      }
+    },
+    duplicateFolder: async (folderId: string) => {
+      try {
+        const tmpl = notesMgr.duplicateFolder(folderId);
+        if (!tmpl) return;
+        await serviceBindings.CreateFolder(tmpl.name, tmpl.parentId);
+        const folders = await serviceBindings.GetAllFolders();
+        notesMgr.loadFolders(folders as Folder[]);
+        refreshNotesUI();
+      } catch (e) {
+        toast.show('Failed to duplicate folder: ' + (e instanceof Error ? e.message : e), 'error');
+      }
+    },
+    getFolders: () =>
+      notesMgr.getFolders().map((f) => ({ id: f.id, name: f.name, parentId: f.parentId })),
+    isDragAndDropEnabled: () => settingsStore.getState().drag_and_drop,
+    isContextMenuNotesEnabled: () => settingsStore.getState().context_menu_notes,
+    isContextMenuFoldersEnabled: () => settingsStore.getState().context_menu_folders,
   };
 
   const cb: AppCallbacks = {

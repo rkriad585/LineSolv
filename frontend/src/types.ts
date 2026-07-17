@@ -1,11 +1,27 @@
+export interface Folder {
+  id: string;
+  name: string;
+  parentId: string;
+  icon: string;
+  position: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Note {
   id: string;
   name: string;
   content: string;
   createdAt: number;
   updatedAt: number;
-  position?: number;
+  position: number;
+  folderId: string;
+  icon: string;
 }
+
+export type TreeNode =
+  | { type: 'folder'; folder: Folder; children: TreeNode[]; depth: number }
+  | { type: 'note'; note: Note; depth: number };
 
 export type ContextMenuItem =
   | {
@@ -51,6 +67,10 @@ export interface SettingsData {
   ui_style: string;
   theme_manually_set: string;
   noise: string;
+  context_menu_notes: string;
+  context_menu_folders: string;
+  drag_and_drop: string;
+  confirm_dialog: string;
 }
 
 export interface AutocompleteItem {

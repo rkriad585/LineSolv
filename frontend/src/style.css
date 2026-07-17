@@ -9,10 +9,12 @@
 /* Only transition specific interactive elements, not everything (avoids flicker) */
 button,
 .panel-toggle,
-.note-item {
+.note-item,
+.folder-item {
   transition:
     background 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 /* Theme color transitions for smooth switching + sidebar panel width animation */
@@ -2015,7 +2017,8 @@ button {
   }
   button,
   .panel-toggle,
-  .note-item {
+  .note-item,
+  .folder-item {
     transition: none !important;
   }
   aside,
@@ -2045,6 +2048,25 @@ a:focus-visible {
 /* Remove mouse-focus outlines */
 :focus:not(:focus-visible) {
   outline: none !important;
+}
+
+/* Suppress focus ring on rename/search inputs */
+.rename-input:focus,
+input.no-focus-ring:focus,
+input[type='search']:focus {
+  outline: none !important;
+}
+
+/* Note and folder hover states */
+.note-item:not(.note-active):hover {
+  color: var(--note-text);
+  background: var(--note-hover);
+}
+.folder-item:hover {
+  background: var(--note-hover);
+}
+.folder-item:hover .folder-chevron {
+  color: var(--text);
 }
 
 /* Context menu */
@@ -2183,6 +2205,42 @@ a:focus-visible {
 .note-item:focus {
   outline: 1px solid var(--accent);
   outline-offset: -1px;
+}
+
+/* Folder tree */
+.folder-item:focus {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+.folder-chevron svg {
+  transition: transform 0.15s ease;
+}
+.folder-item:hover .folder-chevron {
+  color: var(--text);
+}
+
+/* Drag and Drop */
+.note-item.dragging,
+.folder-item.dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+.folder-item.drag-over {
+  background: var(--accent) !important;
+  color: var(--text) !important;
+  border-radius: var(--ui-radius-sm);
+}
+.note-item:hover .drag-handle,
+.folder-item:hover .drag-handle {
+  opacity: 0.5;
+}
+.note-item:hover .drag-handle:hover,
+.folder-item:hover .drag-handle:hover {
+  opacity: 1;
+}
+.note-item[draggable='true'],
+.folder-item[draggable='true'] {
+  user-select: none;
 }
 
 /* Autocomplete popup */

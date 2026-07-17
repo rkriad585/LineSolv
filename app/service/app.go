@@ -198,6 +198,11 @@ func (s *AppService) CreateNote() (*storage.Note, error) {
 	return s.storage.CreateNote(name)
 }
 
+func (s *AppService) CreateNoteInFolder(folderID string) (*storage.Note, error) {
+	name := storage.GenerateFancyName()
+	return s.storage.CreateNoteInFolder(name, folderID)
+}
+
 func (s *AppService) ReorderNotes(noteIDs []string) error {
 	return s.storage.ReorderNotes(noteIDs)
 }
@@ -216,6 +221,46 @@ func (s *AppService) SaveNoteContent(id, content string) error {
 
 func (s *AppService) GetNote(id string) (*storage.Note, error) {
 	return s.storage.GetNote(id)
+}
+
+func (s *AppService) CreateFolder(name, parentID string) (*storage.Folder, error) {
+	return s.storage.CreateFolder(name, parentID)
+}
+
+func (s *AppService) GetAllFolders() ([]storage.Folder, error) {
+	return s.storage.GetAllFolders()
+}
+
+func (s *AppService) RenameFolder(id, name string) error {
+	return s.storage.RenameFolder(id, name)
+}
+
+func (s *AppService) DeleteFolder(id string) error {
+	return s.storage.DeleteFolder(id)
+}
+
+func (s *AppService) MoveFolder(id, newParentID string) error {
+	return s.storage.MoveFolder(id, newParentID)
+}
+
+func (s *AppService) UpdateFolderIcon(id, icon string) error {
+	return s.storage.UpdateFolderIcon(id, icon)
+}
+
+func (s *AppService) UpdateNoteIcon(id, icon string) error {
+	return s.storage.UpdateNoteIcon(id, icon)
+}
+
+func (s *AppService) UniqueFolderName(parentID string) string {
+	return s.storage.UniqueFolderName(parentID)
+}
+
+func (s *AppService) ReorderFolders(folderIDs []string) error {
+	return s.storage.ReorderFolders(folderIDs)
+}
+
+func (s *AppService) MoveNoteToFolder(noteID, folderID string) error {
+	return s.storage.MoveNoteToFolder(noteID, folderID)
 }
 
 func (s *AppService) ExportNote(id, format string) (string, error) {
@@ -457,6 +502,10 @@ type SettingsData struct {
 	UIStyle             string `json:"ui_style"`
 	ThemeManuallySet    string `json:"theme_manually_set"`
 	Noise               string `json:"noise"`
+	ContextMenuNotes    string `json:"context_menu_notes"`
+	ContextMenuFolders  string `json:"context_menu_folders"`
+	DragAndDrop         string `json:"drag_and_drop"`
+	ConfirmDialog       string `json:"confirm_dialog"`
 }
 
 func (s *AppService) GetSettings() (*SettingsData, error) {
@@ -479,6 +528,10 @@ func (s *AppService) GetSettings() (*SettingsData, error) {
 		UIStyle:             cfg.Settings.UIStyle,
 		ThemeManuallySet:    cfg.Settings.ThemeManuallySet,
 		Noise:               cfg.Settings.Noise,
+		ContextMenuNotes:    cfg.Settings.ContextMenuNotes,
+		ContextMenuFolders:  cfg.Settings.ContextMenuFolders,
+		DragAndDrop:         cfg.Settings.DragAndDrop,
+		ConfirmDialog:       cfg.Settings.ConfirmDialog,
 	}, nil
 }
 
@@ -501,6 +554,10 @@ func (s *AppService) SaveSettings(settings *SettingsData) error {
 	cfg.Settings.UIStyle = settings.UIStyle
 	cfg.Settings.ThemeManuallySet = settings.ThemeManuallySet
 	cfg.Settings.Noise = settings.Noise
+	cfg.Settings.ContextMenuNotes = settings.ContextMenuNotes
+	cfg.Settings.ContextMenuFolders = settings.ContextMenuFolders
+	cfg.Settings.DragAndDrop = settings.DragAndDrop
+	cfg.Settings.ConfirmDialog = settings.ConfirmDialog
 	return storage.SaveConfig(cfg)
 }
 

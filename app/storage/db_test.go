@@ -31,7 +31,8 @@ func newTestDB(t *testing.T) *DB {
 		created_at INTEGER NOT NULL,
 		updated_at INTEGER NOT NULL,
 		position INTEGER NOT NULL DEFAULT 0,
-		folder_id TEXT DEFAULT NULL
+		folder_id TEXT DEFAULT NULL,
+		icon TEXT DEFAULT 'document'
 	)`); err != nil {
 		t.Fatal(err)
 	}

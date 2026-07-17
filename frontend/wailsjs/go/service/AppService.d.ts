@@ -9,7 +9,13 @@ export function ClearHistory():Promise<void>;
 
 export function ClearVariables():Promise<void>;
 
+export function CreateFolder(arg1:string,arg2:string):Promise<storage.Folder>;
+
 export function CreateNote():Promise<storage.Note>;
+
+export function CreateNoteInFolder(arg1:string):Promise<storage.Note>;
+
+export function DeleteFolder(arg1:string):Promise<void>;
 
 export function DeleteNote(arg1:string):Promise<void>;
 
@@ -22,6 +28,8 @@ export function EvaluateLine(arg1:string):Promise<string>;
 export function ExportNote(arg1:string,arg2:string):Promise<string>;
 
 export function ExportNoteToFile(arg1:string,arg2:string):Promise<string>;
+
+export function GetAllFolders():Promise<Array<storage.Folder>>;
 
 export function GetAllNotes():Promise<Array<storage.Note>>;
 
@@ -61,11 +69,19 @@ export function InitPlugins(arg1:string):Promise<void>;
 
 export function InstallPlugin(arg1:string,arg2:string,arg3:string):Promise<void>;
 
+export function MoveFolder(arg1:string,arg2:string):Promise<void>;
+
+export function MoveNoteToFolder(arg1:string,arg2:string):Promise<void>;
+
 export function ReloadPlugins():Promise<void>;
 
 export function RemovePlugin(arg1:string,arg2:string):Promise<void>;
 
+export function RenameFolder(arg1:string,arg2:string):Promise<void>;
+
 export function RenameNote(arg1:string,arg2:string):Promise<void>;
+
+export function ReorderFolders(arg1:Array<string>):Promise<void>;
 
 export function ReorderNotes(arg1:Array<string>):Promise<void>;
 
@@ -79,4 +95,10 @@ export function SetDocs(arg1:Record<string, string>):Promise<void>;
 
 export function SetPluginEnabled(arg1:string,arg2:boolean):Promise<void>;
 
+export function UniqueFolderName(arg1:string):Promise<string>;
+
 export function UpdateCurrencyRates():Promise<service.CurrencyCacheInfo>;
+
+export function UpdateFolderIcon(arg1:string,arg2:string):Promise<void>;
+
+export function UpdateNoteIcon(arg1:string,arg2:string):Promise<void>;

@@ -279,6 +279,10 @@ export namespace service {
 	    ui_style: string;
 	    theme_manually_set: string;
 	    noise: string;
+	    context_menu_notes: string;
+	    context_menu_folders: string;
+	    drag_and_drop: string;
+	    confirm_dialog: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SettingsData(source);
@@ -300,6 +304,10 @@ export namespace service {
 	        this.ui_style = source["ui_style"];
 	        this.theme_manually_set = source["theme_manually_set"];
 	        this.noise = source["noise"];
+	        this.context_menu_notes = source["context_menu_notes"];
+	        this.context_menu_folders = source["context_menu_folders"];
+	        this.drag_and_drop = source["drag_and_drop"];
+	        this.confirm_dialog = source["confirm_dialog"];
 	    }
 	}
 
@@ -307,6 +315,30 @@ export namespace service {
 
 export namespace storage {
 	
+	export class Folder {
+	    id: string;
+	    name: string;
+	    parentId: string;
+	    icon: string;
+	    position: number;
+	    createdAt: number;
+	    updatedAt: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Folder(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.parentId = source["parentId"];
+	        this.icon = source["icon"];
+	        this.position = source["position"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
 	export class Note {
 	    id: string;
 	    name: string;
@@ -314,6 +346,8 @@ export namespace storage {
 	    createdAt: number;
 	    updatedAt: number;
 	    position: number;
+	    folderId: string;
+	    icon: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Note(source);
@@ -327,6 +361,8 @@ export namespace storage {
 	        this.createdAt = source["createdAt"];
 	        this.updatedAt = source["updatedAt"];
 	        this.position = source["position"];
+	        this.folderId = source["folderId"];
+	        this.icon = source["icon"];
 	    }
 	}
 
