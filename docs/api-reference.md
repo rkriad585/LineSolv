@@ -323,6 +323,13 @@ interface SettingsData {
   toast_enabled: string; // "true" or "false"
   result_panel_enabled: string; // "true" or "false"
   line_wrap_enabled: string; // "true" or "false"
+  ui_style: string; // e.g. "default", "glass", "material"
+  theme_manually_set: string; // "true" or "false" — whether user manually selected a theme
+  noise: string; // "true" or "false" — background noise animation
+  context_menu_notes: string; // "true" or "false"
+  context_menu_folders: string; // "true" or "false"
+  drag_and_drop: string; // "true" or "false"
+  confirm_dialog: string; // "true" or "false"
 }
 
 function GetSettings(): Promise<SettingsData>;
@@ -332,7 +339,7 @@ Returns the current application settings loaded from `config.toml`.
 
 **Returns:**
 
-- `SettingsData` with theme name, font size, font family, shortcut overrides as a JSON string, opacity, line numbers toggle, autocomplete toggle, animations toggle, toast toggle, result panel toggle, and line wrap toggle.
+- `SettingsData` with theme name, font size, font family, shortcut overrides as a JSON string, opacity, line numbers toggle, autocomplete toggle, animations toggle, toast toggle, result panel toggle, line wrap toggle, UI style, theme manual override, noise animation, context menu toggles (notes/folders), drag-and-drop toggle, and confirm dialog toggle.
 
 **Valid theme values (17 built-in):**
 `dark`, `light`, `neon`, `red`, `obsidian`, `plasma`, `blood`, `midnight`, `aurora`, `mono`, `frost`, `prism`, `lavender`, `sage`, `warm-light`, `claude-dark`, `claude-light`
@@ -364,7 +371,7 @@ Saves application settings to `config.toml`. In the frontend, settings auto-save
 function GetAppVersion(): Promise<string>;
 ```
 
-Returns the current application version string (e.g. `"0.15.25"`).
+Returns the current application version string (e.g. `"0.17.0"`).
 
 ---
 
@@ -409,6 +416,7 @@ Gets or sets the "Don't ask again" preference for note deletion confirmation. St
 ```typescript
 function GetAllNotes(): Promise<Note[]>;
 function CreateNote(): Promise<Note>;
+function CreateNoteInFolder(folderID: string): Promise<Note>;
 function GetNote(id: string): Promise<Note>;
 function RenameNote(id: string, name: string): Promise<void>;
 function DeleteNote(id: string): Promise<void>;
@@ -416,6 +424,8 @@ function SaveNoteContent(id: string, content: string): Promise<void>;
 function ExportNote(id: string, format: string): Promise<string>;
 function ExportNoteToFile(id: string, format: string): Promise<string>;
 function ImportNoteFromFile(): Promise<Note>;
+function UpdateNoteIcon(id: string, icon: string): Promise<void>;
+function MoveNoteToFolder(noteID: string, folderID: string): Promise<void>;
 ```
 
 Where `Note` is:
@@ -425,6 +435,7 @@ interface Note {
   id: string;
   name: string;
   content: string;
+  icon: string; // Emoji or icon identifier
   createdAt: number; // Unix timestamp in milliseconds
   updatedAt: number; // Unix timestamp in milliseconds
   position: number; // Sort order
@@ -432,8 +443,58 @@ interface Note {
 ```
 
 - `CreateNote()` generates a random fancy name (e.g. "Amber Fox")
+- `CreateNoteInFolder(folderID)` creates a note inside the specified folder
+- `UpdateNoteIcon(id, icon)` sets the emoji/icon for a note
+- `MoveNoteToFolder(noteID, folderID)` moves a note into the specified folder
 - `ExportNoteToFile()` opens a native Save As dialog; supported formats: `lv`, `txt`, `md`, `json`, `toml`, `pdf`
 - `ImportNoteFromFile()` opens a native Open file dialog; supported formats: `lv`, `txt`, `md`, `json`, `toml`, `pdf`
+
+---
+
+## Folder Management Methods
+
+```typescript
+function CreateFolder(name: string, parentID: string): Promise<Folder>;
+function GetAllFolders(): Promise<Folder[]>;
+function RenameFolder(id: string, name: string): Promise<void>;
+function DeleteFolder(id: string): Promise<void>;
+function MoveFolder(id: string, newParentID: string): Promise<void>;
+function UpdateFolderIcon(id: string, icon: string): Promise<void>;
+function UniqueFolderName(parentID: string): Promise<string>;
+function ReorderFolders(folderIDs: string[]): Promise<void>;
+```
+
+Where `Folder` is:
+
+```typescript
+interface Folder {
+  id: string;
+  name: string;
+  parentId: string; // Empty string for root-level folders
+  icon: string; // Emoji or icon identifier
+  position: number; // Sort order
+  createdAt: number; // Unix timestamp in milliseconds
+  updatedAt: number; // Unix timestamp in milliseconds
+}
+```
+
+- `CreateFolder(name, parentID)` creates a folder; pass `""` for `parentID` to create at root level
+- `UniqueFolderName(parentID)` returns an auto-generated unique name for a new folder within the given parent
+- `ReorderFolders(folderIDs)` updates folder positions to match the given order
+
+---
+
+## `GetAutocompleteKeywords`
+
+```typescript
+function GetAutocompleteKeywords(): Promise<string[]>;
+```
+
+Returns all available autocomplete keywords — built-in function names, constant names, and user-defined variable names. Used by the frontend `AutocompletePopup` to suggest completions as the user types.
+
+**Returns:**
+
+- `string[]` — Sorted array of keyword strings (e.g. `["abs", "acos", "asin", "atan", "avg", "cbrt", ...]`)
 
 ---
 
@@ -611,9 +672,25 @@ console.log(info.source); // "live" or "cache"
 // Notes
 const notes = await svc.GetAllNotes();
 const note = await svc.CreateNote();
+const folderNote = await svc.CreateNoteInFolder('folder-uuid');
 await svc.SaveNoteContent(note.id, '2 + 2\npi * 2');
 await svc.RenameNote(note.id, 'My Calculations');
+await svc.UpdateNoteIcon(note.id, '\u{1F4C8}');
+await svc.MoveNoteToFolder(note.id, 'folder-uuid');
 await svc.ReorderNotes([note.id]);
+
+// Folders
+const folder = await svc.CreateFolder('Work', '');
+const folders = await svc.GetAllFolders();
+await svc.RenameFolder(folder.id, 'Personal');
+await svc.UpdateFolderIcon(folder.id, '\u{1F4C1}');
+await svc.MoveFolder(folder.id, 'parent-folder-uuid');
+const uniqueName = await svc.UniqueFolderName('');
+await svc.ReorderFolders([folder.id]);
+await svc.DeleteFolder(folder.id);
+
+// Autocomplete keywords
+const keywords = await svc.GetAutocompleteKeywords();
 
 // Plugins
 const plugins = await svc.GetPlugins();

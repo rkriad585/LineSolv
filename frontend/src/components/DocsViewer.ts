@@ -1,4 +1,5 @@
 import * as serviceBindings from '../../wailsjs/go/service/AppService';
+import { Icons } from './Icons';
 import { escapeHtml } from '../utils/html';
 
 function renderMarkdown(md: string): string {
@@ -138,8 +139,7 @@ function inlineMd(s: string): string {
   return r;
 }
 
-const LINE_SOLV_LOGO =
-  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
+const LINE_SOLV_LOGO = Icons.logo(16, 16);
 
 export class DocsViewer {
   readonly el: HTMLDivElement;
@@ -181,8 +181,7 @@ export class DocsViewer {
     titleRow.innerHTML = `${LINE_SOLV_LOGO}<span style="font-size:13px;font-weight:600;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;">Documentation</span>`;
 
     const closeBtn = document.createElement('button');
-    closeBtn.innerHTML =
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    closeBtn.innerHTML = Icons.close();
     closeBtn.title = 'Close (Escape)';
     closeBtn.style.cssText =
       'display:flex;align-items:center;justify-content:center;width:26px;height:26px;' +
@@ -206,13 +205,13 @@ export class DocsViewer {
     this.searchInput = document.createElement('input');
     this.searchInput.type = 'text';
     this.searchInput.placeholder = 'Search docs...';
+    this.searchInput.className = 'no-focus-ring';
     this.searchInput.style.cssText =
       'width:100%;padding:6px 10px 6px 28px;border:1px solid var(--border);border-radius:4px;' +
       'font-size:12px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box;';
 
     const searchIcon = document.createElement('span');
-    searchIcon.innerHTML =
-      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+    searchIcon.innerHTML = Icons.search();
     searchIcon.style.cssText =
       'position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;';
 

@@ -17,6 +17,10 @@ export interface SettingsState {
   line_wrap_enabled: boolean;
   theme_manually_set: boolean;
   noise: number;
+  context_menu_notes: boolean;
+  context_menu_folders: boolean;
+  drag_and_drop: boolean;
+  confirm_dialog: boolean;
 }
 
 type SettingsListener = (state: SettingsState) => void;
@@ -36,6 +40,10 @@ const DEFAULTS: SettingsState = {
   line_wrap_enabled: true,
   theme_manually_set: false,
   noise: 0,
+  context_menu_notes: true,
+  context_menu_folders: true,
+  drag_and_drop: true,
+  confirm_dialog: true,
 };
 
 function toBool(v: string | undefined, def: boolean): boolean {
@@ -65,6 +73,10 @@ function fromStore(s: SettingsState): SettingsData {
     line_wrap_enabled: String(s.line_wrap_enabled),
     theme_manually_set: String(s.theme_manually_set),
     noise: String(s.noise),
+    context_menu_notes: String(s.context_menu_notes),
+    context_menu_folders: String(s.context_menu_folders),
+    drag_and_drop: String(s.drag_and_drop),
+    confirm_dialog: String(s.confirm_dialog),
   };
 }
 
@@ -84,6 +96,10 @@ function toStore(d: SettingsData): SettingsState {
     line_wrap_enabled: toBool(d.line_wrap_enabled, true),
     theme_manually_set: toBool(d.theme_manually_set, false),
     noise: toFloat(d.noise, 0),
+    context_menu_notes: toBool(d.context_menu_notes, true),
+    context_menu_folders: toBool(d.context_menu_folders, true),
+    drag_and_drop: toBool(d.drag_and_drop, true),
+    confirm_dialog: toBool(d.confirm_dialog, true),
   };
 }
 

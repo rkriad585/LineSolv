@@ -1,7 +1,7 @@
 # Privacy Policy
 
 **Effective Date:** July 11, 2026
-**Last Updated:** July 11, 2026
+**Last Updated:** July 17, 2026
 
 ## Summary
 
@@ -39,15 +39,18 @@ You can delete all data at any time by uninstalling the application or clearing 
 
 LineSolv works fully offline for all core functionality (calculations, unit conversion, notes). However, the app makes limited network requests for optional features:
 
-1. **Plugin List Fetch** — When you open the Plugins panel, LineSolv fetches the plugin catalog from `github.com/rkriad585/linesolv-plugins`. This is a public GET request for a JSON manifest. No personal data is included.
+1. **Currency Rates** — When you perform a currency conversion, LineSolv fetches live exchange rates from `api.exchangerate-api.com`. This is a public GET request for a JSON rate table. No personal data is included. Rates are cached locally in the SQLite database and reused until they expire.
+2. **Plugin Catalog** — When you open the Plugins panel, LineSolv fetches the plugin catalog from `github.com/rkriad585/linesolv-plugins`. This is a public GET request for a JSON manifest. No personal data is included.
+3. **Update Check** — LineSolv checks for new versions by fetching the `.version` file from the `main` branch of `github.com/rkriad585/LineSolv`. This is a public GET request containing only the version string. No personal data is included.
 
-These requests are made **only** when you explicitly trigger them. No background network activity occurs.
+These requests are made **only** when you explicitly trigger them (opening the Plugins panel, performing a currency conversion, or clicking "Check for Updates"). No background network activity occurs.
 
 ---
 
 ## Third-Party Services
 
-- **GitHub** — Used for plugin catalog. GitHub may log standard server data (IP addresses, user agent) per their [Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). This logging is performed by GitHub, not by LineSolv.
+- **ExchangeRate-API** — Used for live currency exchange rates. ExchangeRate-API may log standard server data (IP addresses, user agent) per their terms of service. This logging is performed by ExchangeRate-API, not by LineSolv.
+- **GitHub** — Used for the plugin catalog and update checks. GitHub may log standard server data (IP addresses, user agent) per their [Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). This logging is performed by GitHub, not by LineSolv.
 
 ---
 

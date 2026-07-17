@@ -1,5 +1,5 @@
-import type {ContextMenuItem} from '../types';
-import {escapeHtml} from '../utils/html';
+import type { ContextMenuItem } from '../types';
+import { escapeHtml } from '../utils/html';
 
 interface SubTimer {
   show: number | null;
@@ -21,6 +21,7 @@ export class ContextMenu {
     document.body.appendChild(this.el);
 
     const close = (e: Event) => {
+      if (this.el.style.display === 'none') return;
       const target = e.target as Node;
       if (this.el.contains(target)) return;
       for (const sub of this.openSubs) {
@@ -38,8 +39,14 @@ export class ContextMenu {
 
   private clearAllTimers(): void {
     for (const t of this.subTimers) {
-      if (t.show != null) { clearTimeout(t.show); t.show = null; }
-      if (t.hide != null) { clearTimeout(t.hide); t.hide = null; }
+      if (t.show != null) {
+        clearTimeout(t.show);
+        t.show = null;
+      }
+      if (t.hide != null) {
+        clearTimeout(t.hide);
+        t.hide = null;
+      }
     }
     this.subTimers = [];
   }
@@ -57,9 +64,9 @@ export class ContextMenu {
       if ('separator' in item && item.separator) {
         this.renderSeparator();
       } else if ('children' in item && item.children) {
-        this.renderSubmenu(item as Extract<ContextMenuItem, {label: string}>);
+        this.renderSubmenu(item as Extract<ContextMenuItem, { label: string }>);
       } else {
-        this.renderItem(item as Extract<ContextMenuItem, {label: string}>);
+        this.renderItem(item as Extract<ContextMenuItem, { label: string }>);
       }
     }
 
@@ -102,7 +109,7 @@ export class ContextMenu {
     this.el.appendChild(sep);
   }
 
-  private renderItem(item: Extract<ContextMenuItem, {label: string}>): void {
+  private renderItem(item: Extract<ContextMenuItem, { label: string }>): void {
     const div = document.createElement('div');
     div.className = 'context-menu-item';
     div.style.cssText =
@@ -112,7 +119,9 @@ export class ContextMenu {
       div.style.cursor = 'default';
     }
 
-    const iconHtml = item.icon ? `<span style="width:16px;text-align:center;flex-shrink:0">${item.icon}</span>` : '';
+    const iconHtml = item.icon
+      ? `<span style="width:16px;text-align:center;flex-shrink:0">${item.icon}</span>`
+      : '';
     const labelHtml = `<span style="flex:1">${escapeHtml(item.label)}</span>`;
     const shortcutHtml = item.shortcut
       ? `<span style="margin-left:auto;font-size:11px;color:var(--text-muted);white-space:nowrap">${escapeHtml(item.shortcut)}</span>`
@@ -130,19 +139,22 @@ export class ContextMenu {
     this.el.appendChild(div);
   }
 
-  private renderSubmenu(item: Extract<ContextMenuItem, {label: string}>): void {
+  private renderSubmenu(item: Extract<ContextMenuItem, { label: string }>): void {
     const trigger = document.createElement('div');
     trigger.className = 'context-menu-item';
     trigger.style.cssText =
       'padding:6px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text);';
-    const iconHtml = item.icon ? `<span style="width:16px;text-align:center;flex-shrink:0">${item.icon}</span>` : '';
-    trigger.innerHTML = iconHtml +
+    const iconHtml = item.icon
+      ? `<span style="width:16px;text-align:center;flex-shrink:0">${item.icon}</span>`
+      : '';
+    trigger.innerHTML =
+      iconHtml +
       `<span style="flex:1">${escapeHtml(item.label)}</span>` +
       '<span style="margin-left:auto;font-size:10px;color:var(--text-muted)">▶</span>';
 
-const sub = document.createElement('div');
-sub.style.cssText =
-    'position:fixed;min-width:140px;max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--ui-radius-sm);padding:4px 0;box-shadow:var(--ui-shadow-sm);display:none;z-index:10001;transition:opacity 150ms ease;';
+    const sub = document.createElement('div');
+    sub.style.cssText =
+      'position:fixed;min-width:140px;max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--ui-radius-sm);padding:4px 0;box-shadow:var(--ui-shadow-sm);display:none;z-index:10001;transition:opacity 150ms ease;';
 
     for (const child of item.children!) {
       if ('separator' in child && child.separator) {
@@ -151,12 +163,14 @@ sub.style.cssText =
         sub.appendChild(sep);
         continue;
       }
-      const childTyped = child as Extract<ContextMenuItem, {label: string}>;
+      const childTyped = child as Extract<ContextMenuItem, { label: string }>;
       const childDiv = document.createElement('div');
       childDiv.className = 'context-menu-item';
       childDiv.style.cssText =
         'padding:6px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text);';
-      const cIcon = childTyped.icon ? `<span style="width:16px;text-align:center;flex-shrink:0">${childTyped.icon}</span>` : '';
+      const cIcon = childTyped.icon
+        ? `<span style="width:16px;text-align:center;flex-shrink:0">${childTyped.icon}</span>`
+        : '';
       const cLabel = `<span style="flex:1">${escapeHtml(childTyped.label)}</span>`;
       const cShortcut = childTyped.shortcut
         ? `<span style="margin-left:auto;font-size:11px;color:var(--text-muted)">${escapeHtml(childTyped.shortcut)}</span>`
@@ -173,7 +187,7 @@ sub.style.cssText =
     }
     this.el.appendChild(trigger);
 
-    const timers: SubTimer = {show: null, hide: null};
+    const timers: SubTimer = { show: null, hide: null };
     this.subTimers.push(timers);
 
     const positionSub = () => {
@@ -204,8 +218,13 @@ sub.style.cssText =
     };
 
     const showSub = () => {
-      if (timers.hide != null) { clearTimeout(timers.hide); timers.hide = null; }
-      if (timers.show != null) { clearTimeout(timers.show); }
+      if (timers.hide != null) {
+        clearTimeout(timers.hide);
+        timers.hide = null;
+      }
+      if (timers.show != null) {
+        clearTimeout(timers.show);
+      }
       timers.show = window.setTimeout(() => {
         timers.show = null;
         const alreadyVisible = document.body.contains(sub);
@@ -225,26 +244,34 @@ sub.style.cssText =
     };
 
     const hideSub = () => {
-      if (timers.show != null) { clearTimeout(timers.show); timers.show = null; }
+      if (timers.show != null) {
+        clearTimeout(timers.show);
+        timers.show = null;
+      }
       timers.hide = window.setTimeout(() => {
         timers.hide = null;
         sub.style.display = 'none';
         sub.remove();
-        this.openSubs = this.openSubs.filter(s => s !== sub);
+        this.openSubs = this.openSubs.filter((s) => s !== sub);
       }, 300);
     };
 
     trigger.addEventListener('mouseenter', showSub);
     trigger.addEventListener('mouseleave', hideSub);
     sub.addEventListener('mouseenter', () => {
-      if (timers.hide != null) { clearTimeout(timers.hide); timers.hide = null; }
+      if (timers.hide != null) {
+        clearTimeout(timers.hide);
+        timers.hide = null;
+      }
     });
     sub.addEventListener('mouseleave', hideSub);
   }
 
   destroy(): void {
     this.hide();
-    if (this.onClose) { this.onClose(); }
+    if (this.onClose) {
+      this.onClose();
+    }
     this.el.remove();
   }
 }

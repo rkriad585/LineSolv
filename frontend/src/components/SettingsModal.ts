@@ -1,5 +1,6 @@
 import type { SettingsStore, SettingsState } from '../stores/settings';
 import * as serviceBindings from '../../wailsjs/go/service/AppService';
+import { Icons } from './Icons';
 import { toast } from '../utils/toast';
 
 interface CustomSelect {
@@ -13,8 +14,7 @@ import { ALL_SHORTCUTS } from '../utils/shortcutDefs';
 
 const APP_REPO = 'https://github.com/rkriad585/LineSolv';
 
-const CHECK_ICON =
-  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const CHECK_ICON = Icons.check();
 
 const THEMES = [
   { id: 'dark', label: 'Dark', bg: '#18181b', accent: '#a78bfa', text: '#f4f4f5' },
@@ -158,17 +158,13 @@ const STYLE_THEME_DEFAULTS: Record<string, string> = {
   neon: 'neon',
 };
 
-const EDIT_ICON =
-  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
+const EDIT_ICON = Icons.pencil();
 
-const CLOSE_ICON =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+const CLOSE_ICON = Icons.close();
 
-const SETTINGS_ICON =
-  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+const SETTINGS_ICON = Icons.settings();
 
-const LOGO_SVG =
-  '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
+const LOGO_SVG = Icons.logo(48, 48);
 
 function keyEventToCombo(e: KeyboardEvent): string {
   const parts: string[] = [];
@@ -215,6 +211,18 @@ export class SettingsModal {
   private toastToggle!: HTMLInputElement;
   private toastTrack!: HTMLDivElement;
   private toastThumb!: HTMLDivElement;
+  private confirmDialogToggle!: HTMLInputElement;
+  private confirmDialogTrack!: HTMLDivElement;
+  private confirmDialogThumb!: HTMLDivElement;
+  private ctxNotesToggle!: HTMLInputElement;
+  private ctxNotesTrack!: HTMLDivElement;
+  private ctxNotesThumb!: HTMLDivElement;
+  private ctxFoldersToggle!: HTMLInputElement;
+  private ctxFoldersTrack!: HTMLDivElement;
+  private ctxFoldersThumb!: HTMLDivElement;
+  private dragDropToggle!: HTMLInputElement;
+  private dragDropTrack!: HTMLDivElement;
+  private dragDropThumb!: HTMLDivElement;
   private autocompleteToggle!: HTMLInputElement;
   private autocompleteTrack!: HTMLDivElement;
   private autocompleteThumb!: HTMLDivElement;
@@ -418,8 +426,7 @@ export class SettingsModal {
     label.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
 
     const arrow = document.createElement('span');
-    arrow.innerHTML =
-      '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>';
+    arrow.innerHTML = Icons.chevronDown();
     arrow.style.cssText = 'display:flex;color:var(--text-muted);flex-shrink:0;';
 
     display.append(label, arrow);
@@ -878,7 +885,52 @@ export class SettingsModal {
     this.toastTrack = toastRow.track;
     this.toastThumb = toastRow.thumb;
 
-    panel.append(lineNumbersRow.el, resultPanelRow.el, lineWrapRow.el, toastRow.el);
+    const confirmDialogRow = this.toggleRow(
+      'Confirm Dialog',
+      'Show confirmation dialog before deleting notes',
+      true,
+    );
+    this.confirmDialogToggle = confirmDialogRow.toggle;
+    this.confirmDialogTrack = confirmDialogRow.track;
+    this.confirmDialogThumb = confirmDialogRow.thumb;
+
+    const ctxNotesRow = this.toggleRow(
+      'Notes Context Menu',
+      'Enable right-click menu on notes',
+      true,
+    );
+    this.ctxNotesToggle = ctxNotesRow.toggle;
+    this.ctxNotesTrack = ctxNotesRow.track;
+    this.ctxNotesThumb = ctxNotesRow.thumb;
+
+    const ctxFoldersRow = this.toggleRow(
+      'Folders Context Menu',
+      'Enable right-click menu on folders',
+      true,
+    );
+    this.ctxFoldersToggle = ctxFoldersRow.toggle;
+    this.ctxFoldersTrack = ctxFoldersRow.track;
+    this.ctxFoldersThumb = ctxFoldersRow.thumb;
+
+    const dragDropRow = this.toggleRow(
+      'Drag and Drop',
+      'Enable drag-and-drop for notes and folders',
+      true,
+    );
+    this.dragDropToggle = dragDropRow.toggle;
+    this.dragDropTrack = dragDropRow.track;
+    this.dragDropThumb = dragDropRow.thumb;
+
+    panel.append(
+      lineNumbersRow.el,
+      resultPanelRow.el,
+      lineWrapRow.el,
+      toastRow.el,
+      confirmDialogRow.el,
+      ctxNotesRow.el,
+      ctxFoldersRow.el,
+      dragDropRow.el,
+    );
 
     // --- Preview ---
     const previewSection = document.createElement('div');
@@ -905,7 +957,11 @@ export class SettingsModal {
     this.resultPanelToggle.addEventListener('change', () => this.applyAll());
     this.lineWrapToggle.addEventListener('change', () => this.applyAll());
     this.toastToggle.addEventListener('change', () => this.applyAll());
+    this.confirmDialogToggle.addEventListener('change', () => this.applyAll());
     this.animationsToggle.addEventListener('change', () => this.applyAll());
+    this.ctxNotesToggle.addEventListener('change', () => this.applyAll());
+    this.ctxFoldersToggle.addEventListener('change', () => this.applyAll());
+    this.dragDropToggle.addEventListener('change', () => this.applyAll());
     this.opacityInput.addEventListener('input', () => this.applyAll());
     this.noiseInput.addEventListener('input', () => this.applyAll());
     this.fontSizeInput.addEventListener('input', () => this.applyAll());
@@ -1025,7 +1081,9 @@ export class SettingsModal {
           this.highlightThemeCard(this.selectedTheme);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        toast.show('Failed to load app version', 'error');
+      });
 
     panel.append(note, grid);
   }
@@ -1324,6 +1382,9 @@ export class SettingsModal {
     this.lineNumbersToggle.checked = true;
     this.resultPanelToggle.checked = true;
     this.lineWrapToggle.checked = true;
+    this.ctxNotesToggle.checked = true;
+    this.ctxFoldersToggle.checked = true;
+    this.dragDropToggle.checked = true;
     this.updateToggleVisual(this.animationsToggle, this.animationsTrack, this.animationsThumb);
     this.updateToggleVisual(this.toastToggle, this.toastTrack, this.toastThumb);
     this.updateToggleVisual(
@@ -1333,6 +1394,9 @@ export class SettingsModal {
     );
     this.updateToggleVisual(this.lineNumbersToggle, this.lineNumbersTrack, this.lineNumbersThumb);
     this.updateToggleVisual(this.resultPanelToggle, this.resultPanelTrack, this.resultPanelThumb);
+    this.updateToggleVisual(this.ctxNotesToggle, this.ctxNotesTrack, this.ctxNotesThumb);
+    this.updateToggleVisual(this.ctxFoldersToggle, this.ctxFoldersTrack, this.ctxFoldersThumb);
+    this.updateToggleVisual(this.dragDropToggle, this.dragDropTrack, this.dragDropThumb);
     this.overrides = {};
     this.updatePreview();
     this.settingsStore.update({ theme_manually_set: false });
@@ -1365,6 +1429,10 @@ export class SettingsModal {
       result_panel_enabled: this.resultPanelToggle.checked,
       line_wrap_enabled: this.lineWrapToggle.checked,
       noise: parseInt(this.noiseInput.value) || 0,
+      confirm_dialog: this.confirmDialogToggle.checked,
+      context_menu_notes: this.ctxNotesToggle.checked,
+      context_menu_folders: this.ctxFoldersToggle.checked,
+      drag_and_drop: this.dragDropToggle.checked,
     });
   }
 
@@ -1408,6 +1476,10 @@ export class SettingsModal {
       this.lineNumbersToggle.checked = state.line_numbers_enabled;
       this.resultPanelToggle.checked = state.result_panel_enabled;
       this.lineWrapToggle.checked = state.line_wrap_enabled;
+      this.confirmDialogToggle.checked = state.confirm_dialog;
+      this.ctxNotesToggle.checked = state.context_menu_notes;
+      this.ctxFoldersToggle.checked = state.context_menu_folders;
+      this.dragDropToggle.checked = state.drag_and_drop;
       this.updateToggleVisual(this.animationsToggle, this.animationsTrack, this.animationsThumb);
       this.updateToggleVisual(this.toastToggle, this.toastTrack, this.toastThumb);
       this.updateToggleVisual(
@@ -1418,7 +1490,14 @@ export class SettingsModal {
       this.updateToggleVisual(this.lineNumbersToggle, this.lineNumbersTrack, this.lineNumbersThumb);
       this.updateToggleVisual(this.resultPanelToggle, this.resultPanelTrack, this.resultPanelThumb);
       this.updateToggleVisual(this.lineWrapToggle, this.lineWrapTrack, this.lineWrapThumb);
-      this.updateToggleVisual(this.lineWrapToggle, this.lineWrapTrack, this.lineWrapThumb);
+      this.updateToggleVisual(
+        this.confirmDialogToggle,
+        this.confirmDialogTrack,
+        this.confirmDialogThumb,
+      );
+      this.updateToggleVisual(this.ctxNotesToggle, this.ctxNotesTrack, this.ctxNotesThumb);
+      this.updateToggleVisual(this.ctxFoldersToggle, this.ctxFoldersTrack, this.ctxFoldersThumb);
+      this.updateToggleVisual(this.dragDropToggle, this.dragDropTrack, this.dragDropThumb);
 
       this.highlightThemeCard(this.selectedTheme);
       this.highlightStyleCard(this.selectedStyle);
@@ -1434,7 +1513,9 @@ export class SettingsModal {
           const verEl = this.el.querySelector('#settings-version');
           if (verEl) verEl.textContent = `Version ${version}`;
         })
-        .catch(() => {});
+        .catch(() => {
+          toast.show('Failed to load plugin themes', 'error');
+        });
     } catch {
       toast.show('Failed to load settings', 'error');
     }

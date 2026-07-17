@@ -8,11 +8,11 @@ A comprehensive guide to creating, installing, and managing LineSolv plugins.
 
 Plugins are stored in a platform-specific directory:
 
-| Platform | Plugin Directory |
-|----------|-----------------|
-| Linux | `~/.config/neostore/linesolv/plugins/` |
-| macOS | `~/Library/Application Support/neostore/linesolv/plugins/` |
-| Windows | `%APPDATA%/neostore/linesolv/plugins/` |
+| Platform | Plugin Directory                                           |
+| -------- | ---------------------------------------------------------- |
+| Linux    | `~/.config/neostore/linesolv/plugins/`                     |
+| macOS    | `~/Library/Application Support/neostore/linesolv/plugins/` |
+| Windows  | `%APPDATA%/neostore/linesolv/plugins/`                     |
 
 Each plugin lives in its own subdirectory within this plugins folder. The plugin manager scans all subdirectories for a valid `plugin.json` manifest on startup and on reload.
 
@@ -114,21 +114,21 @@ The `plugin.json` file defines everything about a plugin. Here is the complete s
 
 ### Required Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | string | Display name of the plugin |
-| `version` | string | Semantic version (e.g., `"1.0.0"`) |
-| `description` | string | Short description of the plugin |
-| `author` | string | Author name or handle |
+| Field         | Type   | Description                        |
+| ------------- | ------ | ---------------------------------- |
+| `name`        | string | Display name of the plugin         |
+| `version`     | string | Semantic version (e.g., `"1.0.0"`) |
+| `description` | string | Short description of the plugin    |
+| `author`      | string | Author name or handle              |
 
 ### Optional Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `homepage` | string | URL to the plugin's homepage or repository |
-| `functions` | array | Array of function definitions (see below) |
-| `themes` | array | Array of theme definitions (see below) |
-| `variables` | array | Array of variable definitions (see below) |
+| Field       | Type   | Description                                |
+| ----------- | ------ | ------------------------------------------ |
+| `homepage`  | string | URL to the plugin's homepage or repository |
+| `functions` | array  | Array of function definitions (see below)  |
+| `themes`    | array  | Array of theme definitions (see below)     |
+| `variables` | array  | Array of variable definitions (see below)  |
 
 A plugin must declare at least one function, theme, or variable.
 
@@ -228,40 +228,40 @@ Instead of writing an expression, you can reference a pre-defined builtin operat
 
 #### Complete Builtin Functions Table
 
-| Builtin Name | Args | Description | Formula |
-|-------------|------|-------------|---------|
-| `clamp` | 3 | Clamp value between min and max | `max(min, min(max, value))` |
-| `lerp` | 3 | Linear interpolation | `a + (b - a) * t` |
-| `smoothstep` | 3 | Smooth Hermite interpolation | `t^2 * (3 - 2t)` where `t = clamp((x-e0)/(e1-e0))` |
-| `wrap` | 3 | Wrap value within range [min, max) | `mod(value - min, max - min) + min` |
-| `average` | 1+ | Arithmetic mean of all arguments | `sum(args) / count` |
-| `median` | 1+ | Median value of arguments | Middle value of sorted list |
-| `std_dev` | 2+ | Population standard deviation | `sqrt(variance(args))` |
-| `variance` | 2+ | Population variance | `sum((x - mean)^2) / n` |
-| `percentile` | 2+ | P-th percentile (first arg is p, 0-100) | Linear interpolation between sorted ranks |
-| `sum` | 1+ | Sum of all arguments | `a + b + c + ...` |
-| `product` | 1+ | Product of all arguments | `a * b * c * ...` |
-| `gcd` | 2 | Greatest common divisor | Euclidean algorithm |
-| `lcm` | 2 | Least common multiple | `(a / gcd(a,b)) * b` |
-| `fact` | 1 | Factorial (max 170) | `n!` |
-| `npr` | 2 | Permutations (nPr) | `n! / (n - r)!` |
-| `ncr` | 2 | Combinations (nCr) | `n! / (r! * (n-r)!)` |
-| `hypot` | 2 | Hypotenuse (Euclidean distance) | `sqrt(a^2 + b^2)` |
-| `rad` | 1 | Degrees to radians | `degrees * pi / 180` |
-| `deg` | 1 | Radians to degrees | `radians * 180 / pi` |
+| Builtin Name | Args | Description                             | Formula                                            |
+| ------------ | ---- | --------------------------------------- | -------------------------------------------------- |
+| `clamp`      | 3    | Clamp value between min and max         | `max(min, min(max, value))`                        |
+| `lerp`       | 3    | Linear interpolation                    | `a + (b - a) * t`                                  |
+| `smoothstep` | 3    | Smooth Hermite interpolation            | `t^2 * (3 - 2t)` where `t = clamp((x-e0)/(e1-e0))` |
+| `wrap`       | 3    | Wrap value within range [min, max)      | `mod(value - min, max - min) + min`                |
+| `average`    | 1+   | Arithmetic mean of all arguments        | `sum(args) / count`                                |
+| `median`     | 1+   | Median value of arguments               | Middle value of sorted list                        |
+| `std_dev`    | 2+   | Population standard deviation           | `sqrt(variance(args))`                             |
+| `variance`   | 2+   | Population variance                     | `sum((x - mean)^2) / n`                            |
+| `percentile` | 2+   | P-th percentile (first arg is p, 0-100) | Linear interpolation between sorted ranks          |
+| `sum`        | 1+   | Sum of all arguments                    | `a + b + c + ...`                                  |
+| `product`    | 1+   | Product of all arguments                | `a * b * c * ...`                                  |
+| `gcd`        | 2    | Greatest common divisor                 | Euclidean algorithm                                |
+| `lcm`        | 2    | Least common multiple                   | `(a / gcd(a,b)) * b`                               |
+| `fact`       | 1    | Factorial (max 170)                     | `n!`                                               |
+| `npr`        | 2    | Permutations (nPr)                      | `n! / (n - r)!`                                    |
+| `ncr`        | 2    | Combinations (nCr)                      | `n! / (r! * (n-r)!)`                               |
+| `hypot`      | 2    | Hypotenuse (Euclidean distance)         | `sqrt(a^2 + b^2)`                                  |
+| `rad`        | 1    | Degrees to radians                      | `degrees * pi / 180`                               |
+| `deg`        | 1    | Radians to degrees                      | `radians * 180 / pi`                               |
 
 ### Function Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Function name (case-insensitive when called) |
-| `description` | string | Yes | Human-readable description |
-| `args` | int | Yes | Expected argument count. Use `-1` for variadic. |
-| `min_args` | int | Yes | Minimum number of arguments accepted |
-| `max_args` | int | Yes | Maximum arguments. Use `-1` for unlimited. |
-| `expression` | string | Conditional | Math expression using `a`-`z` as args. Required if `builtin` is omitted. |
-| `builtin` | string | Conditional | Builtin function name. Required if `expression` is omitted. |
-| `examples` | string[] | No | Array of example expressions shown in the marketplace detail view |
+| Field         | Type     | Required    | Description                                                              |
+| ------------- | -------- | ----------- | ------------------------------------------------------------------------ |
+| `name`        | string   | Yes         | Function name (case-insensitive when called)                             |
+| `description` | string   | Yes         | Human-readable description                                               |
+| `args`        | int      | Yes         | Expected argument count. Use `-1` for variadic.                          |
+| `min_args`    | int      | Yes         | Minimum number of arguments accepted                                     |
+| `max_args`    | int      | Yes         | Maximum arguments. Use `-1` for unlimited.                               |
+| `expression`  | string   | Conditional | Math expression using `a`-`z` as args. Required if `builtin` is omitted. |
+| `builtin`     | string   | Conditional | Builtin function name. Required if `expression` is omitted.              |
+| `examples`    | string[] | No          | Array of example expressions shown in the marketplace detail view        |
 
 A function must declare either `expression` or `builtin`, not both.
 
@@ -269,20 +269,20 @@ A function must declare either `expression` or `builtin`, not both.
 
 Once installed, plugin functions are called like any built-in function:
 
-| Input | Result |
-|-------|--------|
-| `lerp(0, 10, 0.5)` | `5` |
-| `pythagorean(3, 4)` | `5` |
-| `clamp(15, 0, 10)` | `10` |
-| `clamp(-5, 0, 100)` | `0` |
+| Input               | Result |
+| ------------------- | ------ |
+| `lerp(0, 10, 0.5)`  | `5`    |
+| `pythagorean(3, 4)` | `5`    |
+| `clamp(15, 0, 10)`  | `10`   |
+| `clamp(-5, 0, 100)` | `0`    |
 
 Plugin functions work inside larger expressions:
 
-| Input | Result |
-|-------|--------|
-| `lerp(0, 100, 0.25) + 10` | `35` |
-| `pythagorean(5, 12) * 2` | `26` |
-| `clamp(sum(1, 2, 3, 4, 5), 0, 10)` | `10` |
+| Input                              | Result |
+| ---------------------------------- | ------ |
+| `lerp(0, 100, 0.25) + 10`          | `35`   |
+| `pythagorean(5, 12) * 2`           | `26`   |
+| `clamp(sum(1, 2, 3, 4, 5), 0, 10)` | `10`   |
 
 Plugin functions also appear in the **Steps** panel when step-by-step evaluation is active.
 
@@ -320,36 +320,36 @@ Themes are defined in the `themes` array of `plugin.json`. Each theme provides C
 
 ### Theme Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | string | Yes | Unique identifier (used as the theme key) |
-| `label` | string | Yes | Display name shown in Settings |
-| `colors` | object | Yes | Map of CSS custom property names to color values |
+| Field    | Type   | Required | Description                                      |
+| -------- | ------ | -------- | ------------------------------------------------ |
+| `id`     | string | Yes      | Unique identifier (used as the theme key)        |
+| `label`  | string | Yes      | Display name shown in Settings                   |
+| `colors` | object | Yes      | Map of CSS custom property names to color values |
 
 ### Complete Color Variables Table
 
-| Variable | Description | Example Value |
-|----------|-------------|---------------|
-| `--surface` | Main background color | `#18181b` |
-| `--surface-secondary` | Sidebar/panel background | `#242428` |
-| `--surface-hover` | Hover state for interactive elements | `#2e2e34` |
-| `--border` | Border and divider color | `#3f3f46` |
-| `--accent` | Primary accent (buttons, highlights, links) | `#a78bfa` |
-| `--accent-hover` | Accent on hover | `#c4b5fd` |
-| `--text` | Primary text color | `#f4f4f5` |
-| `--text-muted` | Secondary/muted text | `#a1a1aa` |
-| `--text-subtle` | Tertiary/subtle text | `#71717a` |
-| `--error` | Error state color | `#ef4444` |
-| `--success` | Success state color | `#22c55e` |
-| `--info` | Informational color | `#3b82f6` |
-| `--shadow` | Box shadow color | `rgba(0,0,0,0.3)` |
+| Variable              | Description                                 | Example Value     |
+| --------------------- | ------------------------------------------- | ----------------- |
+| `--surface`           | Main background color                       | `#18181b`         |
+| `--surface-secondary` | Sidebar/panel background                    | `#242428`         |
+| `--surface-hover`     | Hover state for interactive elements        | `#2e2e34`         |
+| `--border`            | Border and divider color                    | `#3f3f46`         |
+| `--accent`            | Primary accent (buttons, highlights, links) | `#a78bfa`         |
+| `--accent-hover`      | Accent on hover                             | `#c4b5fd`         |
+| `--text`              | Primary text color                          | `#f4f4f5`         |
+| `--text-muted`        | Secondary/muted text                        | `#a1a1aa`         |
+| `--text-subtle`       | Tertiary/subtle text                        | `#71717a`         |
+| `--error`             | Error state color                           | `#ef4444`         |
+| `--success`           | Success state color                         | `#22c55e`         |
+| `--info`              | Informational color                         | `#3b82f6`         |
+| `--shadow`            | Box shadow color                            | `rgba(0,0,0,0.3)` |
 
-Plugin themes appear in **Settings > Theme** alongside the 15 built-in themes, labeled with a "Plugin" badge. The theme's `--surface`, `--accent`, and `--text` values are used for the preview swatch.
+Plugin themes appear in **Settings > Theme** alongside the 27 built-in themes, labeled with a "Plugin" badge. The theme's `--surface`, `--accent`, and `--text` values are used for the preview swatch.
 
 ### Theme ID Rules
 
 - Must be unique across all plugins and built-in themes.
-- Built-in IDs: `dark`, `light`, `neon`, `red`, `obsidian`, `plasma`, `blood`.
+- Built-in IDs: `dark`, `light`, `neon`, `red`, `obsidian`, `plasma`, `blood`, `midnight`, `aurora`, `mono`, `frost`, `prism`, `lavender`, `sage`, `warm-light`, `blue-trust-dark`, `blue-trust-light`, `orange-energy-dark`, `orange-energy-light`, `green-growth-dark`, `green-growth-light`, `yellow-optimism-dark`, `yellow-optimism-light`, `purple-innovation-dark`, `purple-innovation-light`, `red-passion-dark`, `red-passion-light`.
 - Use lowercase, hyphen-separated names for custom IDs.
 
 ---
@@ -377,21 +377,21 @@ Variables are named constants provided by a plugin. They are available in all ca
 
 ### Variable Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Variable name (case-insensitive when used) |
-| `description` | string | Yes | Human-readable description |
-| `value` | number | Yes | Numeric value (float64) |
+| Field         | Type   | Required | Description                                |
+| ------------- | ------ | -------- | ------------------------------------------ |
+| `name`        | string | Yes      | Variable name (case-insensitive when used) |
+| `description` | string | Yes      | Human-readable description                 |
+| `value`       | number | Yes      | Numeric value (float64)                    |
 
 ### Usage Examples
 
 Once installed, plugin variables can be used like any built-in constant:
 
-| Input | Result |
-|-------|--------|
-| `planck_ev` | `4.1357e-15` |
-| `planck_ev * 1000` | `4.1357e-12` |
-| `boltzmann_ev * 300` | `0.025852` |
+| Input                | Result       |
+| -------------------- | ------------ |
+| `planck_ev`          | `4.1357e-15` |
+| `planck_ev * 1000`   | `4.1357e-12` |
+| `boltzmann_ev * 300` | `0.025852`   |
 
 Plugin variables appear in the **Variables Explorer** panel alongside user-defined variables. They are read-only and persist for the session as long as the plugin is enabled.
 
@@ -401,10 +401,10 @@ Plugin variables appear in the **Variables Explorer** panel alongside user-defin
 
 ### Keyboard Shortcuts
 
-| Panel | Shortcut |
-|-------|----------|
-| Plugins | `Ctrl+U` |
-| Docs | `Ctrl+J` |
+| Panel    | Shortcut   |
+| -------- | ---------- |
+| Plugins  | `Ctrl+U`   |
+| Docs     | `Ctrl+J`   |
 | Settings | `Ctrl+` `` |
 
 Opening any panel (Plugins, Docs) closes the other — only one side panel is open at a time.
@@ -413,16 +413,16 @@ Opening any panel (Plugins, Docs) closes the other — only one side panel is op
 
 The Plugin Marketplace provides a complete management interface:
 
-| Action | How |
-|--------|-----|
-| **Browse** | Open marketplace, scroll or search |
-| **Install** | Click "Install" on a plugin card |
-| **Update** | Click "Update" when an update is available |
-| **Remove** | Click "Remove" and confirm in the dialog |
-| **Enable/Disable** | Toggle the switch on an installed plugin |
-| **View Details** | Click a plugin card to see functions, themes, variables, and README |
-| **Context Menu** | Right-click a plugin card to access "Switch Note" (with checkmark indicator for the active note) |
-| **Refresh** | Click the refresh button in the marketplace header |
+| Action             | How                                                                           |
+| ------------------ | ----------------------------------------------------------------------------- |
+| **Browse**         | Open marketplace, scroll or search                                            |
+| **Install**        | Click "Install" on a plugin card                                              |
+| **Update**         | Click "Update" when an update is available                                    |
+| **Remove**         | Click "Remove" and confirm in the dialog                                      |
+| **Enable/Disable** | Toggle the switch on an installed plugin                                      |
+| **View Details**   | Click a plugin card to see functions, themes, variables, and README           |
+| **Context Menu**   | Right-click a plugin card to access Enable/Disable, Update, or Remove actions |
+| **Refresh**        | Click the refresh button in the marketplace header                            |
 
 ### Via Code
 
@@ -617,15 +617,15 @@ Here is a full `plugin.json` that defines functions, a theme, and variables:
 
 ### Usage After Installation
 
-| Input | Result |
-|-------|--------|
-| `kinetic_energy(10, 5)` | `125` |
-| `potential_energy(5, 9.81, 10)` | `490.5` |
-| `ohms_law_v(2, 10)` | `20` |
-| `speed(100, 2)` | `50` |
-| `c` | `299792458` |
-| `g` | `9.80665` |
-| `kinetic_energy(1, c)` | `4.4933e+16` |
+| Input                           | Result       |
+| ------------------------------- | ------------ |
+| `kinetic_energy(10, 5)`         | `125`        |
+| `potential_energy(5, 9.81, 10)` | `490.5`      |
+| `ohms_law_v(2, 10)`             | `20`         |
+| `speed(100, 2)`                 | `50`         |
+| `c`                             | `299792458`  |
+| `g`                             | `9.80665`    |
+| `kinetic_energy(1, c)`          | `4.4933e+16` |
 
 ---
 
@@ -658,10 +658,12 @@ Click "Install" in the LineSolv Plugin Marketplace.
 Description of what the function does.
 
 **Parameters:**
+
 - `a` -- first parameter description
 - `b` -- second parameter description
 
 **Examples:**
+
 - `function_name(1, 2)` returns `3`
 - `function_name(5, 10)` returns `15`
 
@@ -684,40 +686,40 @@ The plugin loader enforces these validation rules:
 
 ### Manifest Validation
 
-| Rule | Error Message |
-|------|---------------|
-| `name` must be non-empty | `"plugin name is required"` |
-| `version` must be non-empty | `"plugin version is required"` |
+| Rule                                                | Error Message                                                     |
+| --------------------------------------------------- | ----------------------------------------------------------------- |
+| `name` must be non-empty                            | `"plugin name is required"`                                       |
+| `version` must be non-empty                         | `"plugin version is required"`                                    |
 | Must have at least one function, theme, or variable | `"plugin must declare at least one function, theme, or variable"` |
-| No duplicate function names within a plugin | `"duplicate function name: [name]"` |
-| No duplicate theme IDs within a plugin | `"duplicate theme ID: [id]"` |
+| No duplicate function names within a plugin         | `"duplicate function name: [name]"`                               |
+| No duplicate theme IDs within a plugin              | `"duplicate theme ID: [id]"`                                      |
 
 ### File Validation
 
-| Rule | Behavior |
-|------|----------|
-| Plugin directory must contain `plugin.json` | Directory is skipped if missing |
-| `plugin.json` must be valid JSON | Plugin is loaded with error state |
-| Manifest must pass all validation rules | Plugin is loaded with error state |
+| Rule                                        | Behavior                          |
+| ------------------------------------------- | --------------------------------- |
+| Plugin directory must contain `plugin.json` | Directory is skipped if missing   |
+| `plugin.json` must be valid JSON            | Plugin is loaded with error state |
+| Manifest must pass all validation rules     | Plugin is loaded with error state |
 
 ### Function Validation
 
-| Rule | Error Message |
-|------|---------------|
-| Function must have `expression` or `builtin` | `"function [name]: must declare either 'expression' or 'builtin'"` |
-| `min_args` must be <= `max_args` (or `max_args` is -1) | Handled at call time |
-| `builtin` must reference a known builtin name | `"unknown builtin: [name]"` |
-| Arguments must meet min/max requirements | `"[name] requires at least [N] arguments, got [M]"` |
+| Rule                                                   | Error Message                                                      |
+| ------------------------------------------------------ | ------------------------------------------------------------------ |
+| Function must have `expression` or `builtin`           | `"function [name]: must declare either 'expression' or 'builtin'"` |
+| `min_args` must be <= `max_args` (or `max_args` is -1) | Handled at call time                                               |
+| `builtin` must reference a known builtin name          | `"unknown builtin: [name]"`                                        |
+| Arguments must meet min/max requirements               | `"[name] requires at least [N] arguments, got [M]"`                |
 
 ### Runtime Validation
 
-| Rule | Error Message |
-|------|---------------|
-| Argument count within bounds | `"[name] requires [N] arguments, got [M]"` |
-| Expression variables map to valid args | `"unknown variable: [letter]"` |
-| Expression functions are recognized | `"unknown function: [name]"` |
-| Division by zero caught | `"division by zero"` |
-| Missing closing parenthesis | `"missing closing parenthesis"` |
+| Rule                                   | Error Message                              |
+| -------------------------------------- | ------------------------------------------ |
+| Argument count within bounds           | `"[name] requires [N] arguments, got [M]"` |
+| Expression variables map to valid args | `"unknown variable: [letter]"`             |
+| Expression functions are recognized    | `"unknown function: [name]"`               |
+| Division by zero caught                | `"division by zero"`                       |
+| Missing closing parenthesis            | `"missing closing parenthesis"`            |
 
 ---
 
@@ -845,18 +847,23 @@ Area calculation functions for common geometric shapes.
 ## Functions
 
 ### circle_area(radius)
+
 Returns the area of a circle: π × r²
 
 ### rectangle_area(width, height)
+
 Returns the area of a rectangle: w × h
 
 ### triangle_area(base, height)
+
 Returns the area of a triangle: ½ × b × h
 
 ### trapezoid_area(base1, base2, height)
+
 Returns the area of a trapezoid: ½ × (b₁ + b₂) × h
 
 ### ellipse_area(semi_major, semi_minor)
+
 Returns the area of an ellipse: π × a × b
 ```
 
@@ -999,6 +1006,7 @@ Try: `au`, `ly / (365.25 * 24 * 3600)`, `sun_mass / earth_mass`
 **Symptoms**: Plugin directory exists but doesn't show up.
 
 **Checks**:
+
 1. Verify `plugin.json` exists in the plugin directory
 2. Validate JSON syntax: `python3 -c "import json; json.load(open('plugin.json'))"`
 3. Check that `name`, `version`, `description`, and `author` are non-empty strings
@@ -1009,6 +1017,7 @@ Try: `au`, `ly / (365.25 * 24 * 3600)`, `sun_mass / earth_mass`
 **Symptoms**: Plugin appears in the marketplace with a red error badge.
 
 **Common causes**:
+
 - Invalid JSON in `plugin.json`
 - Duplicate function names within the plugin
 - Duplicate theme IDs within the plugin
@@ -1041,6 +1050,7 @@ Try: `au`, `ly / (365.25 * 24 * 3600)`, `sun_mass / earth_mass`
 **Symptoms**: Theme appears in Settings but colors don't change.
 
 **Checks**:
+
 1. Verify all 14 color variables are defined
 2. Check hex color format: must be `#rrggbb` (6 hex digits)
 3. Verify rgba format: `rgba(r,g,b,a)` with values 0-255 for rgb, 0-1 for a
@@ -1051,6 +1061,7 @@ Try: `au`, `ly / (365.25 * 24 * 3600)`, `sun_mass / earth_mass`
 **Symptoms**: Variable name returns "undefined variable" error.
 
 **Checks**:
+
 1. Verify the plugin is enabled (toggle in marketplace)
 2. Check variable name spelling (case-insensitive, but no spaces)
 3. Verify `value` is a valid number (not a string)
@@ -1060,14 +1071,14 @@ Try: `au`, `ly / (365.25 * 24 * 3600)`, `sun_mass / earth_mass`
 
 **Common errors and fixes**:
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `missing closing parenthesis` | Unmatched `(` | Add closing `)` |
-| `unexpected character` | Invalid symbol in expression | Use only `+`, `-`, `*`, `/`, `%`, `^`, `(`, `)` |
-| `unknown function: [name]` | Typo in function name | Check spelling; use only supported functions |
-| `unknown variable: [letter]` | Variable letter exceeds arg count | Reduce to variables `a`-`z` mapped to args |
-| `division by zero` | Denominator evaluates to zero | Add validation in expression or use different formula |
-| `argument count mismatch` | Wrong number of args passed | Check `min_args` and `max_args` |
+| Error                         | Cause                             | Fix                                                   |
+| ----------------------------- | --------------------------------- | ----------------------------------------------------- |
+| `missing closing parenthesis` | Unmatched `(`                     | Add closing `)`                                       |
+| `unexpected character`        | Invalid symbol in expression      | Use only `+`, `-`, `*`, `/`, `%`, `^`, `(`, `)`       |
+| `unknown function: [name]`    | Typo in function name             | Check spelling; use only supported functions          |
+| `unknown variable: [letter]`  | Variable letter exceeds arg count | Reduce to variables `a`-`z` mapped to args            |
+| `division by zero`            | Denominator evaluates to zero     | Add validation in expression or use different formula |
+| `argument count mismatch`     | Wrong number of args passed       | Check `min_args` and `max_args`                       |
 
 ---
 
@@ -1192,17 +1203,17 @@ A single plugin can provide multiple themes:
     {
       "id": "forest-dark",
       "label": "Forest Dark",
-      "colors": { "..." : "..." }
+      "colors": { "...": "..." }
     },
     {
       "id": "forest-light",
       "label": "Forest Light",
-      "colors": { "..." : "..." }
+      "colors": { "...": "..." }
     },
     {
       "id": "forest-midnight",
       "label": "Forest Midnight",
-      "colors": { "..." : "..." }
+      "colors": { "...": "..." }
     }
   ]
 }
@@ -1237,13 +1248,11 @@ The most complete plugins provide all three types:
   "description": "Engineering formulas, constants, and a professional theme",
   "author": "LineSolv Community",
   "functions": [
-    { "name": "stress", "expression": "a / b", "..." : "..." },
-    { "name": "strain", "expression": "a / b", "..." : "..." },
-    { "name": "youngs_modulus", "expression": "a / b", "..." : "..." }
+    { "name": "stress", "expression": "a / b", "...": "..." },
+    { "name": "strain", "expression": "a / b", "...": "..." },
+    { "name": "youngs_modulus", "expression": "a / b", "...": "..." }
   ],
-  "themes": [
-    { "id": "engineering-blue", "label": "Engineering Blue", "colors": { "..." : "..." } }
-  ],
+  "themes": [{ "id": "engineering-blue", "label": "Engineering Blue", "colors": { "...": "..." } }],
   "variables": [
     { "name": "E_steel", "description": "Young's modulus of steel (Pa)", "value": 200e9 },
     { "name": "E_aluminum", "description": "Young's modulus of aluminum (Pa)", "value": 69e9 }

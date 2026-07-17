@@ -2,14 +2,14 @@
 
 ## Prerequisites
 
-| Tool | Version | Notes |
-|---|---|---|
-| [Go](https://go.dev) | 1.23+ | |
+| Tool                          | Version  | Notes                                                                  |
+| ----------------------------- | -------- | ---------------------------------------------------------------------- |
+| [Go](https://go.dev)          | 1.24+    |                                                                        |
 | [Wails CLI](https://wails.io) | v2.12.0+ | Install via `go install github.com/wailsapp/wails/v2/cmd/wails@latest` |
-| [Node.js](https://nodejs.org) | 20+ | |
-| npm | 10+ | |
-| Linux: WebKit2GTK | 4.1+ | Ubuntu 24.10+, Fedora 40+, or Arch |
-| Linux: GTK3 dev | | `libgtk-3-dev` on Debian/Ubuntu |
+| [Node.js](https://nodejs.org) | 20+      |                                                                        |
+| npm                           | 10+      |                                                                        |
+| Linux: WebKit2GTK             | 4.1+     | Ubuntu 24.10+, Fedora 40+, or Arch                                     |
+| Linux: GTK3 dev               |          | `libgtk-3-dev` on Debian/Ubuntu                                        |
 
 ### Ubuntu / Debian
 
@@ -96,7 +96,8 @@ LineSolv/
 │   │   │   ├── calculator.ts   # Reactive calculator state store
 │   │   │   ├── calculator.test.ts
 │   │   │   ├── notes.ts        # Note manager
-│   │   │   └── notes.test.ts
+│   │   │   ├── notes.test.ts
+│   │   │   └── settings.ts     # Settings reactive store
 │   │   ├── utils/
 │   │   │   ├── html.ts         # escapeHtml()
 │   │   │   ├── html.test.ts
@@ -104,6 +105,7 @@ LineSolv/
 │   │   │   ├── shortcutDefs.ts # Shortcut definitions
 │   │   │   ├── format.ts       # Result formatting helpers
 │   │   │   ├── format.test.ts
+│   │   │   ├── fonts.ts        # Font loading utilities
 │   │   │   └── toast.ts        # Toast notification utility
 │   │   └── components/
 │   │       ├── TitleBar.ts
@@ -124,7 +126,8 @@ LineSolv/
 │   │       ├── ShortcutModal.ts
 │   │       ├── ConfirmDialog.ts
 │   │       ├── confirm-dialog.test.ts
-│   │       └── ContextMenu.ts
+│   │       ├── ContextMenu.ts
+│   │       └── AutocompletePopup.ts
 │   ├── wailsjs/                # Auto-generated bindings (do not edit)
 │   └── index.html
 ├── docs/
@@ -133,13 +136,18 @@ LineSolv/
 │   ├── calculator-engine.md
 │   ├── configuration.md
 │   ├── development.md
+│   ├── expression-reference.md
 │   ├── faq.md
 │   ├── from-words-to-numbers.md
 │   ├── frontend.md
 │   ├── getting-started.md
+│   ├── interface-details.md
 │   ├── plugins.md
+│   ├── screenshots.md
 │   ├── themes.md
-│   └── user-guide.md
+│   ├── user-guide.md
+│   └── extra/
+│       └── future.md
 ├── main.go
 ├── wails.json
 ├── go.mod
@@ -188,7 +196,7 @@ go test ./app/plugin/... -v
 npx vitest run
 ```
 
-95 tests across 9 suites covering stores, components, and utilities.
+107 tests across 9 suites covering stores, components, and utilities.
 
 ### Type Checking
 
@@ -211,6 +219,7 @@ golangci-lint run ./app/...
 ```
 
 The `.golangci.yml` at the project root configures the linter. Notable exclusion:
+
 - `govet` is skipped for `frontend/node_modules/` to avoid false positives from third-party JS dependencies.
 
 ### Full Verification
@@ -231,13 +240,13 @@ Benchmark tests in `app/calculator/benchmark_test.go` cover the engine's core op
 go test ./app/calculator/ -bench=. -benchmem
 ```
 
-| Name | Iterations | Time/op |
-|---|---|---|
-| BenchmarkNaturalize | 280 | ~2,100,000 ns/op |
-| BenchmarkEvaluateLine | 170 | ~3,400,000 ns/op |
-| BenchmarkNaturalizeLong | 856 | ~657,000 ns/op |
-| BenchmarkEvaluateLineLong | 606 | ~957,000 ns/op |
-| BenchmarkEngineNew | 31,468,534 | ~20 ns/op |
+| Name                      | Iterations | Time/op          |
+| ------------------------- | ---------- | ---------------- |
+| BenchmarkNaturalize       | 280        | ~2,100,000 ns/op |
+| BenchmarkEvaluateLine     | 170        | ~3,400,000 ns/op |
+| BenchmarkNaturalizeLong   | 856        | ~657,000 ns/op   |
+| BenchmarkEvaluateLineLong | 606        | ~957,000 ns/op   |
+| BenchmarkEngineNew        | 31,468,534 | ~20 ns/op        |
 
 ## Profiling
 
@@ -265,5 +274,6 @@ Profiling is disabled in production builds via build tags (`app/pprof_dev.go` / 
 ## Build Configuration
 
 Key flags:
+
 - `-tags "webkit2_41"` — required on Ubuntu 26.04+ (webkit2gtk 4.1)
 - `-ldflags` — customize via `wails.json` or CLI

@@ -83,13 +83,13 @@ State is managed through `CalculatorStore` (`stores/calculator.ts`), a reactive 
 
 ```typescript
 interface StoreState {
-  input: string;                        // current textarea content
-  results: string[];                    // per-line result strings
-  variables: Record<string, number>;    // name → value map
+  input: string; // current textarea content
+  results: string[]; // per-line result strings
+  variables: Record<string, number>; // name → value map
   evalState: 'idle' | 'loading' | 'error';
-  error: string | null;                 // error message or null
-  history: HistoryEntry[];              // {input, output} entries
-  historyIndex: number;                 // current position in history nav
+  error: string | null; // error message or null
+  history: HistoryEntry[]; // {input, output} entries
+  historyIndex: number; // current position in history nav
 }
 ```
 
@@ -101,38 +101,38 @@ State updates use immutable spread (`{ ...state, field: newVal }`). All subscrib
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|---|---|
-| `Tab` | Insert 2 spaces |
-| `Shift+Enter` | Force-evaluate immediately |
-| `Esc` | Close open modal/panel; if none open, clear input |
-| `F11` | Toggle fullscreen |
-| `Ctrl/Cmd + Z` | Undo (custom 200-entry stack) |
-| `Ctrl/Cmd + Shift + Z` / `Ctrl/Cmd + Y` | Redo |
-| `Ctrl/Cmd + D` | Duplicate line or selection |
-| `Ctrl/Cmd + L` | Select current line |
-| `Ctrl/Cmd + Shift + K` | Delete current line |
-| `Alt + Shift` | Toggle case (lower → UPPER → Title) |
-| `Alt + ↑ / ↓` | Move line up/down |
-| `Alt + ← / →` | Jump word left/right (native) |
-| `Home / End` | Start/end of line (native) |
-| `Ctrl/Cmd + Home / End` | Start/end of text (native) |
-| `Page Up / Page Down` | Scroll page (native) |
-| `↑ / ↓ / ← / →` | Cursor navigation (native) |
-| `Ctrl/Cmd + N` | New note |
-| `Ctrl/Cmd + B` | Toggle notes sidebar |
-| `Ctrl/Cmd + I` | Toggle variables sidebar |
-| `Ctrl/Cmd + H` | Toggle history sidebar |
-| `Ctrl/Cmd + S` | Toggle steps panel |
-| `Ctrl/Cmd + K` | Clear all (input + variables + history) |
-| `Ctrl/Cmd + P` | Print current note |
-| `Ctrl/Cmd + ,` | Open settings |
-| `Ctrl/Cmd + ↑` | Navigate history back |
-| `Ctrl/Cmd + ↓` | Navigate history forward |
-| `Ctrl/Cmd + /` | Show keyboard shortcut reference |
-| `Ctrl/Cmd + F` | Focus notes search input |
-| `Ctrl/Cmd + J` | Toggle documentation viewer |
-| `Ctrl/Cmd + `` ` | Toggle settings |
+| Shortcut                                | Action                                            |
+| --------------------------------------- | ------------------------------------------------- |
+| `Tab`                                   | Insert 2 spaces                                   |
+| `Shift+Enter`                           | Force-evaluate immediately                        |
+| `Esc`                                   | Close open modal/panel; if none open, clear input |
+| `F11`                                   | Toggle fullscreen                                 |
+| `Ctrl/Cmd + Z`                          | Undo (custom 200-entry stack)                     |
+| `Ctrl/Cmd + Shift + Z` / `Ctrl/Cmd + Y` | Redo                                              |
+| `Ctrl/Cmd + D`                          | Duplicate line or selection                       |
+| `Ctrl/Cmd + L`                          | Select current line                               |
+| `Ctrl/Cmd + Shift + K`                  | Delete current line                               |
+| `Alt + Shift`                           | Toggle case (lower → UPPER → Title)               |
+| `Alt + ↑ / ↓`                           | Move line up/down                                 |
+| `Alt + ← / →`                           | Jump word left/right (native)                     |
+| `Home / End`                            | Start/end of line (native)                        |
+| `Ctrl/Cmd + Home / End`                 | Start/end of text (native)                        |
+| `Page Up / Page Down`                   | Scroll page (native)                              |
+| `↑ / ↓ / ← / →`                         | Cursor navigation (native)                        |
+| `Ctrl/Cmd + N`                          | New note                                          |
+| `Ctrl/Cmd + B`                          | Toggle notes sidebar                              |
+| `Ctrl/Cmd + I`                          | Toggle variables sidebar                          |
+| `Ctrl/Cmd + H`                          | Toggle history sidebar                            |
+| `Ctrl/Cmd + S`                          | Toggle steps panel                                |
+| `Ctrl/Cmd + K`                          | Clear all (input + variables + history)           |
+| `Ctrl/Cmd + P`                          | Print current note                                |
+| `Ctrl/Cmd + ,`                          | Open settings                                     |
+| `Ctrl/Cmd + ↑`                          | Navigate history back                             |
+| `Ctrl/Cmd + ↓`                          | Navigate history forward                          |
+| `Ctrl/Cmd + /`                          | Show keyboard shortcut reference                  |
+| `Ctrl/Cmd + F`                          | Focus notes search input                          |
+| `Ctrl/Cmd + J`                          | Toggle documentation viewer                       |
+| `Ctrl/Cmd + `` `                        | Toggle settings                                   |
 
 All shortcuts are rebindable via the Settings modal. Custom overrides are persisted in `config.toml` as a JSON string in the `shortcut_overrides` field.
 
@@ -141,6 +141,7 @@ All shortcuts are rebindable via the Settings modal. Custom overrides are persis
 ### TitleBar
 
 Frameless drag region at the top of the window. Contains:
+
 - **Window controls**: Close, Minimize, Maximize
 - **LineSolv** title (uppercase, tracked) centered in the drag region
 - **Notes** button (clipboard SVG, toggles sidebar)
@@ -161,6 +162,7 @@ The `<header>` element carries `--wails-draggable:drag` for frameless window dra
 ### CalculatorInput
 
 The main input area consisting of:
+
 - **Gutter** (`#gutter`) — line numbers, synced scroll with textarea, virtualized
 - **Textarea** (`#input-area`) — free-form natural language input
 
@@ -181,6 +183,7 @@ A `<div>` column to the right of the textarea. Results are rendered as HTML with
 ### NotesPanel
 
 Collapsible sidebar (left side) for managing multiple calculation notes:
+
 - **Note list** — clickable note names, active note highlighted
 - **Real-time search** — search input visible when >1 note exists, filters by name case-insensitively (Ctrl+F to focus)
 - **Sort button** — cycles through sort by name/created/updated × asc/desc
@@ -194,6 +197,7 @@ Collapsible sidebar (left side) for managing multiple calculation notes:
 ### VariableExplorer
 
 Collapsible sidebar (right side) showing defined variables:
+
 - Sorted alphabetically
 - Displays variable name (accent color) and value (muted)
 - Shows "No variables" when empty
@@ -204,6 +208,7 @@ Collapsible sidebar (right side) showing defined variables:
 ### HistoryPanel
 
 Collapsible sidebar (left side, before notes) showing evaluation history:
+
 - Each entry shows the input text (monospace, truncated at 40 chars) and its result
 - Click any entry to restore its input into the textarea and re-evaluate
 - Search field at the top filters entries by input/output text in real-time; auto-focused on open, cleared on close
@@ -214,6 +219,7 @@ Collapsible sidebar (left side, before notes) showing evaluation history:
 ### StepsPanel
 
 Bottom dock panel showing step-by-step evaluation details:
+
 - Displays the naturalized expression followed by each parse-tree reduction (addition, multiplication, exponentiation, etc.)
 - Toggle with the steps button in the TitleBar or `⌘S`
 - Only updates when the panel is open; queries the backend `GetSteps` method for the last evaluated expression
@@ -222,6 +228,7 @@ Bottom dock panel showing step-by-step evaluation details:
 ### GraphPanel
 
 Auto-appearing bottom panel for function plotting:
+
 - Detects `plot`, `graph`, `y =` prefixed expressions in the input
 - Calls `EvaluateGraph` on the backend, renders a Chart.js line chart with 200 sampled points
 - Supports custom ranges via `from N to N` syntax
@@ -230,6 +237,7 @@ Auto-appearing bottom panel for function plotting:
 ### PluginPanel
 
 Full-screen overlay for plugin marketplace and management:
+
 - **Two tabs**: Local (installed plugins) and Remote (available from GitHub repository)
 - **Remote plugins**: Fetches plugin index from `rkriad585/linesolv-plugins` GitHub repo, shows name/version/description/author, install button
 - **Local plugins**: Shows installed plugins with enable/disable toggle, remove button, function/variable/theme count badges
@@ -242,6 +250,7 @@ Full-screen overlay for plugin marketplace and management:
 ### ContextMenu
 
 Reusable right-click context menu with submenu support:
+
 - Renders at cursor position, closes on outside click or right-click
 - Submenus use 100ms show / 200ms hide hover delays
 - Items can have optional SVG icons rendered via `innerHTML` in a `.ctx-icon` span
@@ -251,6 +260,7 @@ Reusable right-click context menu with submenu support:
 ### Panel Cross-Closing
 
 Opening any sidebar or panel automatically closes conflicting panels to avoid overlap:
+
 - `switchNote()` closes notes panel if it was triggered from context menu
 - `onToggleNotes` closes docs, plugins, and settings panels
 - `onToggleDocs` closes notes, plugins, and settings panels
@@ -260,6 +270,7 @@ Opening any sidebar or panel automatically closes conflicting panels to avoid ov
 ### ConfirmDialog
 
 Modal confirmation dialog for destructive actions:
+
 - Shows a title, message, Cancel and Confirm buttons
 - Optional "Don't ask again" checkbox (preference stored in backend `config.toml`)
 - Supports async callbacks for confirm/cancel actions
@@ -267,6 +278,7 @@ Modal confirmation dialog for destructive actions:
 ### ShortcutModal
 
 Keyboard shortcut reference overlay:
+
 - Shows a table of all keyboard shortcuts with key bindings and descriptions
 - Triggered by `Ctrl/Cmd+/`
 - Closes on Escape or clicking the backdrop
@@ -274,6 +286,7 @@ Keyboard shortcut reference overlay:
 ### DocsViewer
 
 Full-screen documentation viewer with sidebar tab navigation:
+
 - **Left sidebar** — list of all documentation files as clickable tabs
 - **Content area** — rendered markdown (headers, tables, code blocks, links, lists, blockquotes, horizontal rules)
 - Built-in inline markdown-to-HTML renderer (no external dependencies)
@@ -285,27 +298,40 @@ Full-screen documentation viewer with sidebar tab navigation:
 - **Text selection** — content area allows user-select for copying
 - Opens via the book icon in the title bar; closes on Escape or close button
 
+### AutocompletePopup
+
+Floating keyword suggestion popup that appears near the caret position in the textarea:
+
+- Displays up to **8 visible items** from 6 categories: functions, variables, units, constants, keywords, and plugin functions
+- Uses **prefix matching** against data from the `GetAutocompleteKeywords` backend method
+- **Keyboard navigation**: arrow keys to move selection, Tab to accept, Esc to dismiss
+- Auto-hides when input is empty or no matches found
+- Positioned dynamically to stay within viewport bounds
+
 ### SettingsModal
 
 5-tab settings panel:
+
 - **General** — font family (dropdown), font size (slider/input), opacity (slider 30%-100%), line numbers toggle, autocomplete toggle, animations toggle, toast notifications toggle, result panel toggle, line wrap toggle, with live preview
-- **Theme** — 17 built-in color themes + plugin themes with color swatch thumbnails (surface, accent, text colors)
+- **Theme** — 27 built-in color themes + plugin themes with color swatch thumbnails (surface, accent, text colors)
 - **Keyboard Shortcuts** — view and rebind all shortcuts; reset to defaults button
 - **About** — version info, author, repo links, check for updates
 
-Opened via `Ctrl/Cmd+,`, `` Ctrl/Cmd+` ``, or the gear icon in the title bar. Settings auto-save on every change with 50ms debounce and apply immediately (real-time).
+Opens via `Ctrl/Cmd+,`, `` Ctrl/Cmd+` ``, or the gear icon in the title bar. Settings auto-save on every change with 50ms debounce and apply immediately (real-time).
 
 ## Printing
 
 Printing is triggered by the print icon in the TitleBar or `Ctrl/Cmd+P`. The `onPrint` callback in `App.ts` builds a self-contained HTML document inside a hidden iframe and calls `iframe.contentWindow!.print()`.
 
 The print document contains:
+
 - A **header** with the currently active note name
 - An HTML **table** of all input lines and their results (65%/35% width split)
 - A **watermark** (`position: fixed; bottom: 10mm; left: 15mm`) with the LineSolv logo SVG and "LineSolv" text at 15% opacity — uses `position: fixed` to repeat on every printed page
 - A **date footer** (`position: fixed; bottom: 10mm; right: 15mm`)
 
 The iframe approach was chosen because:
+
 1. It provides a clean, standalone document with `body` as the root, ensuring `position: fixed` elements repeat reliably on every printed page
 2. The print content is fully isolated from the app's screen UI
 3. All styles are inlined in the iframe document for self-containment
@@ -315,6 +341,7 @@ A fallback `@media print` CSS block hides the screen chrome if the browser's nat
 ## Toast Notifications
 
 A lightweight toast notification system (`utils/toast.ts`) provides non-modal feedback:
+
 - Three types: `success` (green), `error` (red), `info` (indigo)
 - Auto-dismiss after 2500ms (configurable)
 - Slide-in animation from the right
@@ -323,6 +350,7 @@ A lightweight toast notification system (`utils/toast.ts`) provides non-modal fe
 ## Undo / Redo
 
 Custom 200-entry undo/redo stack (`utils/shortcuts.ts`) replaces the deprecated `document.execCommand('undo'/'redo')`:
+
 - `pushSnapshot()` captures textarea state on every keystroke before input events fire
 - `undo()` restores previous state; `redo()` restores the undone state
 - Bound to Ctrl/Cmd+Z (undo) and Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y (redo)
@@ -331,6 +359,7 @@ Custom 200-entry undo/redo stack (`utils/shortcuts.ts`) replaces the deprecated 
 ## Loading Spinner
 
 A CSS-animated spinner appears when evaluation takes >60ms (prevents flicker on fast operations):
+
 - Created in `App.ts` as a 16px spinning ring (border + `@keyframes spin`)
 - Positioned at the bottom center of the notepad
 - Visibility toggled by `CalculatorStore.evalState` subscription
@@ -372,7 +401,7 @@ All theme colors are defined as CSS custom properties in `style.css`. The `:root
 
 The active theme is set by adding a `theme-{name}` class to `<html>`. Font settings (`--calc-font-size`, `--calc-font-family`, `--calc-font-color`) are applied as inline style properties on `<html>`.
 
-**17 built-in themes**: dark, light, neon, red, obsidian, plasma, blood, midnight, aurora, mono, frost, prism, lavender, sage, warm-light, claude-dark, claude-light. Plugin themes are injected at runtime as additional CSS custom properties, making them selectable in Settings alongside built-in themes.
+**27 built-in themes**: dark, light, neon, red, obsidian, plasma, blood, midnight, aurora, mono, frost, prism, lavender, sage, warm-light, blue-trust-dark, blue-trust-light, orange-energy-dark, orange-energy-light, green-growth-dark, green-growth-light, yellow-optimism-dark, yellow-optimism-light, purple-innovation-dark, purple-innovation-light, red-passion-dark, red-passion-light. Plugin themes are injected at runtime as additional CSS custom properties, making them selectable in Settings alongside built-in themes.
 
 ### CSS Custom Properties Across Components
 
@@ -383,9 +412,11 @@ All 26 previously hardcoded values (border-radius, box-shadow, font-family) acro
 When the Material 3 (Material) UI style is active, the following tokens are available:
 
 **Typography:**
+
 - `--ui-font-display: 'Inter', sans-serif`
 
 **Radius tokens:**
+
 - `--ui-radius-xs: 4px`
 - `--ui-radius-sm: 6px`
 - `--ui-radius-md: 8px`
@@ -394,6 +425,7 @@ When the Material 3 (Material) UI style is active, the following tokens are avai
 - `--ui-radius-full: 9999px`
 
 **Material 3 color tokens:**
+
 - `--md-primary` / `--md-on-primary` / `--md-primary-container` / `--md-on-primary-container`
 - `--md-secondary` / `--md-on-secondary` / `--md-secondary-container` / `--md-on-secondary-container`
 - `--md-tertiary` / `--md-on-tertiary` / `--md-tertiary-container` / `--md-on-tertiary-container`
@@ -411,17 +443,17 @@ Each UI style can define component-specific overrides. The following components 
 - **Confirm dialog** (`#confirm-dialog`) — style-specific dialog frame and button styling
 - **Toggle switches** (`.toggle-track`, `.toggle-thumb`) — style-specific track/thumb sizing and colors
 
-### UI Style: Claude
-
-The **Claude** style applies Anthropic-inspired design tokens:
-
-- `--ui-radius-sm: 6px`, `--ui-radius-md: 8px`, `--ui-radius-lg: 12px`
-- `--ui-font-display: Inter`
-- Clean, minimal aesthetic with muted tones and generous spacing
-
 ### Custom Scrollbar
 
 Scrollbars are hidden globally (kept functional via `overflow: auto`) since the app uses a custom frameless window with no native scrollbar chrome.
+
+### CVD-Safe Status Tokens
+
+Status tokens (`--color-error`, `--color-success`, `--color-warning`, `--color-info`) are defined per-theme and pass WCAG contrast checks for color-vision-deficient users. These ensure that error, success, warning, and info states remain distinguishable regardless of the active theme.
+
+### Tinted Gray Scale
+
+A tinted gray scale (`--gray-50` through `--gray-950`) provides warm/cool-tinted neutrals rather than pure grays, ensuring visual harmony with each theme's palette. Each theme defines its own gray scale to match its color temperature.
 
 ### Theme Transitions
 
@@ -445,41 +477,52 @@ import * as serviceBindings from '../wailsjs/go/service/AppService';
 
 Available methods:
 
-| Method | Returns |
-|---|---|
-| `EvaluateAll(text)` | `string[]` |
-| `EvaluateLine(text)` | `string` |
-| `EvaluateGraph(text)` | `GraphResult \| null` |
-| `GetSteps(text)` | `EvalDetail` |
-| `GetVariables()` | `Record<string, number>` |
-| `ClearVariables()` | `void` |
-| `GetHistory()` | `HistoryEntry[]` |
-| `ClearHistory()` | `void` |
-| `GetAllNotes()` | `Note[]` |
-| `CreateNote()` | `Note` |
-| `GetNote(id)` | `Note` |
-| `RenameNote(id, name)` | `void` |
-| `DeleteNote(id)` | `void` |
-| `SaveNoteContent(id, content)` | `void` |
-| `ReorderNotes(ids)` | `void` |
-| `ExportNote(id, format)` | `string` |
-| `ExportNoteToFile(id, format)` | `void` |
-| `ImportNoteFromFile()` | `Note` |
-| `GetDataDir()` | `string` |
-| `GetSettings()` | `SettingsData` |
-| `SaveSettings(settings)` | `void` |
-| `GetDeleteWithoutConfirm()` | `bool` |
-| `SetDeleteWithoutConfirm(val)` | `void` |
-| `GetAppVersion()` | `string` |
-| `CheckForUpdate()` | `UpdateInfo` |
-| `GetDocList()` | `string[]` |
-| `GetDocContent(name)` | `string` |
-| `GetPlugins()` | `PluginInfo[]` |
-| `SetPluginEnabled(name, enabled)` | `void` |
-| `ReloadPlugins()` | `void` |
-| `InstallPlugin(pluginsDir, pluginDir, manifestJSON)` | `void` |
-| `RemovePlugin(pluginsDir, pluginDir)` | `void` |
-| `GetPluginThemes()` | `ThemeDef[]` |
-| `GetPluginsDir()` | `string` |
-| `GetCurrencyCacheInfo()` | `CurrencyCacheInfo` |
-| `UpdateCurrencyRates()` | `CurrencyCacheInfo` |
+| Method                                               | Returns                  |
+| ---------------------------------------------------- | ------------------------ |
+| `EvaluateAll(text)`                                  | `string[]`               |
+| `EvaluateLine(text)`                                 | `string`                 |
+| `EvaluateGraph(text)`                                | `GraphResult \| null`    |
+| `GetSteps(text)`                                     | `EvalDetail`             |
+| `GetVariables()`                                     | `Record<string, number>` |
+| `ClearVariables()`                                   | `void`                   |
+| `GetHistory()`                                       | `HistoryEntry[]`         |
+| `ClearHistory()`                                     | `void`                   |
+| `GetAllNotes()`                                      | `Note[]`                 |
+| `CreateNote()`                                       | `Note`                   |
+| `CreateNoteInFolder(folderID)`                       | `Note`                   |
+| `GetNote(id)`                                        | `Note`                   |
+| `RenameNote(id, name)`                               | `void`                   |
+| `DeleteNote(id)`                                     | `void`                   |
+| `SaveNoteContent(id, content)`                       | `void`                   |
+| `ReorderNotes(ids)`                                  | `void`                   |
+| `UpdateNoteIcon(id, icon)`                           | `void`                   |
+| `MoveNoteToFolder(noteID, folderID)`                 | `void`                   |
+| `CreateFolder(name, parentID)`                       | `Folder`                 |
+| `GetAllFolders()`                                    | `Folder[]`               |
+| `RenameFolder(id, name)`                             | `void`                   |
+| `DeleteFolder(id)`                                   | `void`                   |
+| `MoveFolder(id, newParentID)`                        | `void`                   |
+| `UpdateFolderIcon(id, icon)`                         | `void`                   |
+| `ReorderFolders(folderIDs)`                          | `void`                   |
+| `UniqueFolderName(parentID)`                         | `string`                 |
+| `ExportNote(id, format)`                             | `string`                 |
+| `ExportNoteToFile(id, format)`                       | `void`                   |
+| `ImportNoteFromFile()`                               | `Note`                   |
+| `GetDataDir()`                                       | `string`                 |
+| `GetSettings()`                                      | `SettingsData`           |
+| `SaveSettings(settings)`                             | `void`                   |
+| `GetDeleteWithoutConfirm()`                          | `bool`                   |
+| `SetDeleteWithoutConfirm(val)`                       | `void`                   |
+| `GetAppVersion()`                                    | `string`                 |
+| `GetDocList()`                                       | `string[]`               |
+| `GetDocContent(name)`                                | `string`                 |
+| `GetPlugins()`                                       | `PluginInfo[]`           |
+| `SetPluginEnabled(name, enabled)`                    | `void`                   |
+| `ReloadPlugins()`                                    | `void`                   |
+| `InstallPlugin(pluginsDir, pluginDir, manifestJSON)` | `void`                   |
+| `RemovePlugin(pluginsDir, pluginDir)`                | `void`                   |
+| `GetPluginThemes()`                                  | `ThemeDef[]`             |
+| `GetPluginsDir()`                                    | `string`                 |
+| `GetAutocompleteKeywords()`                          | `AutocompleteItem[]`     |
+| `GetCurrencyCacheInfo()`                             | `CurrencyCacheInfo`      |
+| `UpdateCurrencyRates()`                              | `CurrencyCacheInfo`      |

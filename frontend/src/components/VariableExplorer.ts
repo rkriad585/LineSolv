@@ -1,4 +1,5 @@
-import {escapeHtml} from '../utils/html';
+import { escapeHtml } from '../utils/html';
+import { Icons } from './Icons';
 
 export class VariableExplorer {
   readonly el: HTMLElement;
@@ -9,14 +10,25 @@ export class VariableExplorer {
   constructor() {
     this.el = document.createElement('aside');
     this.el.id = 'vars-panel';
-    this.el.className = 'shrink-0 flex flex-col overflow-hidden transition-all duration-150 ease-out';
-    this.el.style.cssText = 'width:0;border-left:0;background:var(--surface);';
+    this.el.className =
+      'shrink-0 flex flex-col overflow-hidden transition-all duration-150 ease-out';
+    this.el.style.cssText = 'width:0px;border-left:0;background:var(--surface);';
     this.el.style.borderLeftWidth = '0';
 
     const header = document.createElement('div');
-    header.className = 'px-4 py-2.5 text-[10px] font-semibold tracking-wider uppercase border-b shrink-0';
+    header.className =
+      'px-4 py-2.5 text-[10px] font-semibold tracking-wider uppercase border-b shrink-0 flex items-center justify-between';
     header.style.cssText = 'color:var(--text-muted);border-color:var(--border);';
-    header.textContent = 'Variables';
+    const headerTitle = document.createElement('span');
+    headerTitle.textContent = 'Variables';
+    const closeHeaderBtn = document.createElement('button');
+    closeHeaderBtn.innerHTML = Icons.close();
+    closeHeaderBtn.title = 'Close variables';
+    closeHeaderBtn.style.cssText =
+      'display:flex;align-items:center;justify-content:center;width:18px;height:18px;' +
+      'border:none;border-radius:3px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;';
+    closeHeaderBtn.addEventListener('click', () => this.close());
+    header.append(headerTitle, closeHeaderBtn);
     this.el.appendChild(header);
 
     this.contentEl = document.createElement('div');
@@ -38,7 +50,8 @@ export class VariableExplorer {
   private buildDOM(vars: Record<string, number>): void {
     const entries = Object.entries(vars);
     if (entries.length === 0) {
-      this.contentEl.innerHTML = '<div class="text-xs" style="color:var(--text-muted)">No variables</div>';
+      this.contentEl.innerHTML =
+        '<div class="text-xs" style="color:var(--text-muted)">No variables</div>';
       return;
     }
     this.contentEl.innerHTML = entries
@@ -61,12 +74,11 @@ export class VariableExplorer {
   }
 
   close(): void {
-    this.el.style.width = '0';
+    this.el.style.width = '0px';
     this.el.style.borderLeftWidth = '0';
   }
 
   isOpen(): boolean {
     return this.el.style.width !== '0px';
   }
-
 }

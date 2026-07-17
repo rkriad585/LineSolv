@@ -20,6 +20,8 @@ export interface ShortcutMap {
   onSearchNotes: () => void;
 }
 
+import { toast } from './toast';
+
 let fullscreen = false;
 
 // --- Undo/Redo stack ---
@@ -46,7 +48,10 @@ function undo(ta: HTMLTextAreaElement): void {
   const stack = undoStack.get(ta);
   if (!stack || stack.length === 0) return;
   let redo = redoStack.get(ta);
-  if (!redo) { redo = []; redoStack.set(ta, redo); }
+  if (!redo) {
+    redo = [];
+    redoStack.set(ta, redo);
+  }
   redo.push(ta.value);
   if (redo.length > MAX_UNDO) redo.shift();
   ta.value = stack.pop()!;
@@ -63,11 +68,7 @@ function redo(ta: HTMLTextAreaElement): void {
   ta.setSelectionRange(len, len);
 }
 
-export function installGlobalShortcuts(
-  textarea: HTMLTextAreaElement,
-  cmds: ShortcutMap,
-): void {
-
+export function installGlobalShortcuts(textarea: HTMLTextAreaElement, cmds: ShortcutMap): void {
   // Push initial snapshot
   pushSnapshot(textarea);
 
@@ -163,14 +164,38 @@ export function installGlobalShortcuts(
 
   document.addEventListener('keydown', (e) => {
     const mod = e.metaKey || e.ctrlKey;
-    if (mod && e.key === 'b') { e.preventDefault(); cmds.onToggleNotes(); }
-    if (mod && e.key === 'i') { e.preventDefault(); cmds.onToggleVars(); }
-    if (mod && e.key === 'h') { e.preventDefault(); cmds.onToggleHistory(); }
-    if (mod && e.key === 's') { e.preventDefault(); cmds.onToggleSteps(); }
-    if (mod && e.key === 'u') { e.preventDefault(); cmds.onTogglePlugins(); }
-    if (mod && e.key === 'j') { e.preventDefault(); cmds.onToggleDocs(); }
-    if (mod && e.key === 'k') { e.preventDefault(); cmds.onClearAll(); }
-    if (mod && e.key === 'n') { e.preventDefault(); cmds.onNewNote(); }
+    if (mod && e.key === 'b') {
+      e.preventDefault();
+      cmds.onToggleNotes();
+    }
+    if (mod && e.key === 'i') {
+      e.preventDefault();
+      cmds.onToggleVars();
+    }
+    if (mod && e.key === 'h') {
+      e.preventDefault();
+      cmds.onToggleHistory();
+    }
+    if (mod && e.key === 's') {
+      e.preventDefault();
+      cmds.onToggleSteps();
+    }
+    if (mod && e.key === 'u') {
+      e.preventDefault();
+      cmds.onTogglePlugins();
+    }
+    if (mod && e.key === 'j') {
+      e.preventDefault();
+      cmds.onToggleDocs();
+    }
+    if (mod && e.key === 'k') {
+      e.preventDefault();
+      cmds.onClearAll();
+    }
+    if (mod && e.key === 'n') {
+      e.preventDefault();
+      cmds.onNewNote();
+    }
 
     if (mod && e.key === 'ArrowUp') {
       e.preventDefault();
@@ -217,18 +242,26 @@ export function installGlobalShortcuts(
     if (!mod && e.key === 'Escape') {
       cmds.onEscape();
     }
-
   });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'F11') {
-      e.preventDefault();
-      cmds.onToggleFullscreen();
-    }
-  }, {capture: true});
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key === 'F11') {
+        e.preventDefault();
+        cmds.onToggleFullscreen();
+      }
+    },
+    { capture: true },
+  );
 }
 
-function getLineInfo(ta: HTMLTextAreaElement): {line: number; col: number; lineStart: number; lineEnd: number} {
+function getLineInfo(ta: HTMLTextAreaElement): {
+  line: number;
+  col: number;
+  lineStart: number;
+  lineEnd: number;
+} {
   const val = ta.value;
   const pos = ta.selectionStart;
   const before = val.substring(0, pos);
@@ -238,11 +271,11 @@ function getLineInfo(ta: HTMLTextAreaElement): {line: number; col: number; lineS
   for (let i = 0; i < line; i++) lineStart += lines[i].length + 1;
   const lineEnd = lineStart + lines[line].length;
   const col = pos - lineStart;
-  return {line, col, lineStart, lineEnd};
+  return { line, col, lineStart, lineEnd };
 }
 
 function selectCurrentLine(ta: HTMLTextAreaElement): void {
-  const {lineStart, lineEnd} = getLineInfo(ta);
+  const { lineStart, lineEnd } = getLineInfo(ta);
   ta.setSelectionRange(lineStart, lineEnd);
 }
 
@@ -257,7 +290,7 @@ function duplicateLineOrSelection(ta: HTMLTextAreaElement): void {
     const selected = getSelectedText(ta);
     ta.setRangeText(selected + selected, start, end, 'end');
   } else {
-    const {lineStart, lineEnd} = getLineInfo(ta);
+    const { lineStart, lineEnd } = getLineInfo(ta);
     const line = ta.value.substring(lineStart, lineEnd);
     if (lineEnd >= ta.value.length) {
       ta.setRangeText('\n' + line, lineEnd, lineEnd, 'end');
@@ -269,11 +302,12 @@ function duplicateLineOrSelection(ta: HTMLTextAreaElement): void {
 
 function deleteCurrentLine(ta: HTMLTextAreaElement): void {
   pushSnapshot(ta);
-  const {line, lineStart, lineEnd} = getLineInfo(ta);
+  const { line, lineStart, lineEnd } = getLineInfo(ta);
   const val = ta.value;
   const beforeLine = val.substring(0, lineStart);
   const afterLine = val.substring(lineEnd);
-  const newVal = beforeLine + (line > 0 && afterLine.startsWith('\n') ? afterLine.substring(1) : afterLine);
+  const newVal =
+    beforeLine + (line > 0 && afterLine.startsWith('\n') ? afterLine.substring(1) : afterLine);
   ta.value = newVal;
   const newPos = Math.min(lineStart, newVal.length);
   ta.setSelectionRange(newPos, newPos);
@@ -297,7 +331,7 @@ function toggleCase(ta: HTMLTextAreaElement): void {
 }
 
 function moveLineUp(ta: HTMLTextAreaElement): void {
-  const {line, lineStart, lineEnd} = getLineInfo(ta);
+  const { line, lineStart, lineEnd } = getLineInfo(ta);
   if (line === 0) return;
   pushSnapshot(ta);
   const val = ta.value;
@@ -313,7 +347,7 @@ function moveLineUp(ta: HTMLTextAreaElement): void {
 }
 
 function moveLineDown(ta: HTMLTextAreaElement): void {
-  const {line, lineStart, lineEnd} = getLineInfo(ta);
+  const { line, lineStart, lineEnd } = getLineInfo(ta);
   const val = ta.value;
   const lines = val.split('\n');
   if (line >= lines.length - 1) return;
@@ -335,5 +369,7 @@ export function toggleFullscreen(): void {
     } else {
       window.runtime?.WindowUnfullscreen();
     }
-  } catch { /* ignored */ }
+  } catch {
+    toast.show('Failed to toggle fullscreen', 'error');
+  }
 }

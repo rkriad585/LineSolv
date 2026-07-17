@@ -47,6 +47,7 @@ LineSolv is a cross-platform desktop application built with the **Wails v2** fra
 │  │  │   ├─ StepsPanel.ts, GraphPanel.ts, PluginPanel.ts        │ │
 │  │  │   ├─ ContextMenu.ts, ConfirmDialog.ts                     │ │
 │  │  │   ├─ ShortcutModal.ts, SettingsModal.ts, DocsViewer.ts   │ │
+│  │  │   ├─ AutocompletePopup.ts (floating keyword popup)       │ │
 │  │  │   └─ (see §Components below)                              │ │
 │  │  ├─ utils/                                                   │ │
 │  │  │   ├─ shortcuts.ts    — global handler, undo/redo stacks   │ │
@@ -54,7 +55,7 @@ LineSolv is a cross-platform desktop application built with the **Wails v2** fra
 │  │  │   ├─ toast.ts        — toast notification system           │ │
 │  │  │   ├─ html.ts         — escapeHtml (XSS prevention)        │ │
 │  │  │   └─ format.ts       — result formatting + alignment      │ │
-│  │  ├─ style.css          — Tailwind v4 + CSS vars (7 themes)   │ │
+│  │  ├─ style.css          — Tailwind v4 + CSS vars (27 themes)  │ │
 │  │  ├─ types.ts           — shared TS types                     │ │
 │  │  └─ wailsjs/go/service/ — auto-generated Wails bindings      │ │
 │  └──────────────────────────────────────────────────────────────┘ │
@@ -64,26 +65,31 @@ LineSolv is a cross-platform desktop application built with the **Wails v2** fra
 ## Go Backend
 
 ### `main.go`
+
 Minimal entrypoint. Creates the DB, loads embedded docs from `//go:embed all:docs`, initializes the plugin system (`~/.config/neostore/linesolv/plugins`), and calls `wails.Run`. Platform options include frameless window, translucent backgrounds, and platform-specific title bar behavior.
 
 ### `app/service/`
-Wails-bound `AppService` struct exposes 25+ methods to the frontend:
 
-| Category | Methods |
-|---|---|
-| Evaluation | `EvaluateLine`, `EvaluateAll`, `EvaluateGraph`, `GetSteps` |
-| Variables | `GetVariables`, `ClearVariables` |
-| History | `GetHistory`, `ClearHistory` |
-| Notes | `GetAllNotes`, `CreateNote`, `GetNote`, `SaveNoteContent`, `RenameNote`, `DeleteNote`, `ReorderNotes` |
-| Export/Import | `ExportNote`, `ExportNoteToFile`, `ImportNoteFromFile`, `GetDataDir` |
-| Settings | `GetSettings`, `SaveSettings`, `GetDeleteWithoutConfirm`, `SetDeleteWithoutConfirm` |
-| Plugins | `GetPlugins`, `SetPluginEnabled`, `ReloadPlugins`, `InstallPlugin`, `RemovePlugin`, `GetPluginThemes`, `GetPluginsDir` |
-| System | `GetAppVersion`, `CheckForUpdate`, `GetCurrencyCacheInfo`, `UpdateCurrencyRates` |
-| Docs | `GetDocList`, `GetDocContent` |
+Wails-bound `AppService` struct exposes 42+ methods to the frontend:
+
+| Category      | Methods                                                                                                                                                           |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Evaluation    | `EvaluateLine`, `EvaluateAll`, `EvaluateGraph`, `GetSteps`                                                                                                        |
+| Variables     | `GetVariables`, `ClearVariables`                                                                                                                                  |
+| History       | `GetHistory`, `ClearHistory`                                                                                                                                      |
+| Notes         | `GetAllNotes`, `CreateNote`, `CreateNoteInFolder`, `GetNote`, `SaveNoteContent`, `RenameNote`, `DeleteNote`, `ReorderNotes`, `UpdateNoteIcon`, `MoveNoteToFolder` |
+| Folders       | `CreateFolder`, `GetAllFolders`, `RenameFolder`, `DeleteFolder`, `MoveFolder`, `UpdateFolderIcon`, `ReorderFolders`, `UniqueFolderName`                           |
+| Export/Import | `ExportNote`, `ExportNoteToFile`, `ImportNoteFromFile`, `GetDataDir`                                                                                              |
+| Settings      | `GetSettings`, `SaveSettings`, `GetDeleteWithoutConfirm`, `SetDeleteWithoutConfirm`                                                                               |
+| Plugins       | `GetPlugins`, `SetPluginEnabled`, `ReloadPlugins`, `InstallPlugin`, `RemovePlugin`, `GetPluginThemes`, `GetPluginsDir`                                            |
+| Autocomplete  | `GetAutocompleteKeywords`                                                                                                                                         |
+| System        | `GetAppVersion`, `GetCurrencyCacheInfo`, `UpdateCurrencyRates`                                                                                                    |
+| Docs          | `GetDocList`, `GetDocContent`                                                                                                                                     |
 
 All evaluation methods (`EvaluateLine`, `EvaluateAll`, `EvaluateGraph`, `GetSteps`) run in goroutines with a 5-second timeout to prevent UI hangs.
 
 ### `app/calculator/`
+
 The natural-language arithmetic engine, split into six files:
 
 - **`engine.go`** (2010 lines) — Core `Engine` struct with `variables`, `lastResult`, `history`, and plugin extension maps. Contains:
@@ -104,6 +110,7 @@ The natural-language arithmetic engine, split into six files:
 - **`graph.go`** — `Point` (x, y), `GraphResult` (points, expression, from, to). `parseGraphInput` matches `plot ...`, `graph ...`, `y = ...` with optional `from N to N` range. `EvaluateGraph` samples 200 points across the range, temporarily setting `x` in the variable store and restoring it afterward. Skips `Inf`/`NaN` results.
 
 ### `app/plugin/`
+
 Plugin system providing extensibility through JSON manifests:
 
 - **`types.go`** — `Manifest` (name, version, description, author, homepage, functions, themes, variables), `FunctionDef` (name, description, args, min/max args, expression or builtin, examples), `ThemeDef` (id, label, colors map), `VariableDef` (name, description, value). `Plugin` struct holds manifest, directory, enabled state, and compiled function/theme/variable maps.
@@ -115,6 +122,7 @@ Plugin system providing extensibility through JSON manifests:
 - **`expr.go`** — Lightweight expression evaluator for plugin function expressions. Supports: numbers, arithmetic operators (`+`, `-`, `*`, `/`, `^`), parentheses, and variable substitution (`a`, `b`, `c`... mapped to function arguments).
 
 ### `app/storage/`
+
 Persistent storage layer with four modules:
 
 - **`db.go`** — SQLite database with WAL mode, single-connection limit. Tables: `notes` (id, name, content, created_at, updated_at, position) and `currency_cache` (rates JSON, updated_at). Composite index `idx_notes_sort` on `(position, updated_at)` optimizes note listing and reordering. CRUD: `CreateNote`, `CreateNoteWithContent`, `CreateNoteWithContentAndDates` (preserves timestamps on import), `GetAllNotes` (ordered by position, then updated_at), `ReorderNotes` (transactional position update), `RenameNote`, `DeleteNote`, `SaveNoteContent`. Currency: `SaveCurrencyRates`, `GetCachedCurrencyRates`.
@@ -135,7 +143,7 @@ Persistent storage layer with four modules:
 
 `App.ts` is the central controller (≈720 lines). It:
 
-1. Creates all UI components (TitleBar, CalculatorInput, ResultDisplay, NotesPanel, VariableExplorer, HistoryPanel, StepsPanel, GraphPanel, PluginPanel, DocsViewer, SettingsModal, ShortcutModal, ConfirmDialog)
+1. Creates all UI components (TitleBar, CalculatorInput, ResultDisplay, NotesPanel, VariableExplorer, HistoryPanel, StepsPanel, GraphPanel, PluginPanel, DocsViewer, AutocompletePopup, SettingsModal, ShortcutModal, ConfirmDialog)
 2. Creates a `CalculatorStore` for reactive state management
 3. Wires keyboard shortcuts via `installGlobalShortcuts`
 4. Manages note operations (create, rename, delete, export, import, share, reorder)
@@ -160,13 +168,13 @@ State is managed through `CalculatorStore` (`stores/calculator.ts`), a reactive 
 
 ```typescript
 interface StoreState {
-  input: string;              // current textarea content
-  results: string[];          // per-line result strings
+  input: string; // current textarea content
+  results: string[]; // per-line result strings
   variables: Record<string, number>; // name → value map
   evalState: 'idle' | 'loading' | 'error';
   error: string | null;
-  history: HistoryEntry[];    // {input, output} entries
-  historyIndex: number;       // current position in history nav
+  history: HistoryEntry[]; // {input, output} entries
+  historyIndex: number; // current position in history nav
 }
 ```
 
@@ -178,38 +186,38 @@ Subscribers receive the full state on every change. Components subscribe via `st
 
 ### Keyboard Shortcuts
 
-| Shortcut | Action |
-|---|---|
-| `Tab` | Insert 2 spaces |
-| `Shift+Enter` | Force-evaluate immediately |
-| `Esc` | Close open modal/panel, or clear input if none open |
-| `F11` | Toggle fullscreen |
-| `Ctrl/Cmd + Z` | Undo (custom 200-entry stack) |
-| `Ctrl/Cmd + Shift + Z` / `Ctrl/Cmd + Y` | Redo |
-| `Ctrl/Cmd + D` | Duplicate line or selection |
-| `Ctrl/Cmd + L` | Select current line |
-| `Ctrl/Cmd + Shift + K` | Delete current line |
-| `Alt + Shift` | Toggle case (lower → UPPER → Title) |
-| `Alt + ↑ / ↓` | Move line up/down |
-| `Alt + ← / →` | Jump word left/right (native) |
-| `Home / End` | Start/end of line (native) |
-| `Ctrl/Cmd + Home / End` | Start/end of text (native) |
-| `Page Up / Page Down` | Scroll page (native) |
-| `↑ / ↓ / ← / →` | Cursor navigation (native) |
-| `Ctrl/Cmd + N` | New note |
-| `Ctrl/Cmd + B` | Toggle notes sidebar |
-| `Ctrl/Cmd + I` | Toggle variables sidebar |
-| `Ctrl/Cmd + H` | Toggle history sidebar |
-| `Ctrl/Cmd + S` | Toggle steps panel |
-| `Ctrl/Cmd + K` | Clear all (input + variables + history) |
-| `Ctrl/Cmd + P` | Print current note |
-| `Ctrl/Cmd + ,` | Open settings |
-| `Ctrl/Cmd + ↑` | Navigate history back |
-| `Ctrl/Cmd + ↓` | Navigate history forward |
-| `Ctrl/Cmd + /` | Show keyboard shortcut reference |
-| `Ctrl/Cmd + F` | Focus notes search input |
-| `Ctrl/Cmd + J` | Toggle documentation viewer |
-| `Ctrl/Cmd + `` ` | Toggle settings |
+| Shortcut                                | Action                                              |
+| --------------------------------------- | --------------------------------------------------- |
+| `Tab`                                   | Insert 2 spaces                                     |
+| `Shift+Enter`                           | Force-evaluate immediately                          |
+| `Esc`                                   | Close open modal/panel, or clear input if none open |
+| `F11`                                   | Toggle fullscreen                                   |
+| `Ctrl/Cmd + Z`                          | Undo (custom 200-entry stack)                       |
+| `Ctrl/Cmd + Shift + Z` / `Ctrl/Cmd + Y` | Redo                                                |
+| `Ctrl/Cmd + D`                          | Duplicate line or selection                         |
+| `Ctrl/Cmd + L`                          | Select current line                                 |
+| `Ctrl/Cmd + Shift + K`                  | Delete current line                                 |
+| `Alt + Shift`                           | Toggle case (lower → UPPER → Title)                 |
+| `Alt + ↑ / ↓`                           | Move line up/down                                   |
+| `Alt + ← / →`                           | Jump word left/right (native)                       |
+| `Home / End`                            | Start/end of line (native)                          |
+| `Ctrl/Cmd + Home / End`                 | Start/end of text (native)                          |
+| `Page Up / Page Down`                   | Scroll page (native)                                |
+| `↑ / ↓ / ← / →`                         | Cursor navigation (native)                          |
+| `Ctrl/Cmd + N`                          | New note                                            |
+| `Ctrl/Cmd + B`                          | Toggle notes sidebar                                |
+| `Ctrl/Cmd + I`                          | Toggle variables sidebar                            |
+| `Ctrl/Cmd + H`                          | Toggle history sidebar                              |
+| `Ctrl/Cmd + S`                          | Toggle steps panel                                  |
+| `Ctrl/Cmd + K`                          | Clear all (input + variables + history)             |
+| `Ctrl/Cmd + P`                          | Print current note                                  |
+| `Ctrl/Cmd + ,`                          | Open settings                                       |
+| `Ctrl/Cmd + ↑`                          | Navigate history back                               |
+| `Ctrl/Cmd + ↓`                          | Navigate history forward                            |
+| `Ctrl/Cmd + /`                          | Show keyboard shortcut reference                    |
+| `Ctrl/Cmd + F`                          | Focus notes search input                            |
+| `Ctrl/Cmd + J`                          | Toggle documentation viewer                         |
+| `Ctrl/Cmd + `` `                        | Toggle settings                                     |
 
 All shortcuts are rebindable via the Settings modal. Custom overrides are persisted in `config.toml` as `shortcut_overrides`.
 
@@ -241,32 +249,36 @@ All 15 components are class-based, using imperative DOM manipulation (no framewo
 
 - **ShortcutModal** — Keyboard shortcut reference overlay. Shows table of all shortcuts with key bindings and descriptions. Triggered by `Ctrl/Cmd+/`. Closes on Escape or backdrop click.
 
-- **SettingsModal** — 5-tab settings panel: General (font family, font size, opacity slider, line numbers toggle, autocomplete toggle, animations toggle, toast toggle, result panel toggle, line wrap toggle with live preview), Theme (17 built-in + plugin themes with color swatch thumbnails), UI Style (7 styles: Default, Nothing, Glass, Material, Alivated, Neon, Claude), Keyboard Shortcuts (view and rebind all shortcuts), About (version info, author, repo links, check for updates). Settings auto-save on every change with 50ms debounce and apply immediately (real-time).
+- **SettingsModal** — 5-tab settings panel: General (font family, font size, opacity slider, line numbers toggle, autocomplete toggle, animations toggle, toast toggle, result panel toggle, line wrap toggle with live preview), Theme (27 built-in + plugin themes with color swatch thumbnails), UI Style (5 styles: Default, Glass, Material, Alivated, Neon), Keyboard Shortcuts (view and rebind all shortcuts), About (version info, author, repo links). Settings auto-save on every change with 50ms debounce and apply immediately (real-time).
 
 - **DocsViewer** — Full-screen documentation viewer with sidebar tab navigation. Left sidebar lists all embedded docs. Content area renders markdown via a built-in inline renderer (headers, tables, code blocks, links, lists, blockquotes, horizontal rules). Async loading from Go backend. In-memory cache for instant re-opening. All docs embedded in the Go binary (offline). User Guide opens by default. Logo header with LineSolv SVG.
+
+- **AutocompletePopup** — Floating keyword suggestion popup anchored to the caret position. Displays up to 8 visible items from 6 categories (functions, variables, units, constants, keywords, plugins). Uses prefix matching against `GetAutocompleteKeywords` backend data. Supports keyboard navigation (arrow keys, Tab to accept, Esc to dismiss). Auto-hides when input is empty or no matches found.
 
 ### Theming
 
 Theme is driven by CSS custom properties defined per-theme in `style.css`. The `:root` block defines dark theme defaults. Each `.theme-*` class overrides color variables:
 
-| Variable | Purpose |
-|---|---|
-| `--surface` | Main background |
-| `--surface-secondary` | Card/panel background |
-| `--surface-hover` | Hover state background |
-| `--border` | Border color |
-| `--text` | Primary text |
-| `--text-muted` | Muted text |
-| `--text-subtle` | Subtle/dim text |
-| `--accent` | Primary accent color |
-| `--error` | Error color |
-| `--btn-hover` | Button hover color |
-| `--note-bg` / `--note-hover` / `--note-text` | Note item colors |
-| `--calc-font-size` / `--calc-font-family` / `--calc-font-color` | Calculator font |
+| Variable                                                        | Purpose                |
+| --------------------------------------------------------------- | ---------------------- |
+| `--surface`                                                     | Main background        |
+| `--surface-secondary`                                           | Card/panel background  |
+| `--surface-hover`                                               | Hover state background |
+| `--border`                                                      | Border color           |
+| `--text`                                                        | Primary text           |
+| `--text-muted`                                                  | Muted text             |
+| `--text-subtle`                                                 | Subtle/dim text        |
+| `--accent`                                                      | Primary accent color   |
+| `--error`                                                       | Error color            |
+| `--btn-hover`                                                   | Button hover color     |
+| `--note-bg` / `--note-hover` / `--note-text`                    | Note item colors       |
+| `--calc-font-size` / `--calc-font-family` / `--calc-font-color` | Calculator font        |
 
-**17 built-in themes**: dark, light, neon, red, obsidian, plasma, blood, midnight, aurora, mono, frost, prism, lavender, sage, warm-light, claude-dark, claude-light. Plugin themes are injected as CSS custom properties at runtime, making them selectable in the Settings modal alongside built-in themes. The active theme is set by adding a `theme-{name}` class to `<html>`.
+**27 built-in themes**: dark, light, neon, red, obsidian, plasma, blood, midnight, aurora, mono, frost, prism, lavender, sage, warm-light, blue-trust-dark, blue-trust-light, orange-energy-dark, orange-energy-light, green-growth-dark, green-growth-light, yellow-optimism-dark, yellow-optimism-light, purple-innovation-dark, purple-innovation-light, red-passion-dark, red-passion-light. Plugin themes are injected as CSS custom properties at runtime, making them selectable in the Settings modal alongside built-in themes. The active theme is set by adding a `theme-{name}` class to `<html>`.
 
 All 26 previously hardcoded values (border-radius, box-shadow, font-family) across 11 component files have been replaced with CSS custom properties (`var(--ui-radius-*)`, `var(--ui-shadow-*)`, `var(--ui-font-display)`), ensuring consistent styling across all UI styles. Style-specific CSS rules override components for individual UI styles: toast notifications (`.toast-item`), plugin panel (`#plugin-viewer`, `.plugin-card`), confirm dialog (`#confirm-dialog`), and toggle switches (`.toggle-track`, `.toggle-thumb`).
+
+**CVD-safe status tokens** (`--color-error`, `--color-success`, `--color-warning`, `--color-info`) are defined per-theme and pass WCAG contrast checks for color-vision-deficient users. A **tinted gray scale** (`--gray-50` through `--gray-950`) provides warm/cool-tinted neutrals rather than pure grays, ensuring visual harmony with each theme's palette.
 
 No Tailwind `dark:` variants are used — all theming is CSS custom properties.
 

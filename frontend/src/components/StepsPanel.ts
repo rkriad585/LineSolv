@@ -1,5 +1,6 @@
-import type {calculator} from '../../wailsjs/go/models';
-import {escapeHtml} from '../utils/html';
+import type { calculator } from '../../wailsjs/go/models';
+import { escapeHtml } from '../utils/html';
+import { Icons } from './Icons';
 
 type Step = calculator.Step;
 
@@ -48,13 +49,24 @@ export class StepsPanel {
   constructor() {
     this.el = document.createElement('aside');
     this.el.id = 'steps-panel';
-    this.el.className = 'shrink-0 flex flex-col overflow-hidden transition-all duration-150 ease-out';
-    this.el.style.cssText = 'width:0;border-left:0;background:var(--surface);';
+    this.el.className =
+      'shrink-0 flex flex-col overflow-hidden transition-all duration-150 ease-out';
+    this.el.style.cssText = 'width:0px;border-left:0;background:var(--surface);';
 
     const header = document.createElement('div');
-    header.className = 'px-4 py-2.5 text-[10px] font-semibold tracking-wider uppercase border-b shrink-0';
+    header.className =
+      'px-4 py-2.5 text-[10px] font-semibold tracking-wider uppercase border-b shrink-0 flex items-center justify-between';
     header.style.cssText = 'color:var(--text-muted);border-color:var(--border);';
-    header.textContent = 'Steps';
+    const headerTitle = document.createElement('span');
+    headerTitle.textContent = 'Steps';
+    const closeHeaderBtn = document.createElement('button');
+    closeHeaderBtn.innerHTML = Icons.close();
+    closeHeaderBtn.title = 'Close steps';
+    closeHeaderBtn.style.cssText =
+      'display:flex;align-items:center;justify-content:center;width:18px;height:18px;' +
+      'border:none;border-radius:3px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;';
+    closeHeaderBtn.addEventListener('click', () => this.close());
+    header.append(headerTitle, closeHeaderBtn);
     this.el.appendChild(header);
 
     this.contentEl = document.createElement('div');
@@ -66,22 +78,29 @@ export class StepsPanel {
 
   render(steps: Step[], _result: string): void {
     if (!steps || steps.length === 0) {
-      this.contentEl.innerHTML = '<div class="text-xs p-2" style="color:var(--text-muted)">Evaluate an expression to see steps</div>';
+      this.contentEl.innerHTML =
+        '<div class="text-xs p-2" style="color:var(--text-muted)">Evaluate an expression to see steps</div>';
       return;
     }
 
-    const html = steps.map((s) => {
-      const extra = stepStyles[s.operation] || '';
-      const label = operatorLabels[s.operation] || s.operation;
-      const isParse = !['naturalize', 'convert', 'percent', 'date-math', 'age'].includes(s.operation);
-      const exprStyle = 'font-size:12px;font-family:monospace;white-space:pre;overflow:hidden;text-overflow:ellipsis;' + extra;
-      return `
+    const html = steps
+      .map((s) => {
+        const extra = stepStyles[s.operation] || '';
+        const label = operatorLabels[s.operation] || s.operation;
+        const isParse = !['naturalize', 'convert', 'percent', 'date-math', 'age'].includes(
+          s.operation,
+        );
+        const exprStyle =
+          'font-size:12px;font-family:monospace;white-space:pre;overflow:hidden;text-overflow:ellipsis;' +
+          extra;
+        return `
         <div class="step-item" style="padding:5px 8px;border-radius:var(--ui-radius-sm);margin-bottom:3px;${isParse ? 'border-left:2px solid var(--accent);' : ''}">
           <div style="font-size:10px;color:var(--text-subtle);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">${escapeHtml(label)}</div>
           <div style="${exprStyle}">${escapeHtml(s.expression)}</div>
           <div style="font-size:11px;color:var(--accent);margin-top:1px;font-family:monospace;">= ${escapeHtml(s.result)}</div>
         </div>`;
-    }).join('');
+      })
+      .join('');
 
     this.contentEl.innerHTML = html;
   }
@@ -90,11 +109,13 @@ export class StepsPanel {
     this.el.style.width = '220px';
     this.el.style.borderLeftWidth = '1px';
     this.contentEl.focus();
-    setTimeout(() => { this.contentEl.focus(); }, 0);
+    setTimeout(() => {
+      this.contentEl.focus();
+    }, 0);
   }
 
   close(): void {
-    this.el.style.width = '0';
+    this.el.style.width = '0px';
     this.el.style.borderLeftWidth = '0';
   }
 

@@ -2,7 +2,7 @@
 
 ## Built-in Themes
 
-LineSolv ships with 17 themes. All themes define the same 14 CSS custom properties, so plugins can contribute additional themes that integrate seamlessly.
+LineSolv ships with 27 themes. All themes define the same 14 CSS custom properties, so plugins can contribute additional themes that integrate seamlessly.
 
 ### Dark (default)
 
@@ -64,27 +64,65 @@ A dark theme with deep green surfaces and mint accents (`#34d399`). Nature-inspi
 
 A light theme with warm cream surfaces and amber accents (`#f59e0b`). Comfortable for extended reading.
 
-### Claude Dark
+### Blue Trust Dark
 
-A warm dark theme with charcoal surfaces (`#141413`) and terracotta accents (`#c96442`). Olive-tinted dark tones throughout. Inspired by Anthropic's design language.
+A dark theme with deep navy surfaces and trust-inspiring blue accents (`#3b82f6`). Conveys security, reliability, and professionalism.
 
-### Claude Light
+### Blue Trust Light
 
-A warm light theme with parchment surfaces (`#f5f4ed`) and terracotta accents (`#c96442`). Cream and ivory tones throughout. Inspired by Anthropic's design language.
+A light theme with clean white surfaces and authoritative blue accents (`#2563eb`). Professional and trustworthy.
+
+### Orange Energy Dark
+
+A dark theme with deep charcoal surfaces and energetic orange accents (`#f97316`). Friendly, approachable, and action-oriented.
+
+### Orange Energy Light
+
+A light theme with warm white surfaces and vibrant orange accents (`#ea580c`). Inviting and call-to-action friendly.
+
+### Green Growth Dark
+
+A dark theme with forest-toned surfaces and natural green accents (`#22c55e`). Evokes growth, nature, and success.
+
+### Green Growth Light
+
+A light theme with soft sage surfaces and fresh green accents (`#16a34a`). Restful and growth-oriented.
+
+### Yellow Optimism Dark
+
+A dark theme with deep surfaces and attention-grabbing yellow accents (`#eab308`). Optimistic and high-visibility.
+
+### Yellow Optimism Light
+
+A light theme with bright surfaces and warm yellow accents (`#ca8a04`). Cheerful and attention-directing.
+
+### Purple Innovation Dark
+
+A dark theme with deep violet surfaces and creative purple accents (`#a855f7`). Luxury, creativity, and forward-thinking.
+
+### Purple Innovation Light
+
+A light theme with soft lavender surfaces and vibrant purple accents (`#9333ea`). Innovative and premium-feeling.
+
+### Red Passion Dark
+
+A dark theme with deep crimson surfaces and bold red accents (`#ef4444`). Urgency, energy, and passion.
+
+### Red Passion Light
+
+A light theme with warm surfaces and striking red accents (`#dc2626`). Dynamic and high-energy.
 
 ## UI Styles
 
-In addition to themes, LineSolv offers 7 UI styles that control shape, depth, and motion:
+In addition to themes, LineSolv offers 5 UI styles that control shape, depth, and motion:
 
-| Style | Description |
-|-------|-------------|
-| **Default** | Flat, clean, minimal |
-| **Nothing** | Monochrome, industrial, Swiss |
+| Style            | Description                |
+| ---------------- | -------------------------- |
+| **Default**      | Flat, clean, minimal       |
 | **Liquid Glass** | Frosted glass, translucent |
-| **Material 3** | Rounded, tinted, elevation |
-| **Alivated** | Soft, warm, neumorphic |
-| **Neon** | Cyberpunk, glowing borders |
-| **Claude** | Warm, minimal, Anthropic-inspired |
+| **Material 3**   | Rounded, tinted, elevation |
+| **Alivated**     | Soft, warm, neumorphic     |
+| **Neon**         | Cyberpunk, glowing borders |
 
 Each style defines CSS tokens for border-radius (`--ui-radius-*`), shadows (`--ui-shadow-*`), font display (`--ui-font-display`), blur, and transitions. Styles are applied via CSS class on the root element and can be combined with any theme.
 
@@ -101,29 +139,48 @@ The active theme and style are saved to `config.toml` and persist across session
 
 Every theme defines these 14 CSS custom properties on `:root`:
 
-| Variable | Description | Default (Dark) |
-|----------|-------------|-----------------|
-| `--surface` | Main background color | `#18181b` |
-| `--surface-secondary` | Secondary background (panels, code blocks) | `#27272a` |
-| `--surface-hover` | Hover state background for interactive elements | `#3f3f46` |
-| `--border` | Border color for dividers, inputs, and panels | `#27272a` |
-| `--text` | Primary text color | `#f4f4f5` |
-| `--text-muted` | Secondary text (timestamps, labels) | `#52525b` |
-| `--text-subtle` | Tertiary text (placeholder, very dim) | `#3f3f46` |
-| `--accent` | Primary accent (links, highlights, focus rings) | `#a78bfa` |
-| `--error` | Error states and destructive actions | `#ef4444` |
-| `--btn-hover` | Button hover background | `#f4f4f5` |
-| `--note-bg` | Note item background in sidebar | `#27272a` |
-| `--note-hover` | Note item hover background | `#27272a` |
-| `--note-text` | Note item text color | `#d4d4d8` |
-| `--calc-font-color` | Calculator input and result text color | `#ffffff` |
+| Variable              | Description                                     | Default (Dark) |
+| --------------------- | ----------------------------------------------- | -------------- |
+| `--surface`           | Main background color                           | `#18181b`      |
+| `--surface-secondary` | Secondary background (panels, code blocks)      | `#27272a`      |
+| `--surface-hover`     | Hover state background for interactive elements | `#3f3f46`      |
+| `--border`            | Border color for dividers, inputs, and panels   | `#27272a`      |
+| `--text`              | Primary text color                              | `#f4f4f5`      |
+| `--text-muted`        | Secondary text (timestamps, labels)             | `#52525b`      |
+| `--text-subtle`       | Tertiary text (placeholder, very dim)           | `#3f3f46`      |
+| `--accent`            | Primary accent (links, highlights, focus rings) | `#a78bfa`      |
+| `--error`             | Error states and destructive actions            | `#ef4444`      |
+| `--btn-hover`         | Button hover background                         | `#f4f4f5`      |
+| `--note-bg`           | Note item background in sidebar                 | `#27272a`      |
+| `--note-hover`        | Note item hover background                      | `#27272a`      |
+| `--note-text`         | Note item text color                            | `#d4d4d8`      |
+| `--calc-font-color`   | Calculator input and result text color          | `#ffffff`      |
 
 Additional non-theme variables (set separately in `style.css`):
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `--calc-font-size` | Calculator font size | `16px` |
+| Variable             | Description           | Default     |
+| -------------------- | --------------------- | ----------- |
+| `--calc-font-size`   | Calculator font size  | `16px`      |
 | `--calc-font-family` | Calculator font stack | `monospace` |
+
+### CVD-Safe Status Tokens
+
+All 27 built-in themes provide standardized CVD-safe (color-vision-deficiency safe) status tokens that work reliably for users with color blindness:
+
+| Variable          | Description                   | Dark Theme | Light Theme |
+| ----------------- | ----------------------------- | ---------- | ----------- |
+| `--color-error`   | Error state indicator         | `#f87171`  | `#dc2626`   |
+| `--color-success` | Success state indicator       | `#4ade80`  | `#16a34a`   |
+| `--color-warning` | Warning state indicator       | `#facc15`  | `#ca8a04`   |
+| `--color-info`    | Informational state indicator | `#60a5fa`  | `#2563eb`   |
+
+These tokens use luminance-safe color pairs that maintain sufficient contrast against both dark and light surfaces, ensuring readability for all users.
+
+### Tinted Gray Scale
+
+All themes share a consistent 11-step tinted gray scale with a warm violet undertone, providing cohesive neutral colors across the interface:
+
+`--gray-50`, `--gray-100`, `--gray-200`, `--gray-300`, `--gray-400`, `--gray-500`, `--gray-600`, `--gray-700`, `--gray-800`, `--gray-900`, `--gray-950`
 
 ## Creating Custom Themes
 

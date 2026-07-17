@@ -2,14 +2,14 @@
 
 The calculator engine (`app/calculator/`) is a complete natural-language arithmetic evaluator built in Go, split across six files for maintainability.
 
-| File | Responsibility |
-|---|---|
-| `engine.go` | Core Engine struct, PEMDAS recursive descent parser, lexer, naturalize pipeline, EvaluateLine/EvaluateAll, history tracking, helpers |
-| `units.go` | Unit conversion database (`unitDB`), `convertUnit`, `RegisterUnit` |
-| `functions.go` | Built-in math function dispatch (`sin`, `cos`, `sqrt`, etc.) |
-| `variables.go` | `GetVariables`, `SetVariable`, `ClearVariables` |
-| `steps.go` | `Step` and `EvalDetail` types, `GetSteps` method (read-only evaluation with intermediate steps) |
-| `graph.go` | `Point`, `GraphResult` types, `EvaluateGraph` method (function plotting via sampled points) |
+| File           | Responsibility                                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `engine.go`    | Core Engine struct, PEMDAS recursive descent parser, lexer, naturalize pipeline, EvaluateLine/EvaluateAll, history tracking, helpers |
+| `units.go`     | Unit conversion database (`unitDB`), `convertUnit`, `RegisterUnit`                                                                   |
+| `functions.go` | Built-in math function dispatch (`sin`, `cos`, `sqrt`, etc.)                                                                         |
+| `variables.go` | `GetVariables`, `SetVariable`, `ClearVariables`                                                                                      |
+| `steps.go`     | `Step` and `EvalDetail` types, `GetSteps` method (read-only evaluation with intermediate steps)                                      |
+| `graph.go`     | `Point`, `GraphResult` types, `EvaluateGraph` method (function plotting via sampled points)                                          |
 
 ## Overview
 
@@ -64,6 +64,7 @@ words before any pattern matching.
 ### Query Prefixes
 
 Stripped prefixes include:
+
 - **Standard**: `what is`, `what's`, `what are`, `calculate`, `compute`, `find`, `solve`, `the value of`, `evaluate`, `result of`, `how much is`, `how many is`
 - **Conversational**: `can you`, `could you`, `would you`, `will you`, `do you`, `does`
 - **Request**: `i need to`, `i want`, `i would like`, `i'd like`, `we need`, `we want`
@@ -75,6 +76,7 @@ Stripped prefixes include:
 ### Word-to-Number
 
 Supports numbers from zero through billions:
+
 - Simple: `one` → `1`, `twenty` → `20`
 - Compound: `twenty five` → `25`, `two hundred thirty` → `230`
 - Large: `two million three hundred thousand` → `2300000`
@@ -82,6 +84,7 @@ Supports numbers from zero through billions:
 - "And" is ignored: `one hundred and five` → `105`
 
 Collective nouns are mapped in `wordNumMap` and handled by the word-to-number step:
+
 ```
 a couple  →  2
 a dozen   →  12
@@ -92,31 +95,31 @@ a score   →  20
 
 New `normalize()` pass at the top of the pipeline handles character-level issues before any pattern matching:
 
-| Pattern | Transformation | Example |
-|---|---|---|
-| Unicode quotes | Smart/curly quotes → ASCII | `\u2018` `\u2019` → `'`, `\u201c` `\u201d` → `"` |
-| Unicode dashes | En/em dash, minus → `-` | `5 \u2013 3` → `5 - 3` |
-| Unicode multiply/divide | `×`/`·` → `*`, `÷` → `/` | `5 × 3` → `5 * 3`, `10 ÷ 2` → `10 / 2` |
-| Unicode spaces | NBSP, thin spaces → regular space | |
-| Multiple punctuation | `??`, `!!!`, `...` → stripped | |
-| Noise words | `exactly`, `roughly`, `about`, `approximately`, `say` → stripped | |
+| Pattern                 | Transformation                                                   | Example                                          |
+| ----------------------- | ---------------------------------------------------------------- | ------------------------------------------------ |
+| Unicode quotes          | Smart/curly quotes → ASCII                                       | `\u2018` `\u2019` → `'`, `\u201c` `\u201d` → `"` |
+| Unicode dashes          | En/em dash, minus → `-`                                          | `5 \u2013 3` → `5 - 3`                           |
+| Unicode multiply/divide | `×`/`·` → `*`, `÷` → `/`                                         | `5 × 3` → `5 * 3`, `10 ÷ 2` → `10 / 2`           |
+| Unicode spaces          | NBSP, thin spaces → regular space                                |                                                  |
+| Multiple punctuation    | `??`, `!!!`, `...` → stripped                                    |                                                  |
+| Noise words             | `exactly`, `roughly`, `about`, `approximately`, `say` → stripped |                                                  |
 
 ### Phase 1 — Prefix / Suffix / Notation Patterns
 
 These patterns clean up formatting and expand common shorthand before arithmetic parsing:
 
-| Pattern | Step | Example |
-|---|---|---|
-| Unicode normalisation | 0 | `5 × 3` → `5 * 3`, `5 ÷ 2` → `5 / 2` |
-| Expanded prefixes | 1 | `can you find 5+3` → `5+3`, `maybe 2+2` → `2+2`, `i'd like 2*3` → `2*3` |
-| Expanded trailing fluff | 2 | `2+2 for me` → `2+2`, `25 yrs old` → `25` |
-| Currency conversion | 3 | `$10` → `10`, `$5k in EUR` → `5000 usd in EUR`, `BTC5k in USD` → `5k btc in USD` |
-| Compact time notation | 3b | `2h30m` → `(2 + 30/60.0)`, `2h` → `2` |
-| Mixed numbers | 8b | `2 1/2` → `2 + (1/2)`, `3 3/4` → `3 + (3/4)` |
-| Ordinal suffix stripping | 6 | `1st` → `1`, `2nd` → `2`, `3rd` → `3`, `4th` → `4` |
-| SI notation expansion | 8 | `5k` → `5000`, `3M` → `3000000`, `2B` → `2000000000` |
-| Possessive plurals | 9 | `3 tens` → `(3 * 10)`, `2 dozens` → `(2 * 12)`, `5 scores` → `(5 * 20)` |
-| "X from Y" subtraction | 16 | `10 from 100` → `100 - 10` |
+| Pattern                  | Step | Example                                                                          |
+| ------------------------ | ---- | -------------------------------------------------------------------------------- |
+| Unicode normalisation    | 0    | `5 × 3` → `5 * 3`, `5 ÷ 2` → `5 / 2`                                             |
+| Expanded prefixes        | 1    | `can you find 5+3` → `5+3`, `maybe 2+2` → `2+2`, `i'd like 2*3` → `2*3`          |
+| Expanded trailing fluff  | 2    | `2+2 for me` → `2+2`, `25 yrs old` → `25`                                        |
+| Currency conversion      | 3    | `$10` → `10`, `$5k in EUR` → `5000 usd in EUR`, `BTC5k in USD` → `5k btc in USD` |
+| Compact time notation    | 3b   | `2h30m` → `(2 + 30/60.0)`, `2h` → `2`                                            |
+| Mixed numbers            | 8b   | `2 1/2` → `2 + (1/2)`, `3 3/4` → `3 + (3/4)`                                     |
+| Ordinal suffix stripping | 6    | `1st` → `1`, `2nd` → `2`, `3rd` → `3`, `4th` → `4`                               |
+| SI notation expansion    | 8    | `5k` → `5000`, `3M` → `3000000`, `2B` → `2000000000`                             |
+| Possessive plurals       | 9    | `3 tens` → `(3 * 10)`, `2 dozens` → `(2 * 12)`, `5 scores` → `(5 * 20)`          |
+| "X from Y" subtraction   | 16   | `10 from 100` → `100 - 10`                                                       |
 
 SI notation uses case‑sensitive matching: `k`/`K` = thousand, `M` = million, `B` = billion, `T` = trillion. Lowercase `m` is NOT treated as SI (it would conflict with meters in unit conversion). Unlike the old parenthesized form `(5 * 1000)`, SI now expands to the computed numeric value (`5000`) so that subsequent currency conversion can match the complete number.
 
@@ -126,42 +129,42 @@ The "how many times" pattern runs **before** SI expansion so that `5k`, `3M`, et
 
 These patterns answer relational percentage questions without needing to set up the formula manually:
 
-| Phrase | Transformation | Example |
-|---|---|---|
-| `X is what percent of Y` (or `%`) | `(X / Y) * 100` | `10 is what percent of 50` → `20` |
-| `X as a percentage of Y` | `(X / Y) * 100` | `10 as a percentage of 50` → `20` |
-| `X percent of what is Y` (or `%`) | `(Y / X) * 100` | `50 percent of what is 25` → `50` |
-| `what percent of Y is X` (or `%`) | `(X / Y) * 100` | `what percent of 50 is 10` → `20` |
-| `X out of Y as a percentage` | `(X / Y) * 100` | `10 out of 50 as a percentage` → `20` |
-| `X pct` / `X p.c.` / `X pc` | `X percent` | `10 pct of 200` → `20` |
-| `X plus Y% tip/tax` | `X + X * Y / 100` | `40 plus 15% tip` → `46` |
-| `X minus/after Y% discount` | `X - X * Y / 100` | `200 minus 10% discount` → `180` |
+| Phrase                            | Transformation    | Example                               |
+| --------------------------------- | ----------------- | ------------------------------------- |
+| `X is what percent of Y` (or `%`) | `(X / Y) * 100`   | `10 is what percent of 50` → `20`     |
+| `X as a percentage of Y`          | `(X / Y) * 100`   | `10 as a percentage of 50` → `20`     |
+| `X percent of what is Y` (or `%`) | `(Y / X) * 100`   | `50 percent of what is 25` → `50`     |
+| `what percent of Y is X` (or `%`) | `(X / Y) * 100`   | `what percent of 50 is 10` → `20`     |
+| `X out of Y as a percentage`      | `(X / Y) * 100`   | `10 out of 50 as a percentage` → `20` |
+| `X pct` / `X p.c.` / `X pc`       | `X percent`       | `10 pct of 200` → `20`                |
+| `X plus Y% tip/tax`               | `X + X * Y / 100` | `40 plus 15% tip` → `46`              |
+| `X minus/after Y% discount`       | `X - X * Y / 100` | `200 minus 10% discount` → `180`      |
 
 ### Phase 3 — Advanced Math / Natural Function Phrases
 
 These patterns provide natural‑language access to advanced mathematical operations:
 
-| Phrase | Transformation | Example |
-|---|---|---|
-| `X!` (postfix `!`) | `factorial(X)` | `5!` → `120` |
-| `log base X of Y` | `ln(Y) / ln(X)` | `log base 2 of 8` → `3` |
-| `X choose Y` | `nCr(X, Y)` | `5 choose 3` → `10` |
-| `how many times does X go into Y` | `Y / X` | `how many times does 5 go into 20` → `4` |
-| `the square root of X` | `sqrt(X)` | `the square root of 144` → `12` |
-| `the cube root of X` | `cbrt(X)` | `the cube root of 27` → `3` |
-| `the absolute value of X` | `abs(X)` | `the absolute value of -5` → `5` |
-| `sine of X` / `cosine of X` / `tangent of X` | `sin(X)` / `cos(X)` / `tan(X)` | `sine of 0` → `0` |
-| `log of X` / `ln of X` / `natural log of X` | `ln(X)` | `log of 100` → `4.605...` |
-| `square X` / `cube X` (verb) | `X ^ 2` / `X ^ 3` | `square 5` → `25` |
-| `half as much as X` | `X * 0.5` | `half as much as 10` → `5` |
-| `quarter as much as X` | `X * 0.25` | `quarter as much as 20` → `5` |
-| `how many X in Y` | `Y / X` | `how many 5 in 20` → `4` |
+| Phrase                                       | Transformation                 | Example                                  |
+| -------------------------------------------- | ------------------------------ | ---------------------------------------- |
+| `X!` (postfix `!`)                           | `factorial(X)`                 | `5!` → `120`                             |
+| `log base X of Y`                            | `ln(Y) / ln(X)`                | `log base 2 of 8` → `3`                  |
+| `X choose Y`                                 | `nCr(X, Y)`                    | `5 choose 3` → `10`                      |
+| `how many times does X go into Y`            | `Y / X`                        | `how many times does 5 go into 20` → `4` |
+| `the square root of X`                       | `sqrt(X)`                      | `the square root of 144` → `12`          |
+| `the cube root of X`                         | `cbrt(X)`                      | `the cube root of 27` → `3`              |
+| `the absolute value of X`                    | `abs(X)`                       | `the absolute value of -5` → `5`         |
+| `sine of X` / `cosine of X` / `tangent of X` | `sin(X)` / `cos(X)` / `tan(X)` | `sine of 0` → `0`                        |
+| `log of X` / `ln of X` / `natural log of X`  | `ln(X)`                        | `log of 100` → `4.605...`                |
+| `square X` / `cube X` (verb)                 | `X ^ 2` / `X ^ 3`              | `square 5` → `25`                        |
+| `half as much as X`                          | `X * 0.5`                      | `half as much as 10` → `5`               |
+| `quarter as much as X`                       | `X * 0.25`                     | `quarter as much as 20` → `5`            |
+| `how many X in Y`                            | `Y / X`                        | `how many 5 in 20` → `4`                 |
 
 The factorial `!` operator is parsed at the lexer level as a `tokBang` token and applied in the parser's `parseAtom` — it binds tighter than all binary operators. The `nCr` function is registered in the built‑in function table. `log base` and `choose` are substituted before word operators so they don't conflict with other patterns. The "how many times" pattern runs before SI expansion (step 7) to handle SI suffixed numbers like `5k`.
 
 ### Date Math (before and after naturalize)
 
-Date math runs **before** naturalize (to preserve date keywords like `today`, `now`, `next`) 
+Date math runs **before** naturalize (to preserve date keywords like `today`, `now`, `next`)
 and again **after** naturalize (handling cleaned expressions like `what is next week` → `next week`).
 
 An additional embedded extraction pass searches for date patterns anywhere in the
@@ -169,6 +172,7 @@ post-naturalize string, so expressions like `asjeh fjfugh today + 3 months etc` 
 resolve to the correct date.
 
 Supported patterns:
+
 - `today` / `now` — returns current date/time
 - `next week` / `last month` / `next year` — relative dates
 - `today + 14 days` / `today - 3 months` / `now + 1 year`
@@ -186,14 +190,14 @@ Supported patterns:
 
 ### Word Operators
 
-| English | Symbol |
-|---|---|
-| `plus`, `and`, `combined with`, `together with`, `along with` | `+` |
-| `minus`, `subtracted from`, `less`, `reduced by`, `take away`, `subtract`, `without`, `fewer` | `-` |
-| `times`, `multiplied by`, `multiply`, `groups of`, `lots of`, `sets of` | `*` |
-| `divided by`, `split into/between/among`, `per`, `divide`, `shared between/among` | `/` |
-| `to the power of`, `raised to`, `raised to the power of`, `exponent`, `to the N` | `^` |
-| `mod`, `modulo` | `%` |
+| English                                                                                       | Symbol |
+| --------------------------------------------------------------------------------------------- | ------ |
+| `plus`, `and`, `combined with`, `together with`, `along with`                                 | `+`    |
+| `minus`, `subtracted from`, `less`, `reduced by`, `take away`, `subtract`, `without`, `fewer` | `-`    |
+| `times`, `multiplied by`, `multiply`, `groups of`, `lots of`, `sets of`                       | `*`    |
+| `divided by`, `split into/between/among`, `per`, `divide`, `shared between/among`             | `/`    |
+| `to the power of`, `raised to`, `raised to the power of`, `exponent`, `to the N`              | `^`    |
+| `mod`, `modulo`                                                                               | `%`    |
 
 > **Note:** The `per` → `/` conversion is aggressive. For unit conversion (e.g., `10 km per hour`), use the `X in Y` syntax instead.
 
@@ -243,49 +247,51 @@ The postfix factorial operator `!` (tokBang) binds tighter than all binary opera
 
 ### Built-in Functions
 
-| Function | Description |
-|---|---|
-| `sin(x)` | Sine (radians) |
-| `cos(x)` | Cosine (radians) |
-| `tan(x)` | Tangent (radians) |
-| `asin(x)` | Arc sine |
-| `acos(x)` | Arc cosine |
-| `atan(x)` | Arc tangent |
-| `atan2(y, x)` | Arc tangent of y/x |
-| `sinh(x)` | Hyperbolic sine |
-| `cosh(x)` | Hyperbolic cosine |
-| `tanh(x)` | Hyperbolic tangent |
-| `sqrt(x)` | Square root |
-| `cbrt(x)` | Cube root |
-| `abs(x)` | Absolute value |
-| `round(x)` | Nearest integer |
-| `floor(x)` | Round down |
-| `ceil(x)` | Round up |
-| `trunc(x)` | Truncate decimals |
-| `fract(x)` | Fractional part |
-| `log(x)` / `ln(x)` | Natural logarithm |
-| `log10(x)` | Base-10 logarithm |
-| `log2(x)` | Base-2 logarithm |
-| `exp(x)` | e^x |
-| `pow(x, y)` | x^y |
-| `fact(x)` / `factorial(x)` | Factorial | `fact(5)` → 120 |
-| `nCr(n, r)` | Combinations (n choose r) | `nCr(5, 3)` → 10 |
-| `gcd(a, b)` | Greatest common divisor |
-| `lcm(a, b)` | Least common multiple |
-| `rand()` | Random [0, 1) |
-| `min(a, b, ...)` | Minimum |
-| `max(a, b, ...)` | Maximum |
-| `sum(a, b, ...)` | Sum |
-| `avg(a, b, ...)` | Average |
-| `median(a, b, ...)` | Median value |
-| `mode(a, b, ...)` | Mode (most frequent) |
-| `stdev(a, b, ...)` | Standard deviation |
-| `variance(a, b, ...)` | Population variance |
-| `range(a, b, ...)` | Range (max - min) |
-| `sign(x)` / `sgn(x)` | Sign (-1, 0, 1) |
-| `deg(x)` | Radians to degrees |
-| `rad(x)` | Degrees to radians |
-| `isprime(n)` | Primality test (returns 1 or 0) |
+| Function                                 | Description                     |
+| ---------------------------------------- | ------------------------------- |
+| `sin(x)`                                 | Sine (radians)                  |
+| `cos(x)`                                 | Cosine (radians)                |
+| `tan(x)`                                 | Tangent (radians)               |
+| `asin(x)`                                | Arc sine                        |
+| `acos(x)`                                | Arc cosine                      |
+| `atan(x)`                                | Arc tangent                     |
+| `atan2(y, x)`                            | Arc tangent of y/x              |
+| `sinh(x)`                                | Hyperbolic sine                 |
+| `cosh(x)`                                | Hyperbolic cosine               |
+| `tanh(x)`                                | Hyperbolic tangent              |
+| `sqrt(x)`                                | Square root                     |
+| `cbrt(x)`                                | Cube root                       |
+| `abs(x)`                                 | Absolute value                  |
+| `round(x)`                               | Nearest integer                 |
+| `floor(x)`                               | Round down                      |
+| `ceil(x)`                                | Round up                        |
+| `trunc(x)`                               | Truncate decimals               |
+| `fract(x)`                               | Fractional part                 |
+| `log(x)` / `ln(x)`                       | Natural logarithm               |
+| `log10(x)`                               | Base-10 logarithm               |
+| `log2(x)`                                | Base-2 logarithm                |
+| `exp(x)`                                 | e^x                             |
+| `pow(x, y)`                              | x^y                             |
+| `fact(x)` / `factorial(x)`               | Factorial                       | `fact(5)` → 120  |
+| `nCr(n, r)` / `choose(n, r)`             | Combinations (n choose r)       | `nCr(5, 3)` → 10 |
+| `nPr(n, r)`                              | Permutations (n pick r)         | `nPr(5, 3)` → 60 |
+| `gcd(a, b)`                              | Greatest common divisor         |
+| `lcm(a, b)`                              | Least common multiple           |
+| `rand()` / `random()`                    | Random [0, 1)                   |
+| `min(a, b, ...)`                         | Minimum                         |
+| `max(a, b, ...)`                         | Maximum                         |
+| `sum(a, b, ...)`                         | Sum                             |
+| `avg(a, b, ...)`                         | Average                         |
+| `median(a, b, ...)`                      | Median value                    |
+| `mode(a, b, ...)`                        | Mode (most frequent)            |
+| `stdev(a, b, ...)` / `stddev(a, b, ...)` | Standard deviation              |
+| `variance(a, b, ...)` / `var(a, b, ...)` | Population variance             |
+| `range(a, b, ...)`                       | Range (max - min)               |
+| `sign(x)` / `sgn(x)`                     | Sign (-1, 0, 1)                 |
+| `deg(x)`                                 | Radians to degrees              |
+| `rad(x)`                                 | Degrees to radians              |
+| `isprime(n)` / `is_prime(n)`             | Primality test (returns 1 or 0) |
+| `hypot(a, b)` / `pythag(a, b)`           | Hypotenuse: sqrt(a² + b²)       |
 
 ### Constants
 
@@ -319,6 +325,7 @@ Each successful evaluation is recorded in the engine's history as a `HistoryEntr
 ## Unit Database
 
 Built-in conversion for:
+
 - **Length**: meter, kilometer, centimeter, millimeter, inch, foot, yard, mile
 - **Mass**: gram, kilogram, pound, ounce
 - **Volume**: liter, milliliter, gallon, quart, cup
@@ -330,18 +337,18 @@ Built-in conversion for:
 
 The `GetSteps(input)` method evaluates an expression in read-only mode — it runs the full parser pipeline but does not modify engine state (no history recording, no variable mutations). Each parser level records `Step` entries showing the operation performed and the intermediate result:
 
-| Parser Level | Example Step |
-|---|---|
-| Naturalize | `naturalize("what is 5 + 3 * 2")` → `"5 + 3 * 2"` |
-| Add/Subtract | `5 + 6` → `11` |
-| Multiply/Divide | `3 * 2` → `6` |
-| Power | `2 ^ 3` → `8` |
-| Negate | `-5` → `-5` |
-| Modulo | `17 % 5` → `2` |
-| Factorial | `5!` → `120` |
-| Function | `sqrt(144)` → `12` |
-| Constant | `pi` → `3.1416` |
-| Variable | `x` → `42` |
+| Parser Level    | Example Step                                      |
+| --------------- | ------------------------------------------------- |
+| Naturalize      | `naturalize("what is 5 + 3 * 2")` → `"5 + 3 * 2"` |
+| Add/Subtract    | `5 + 6` → `11`                                    |
+| Multiply/Divide | `3 * 2` → `6`                                     |
+| Power           | `2 ^ 3` → `8`                                     |
+| Negate          | `-5` → `-5`                                       |
+| Modulo          | `17 % 5` → `2`                                    |
+| Factorial       | `5!` → `120`                                      |
+| Function        | `sqrt(144)` → `12`                                |
+| Constant        | `pi` → `3.1416`                                   |
+| Variable        | `x` → `42`                                        |
 
 Steps are returned as an `EvalDetail` struct containing the final result string and an ordered slice of `Step` objects.
 
@@ -357,6 +364,7 @@ graph x^2 from -5 to 5   →  200 points from -5 to 5
 ```
 
 The implementation:
+
 1. Strips the leading `plot`/`graph`/`y =` prefix
 2. Extracts optional `from N to N` range specifier (defaults to -10 to 10)
 3. Saves the current `x` variable, evaluates the expression for 200 evenly spaced x values, and restores the original `x`
@@ -372,13 +380,13 @@ The calculator engine integrates a plugin system that extends the function table
 
 ### Plugin Manager (`app/plugin/`)
 
-| File | Responsibility |
-|---|---|
-| `types.go` | `Manifest`, `Plugin`, `FunctionDef`, `ThemeDef`, `VariableDef` types |
-| `loader.go` | `Manager` struct — scans plugin directory, loads manifests, registers functions |
-| `builtins.go` | 20+ pre-defined builtin functions available to plugin expressions |
-| `expr.go` | Safe expression evaluator for plugin function definitions |
-| `state.go` | Plugin enabled/disabled state persistence |
+| File          | Responsibility                                                                  |
+| ------------- | ------------------------------------------------------------------------------- |
+| `types.go`    | `Manifest`, `Plugin`, `FunctionDef`, `ThemeDef`, `VariableDef` types            |
+| `loader.go`   | `Manager` struct — scans plugin directory, loads manifests, registers functions |
+| `builtins.go` | 20+ pre-defined builtin functions available to plugin expressions               |
+| `expr.go`     | Safe expression evaluator for plugin function definitions                       |
+| `state.go`    | Plugin enabled/disabled state persistence                                       |
 
 ### How Plugins Extend the Engine
 
@@ -393,6 +401,7 @@ The calculator engine integrates a plugin system that extends the function table
 ### Expression Evaluator (`expr.go`)
 
 Plugin expressions use a safe subset of math:
+
 - **Operators**: `+`, `-`, `*`, `/`, `^`, `%`
 - **Functions**: `min`, `max`, `abs`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sqrt`, `cbrt`, `log`, `ln`, `log2`, `exp`, `pow`, `floor`, `ceil`, `round`, `sign`, `mod`, `atan2`
 - **Constants**: `pi()`, `e()`, `tau()`, `phi()`

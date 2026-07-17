@@ -6,7 +6,7 @@
     <a href="https://github.com/rkriad585/LineSolv/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
     </a>
-    <img src="https://img.shields.io/badge/version-0.16.0-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/version-0.17.0-green.svg" alt="Version">
     <img src="https://img.shields.io/badge/platform-linux%20|%20macOS%20|%20windows-lightgrey" alt="Platform">
     <img src="https://img.shields.io/badge/go-1.24+-00ADD8?logo=go&logoColor=white" alt="Go">
     <img src="https://img.shields.io/badge/wails-v2-5c2d91?logo=wails&logoColor=white" alt="Wails">
@@ -17,6 +17,14 @@ LineSolv is a natural-language calculator that understands phrases like `$20 in 
 
 Built with **Wails v2** (Go + WebView), **Vite**, **TypeScript**, and **CSS custom properties** for theming.
 
+## Screenshot
+
+<p align="center">
+  <img src="Screenshots/01-dark-welcome-screen-on-first-open.png" alt="LineSolv home screen" width="80%">
+</p>
+
+<p align="center"><em>More screenshots: <a href="docs/screenshots.md">View all screenshots</a></em></p>
+
 ## Key Features
 
 - **Natural Language Math** — Type phrases like `what is 20 plus 5%` or `$20 in euro - 10% discount` and get instant results
@@ -24,60 +32,14 @@ Built with **Wails v2** (Go + WebView), **Vite**, **TypeScript**, and **CSS cust
 - **Real-Time Settings** — Every setting (theme, font, opacity, line numbers, autocomplete) applies instantly with no Save button
 - **Line Number Toggle** — Show or hide line numbers in the calculator editor
 - **Autocomplete Popup** — Type-aware keyword suggestions that can be toggled on/off
-- **29 Color Themes** — Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light, Claude Dark, Claude Light, Blue Trust Dark/Light, Orange Energy Dark/Light, Green Growth Dark/Light, Yellow Optimism Dark/Light, Purple Innovation Dark/Light, Red Passion Dark/Light with instant switching
-- **7 UI Styles** — Default, Nothing, Liquid Glass, Material 3, Alivated, Neon, and Claude Code — all rewritten to match their real-world design systems with authentic colors, typography, shadows, and component styling
+- **27 Color Themes** — Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light, Blue Trust Dark/Light, Orange Energy Dark/Light, Green Growth Dark/Light, Yellow Optimism Dark/Light, Purple Innovation Dark/Light, Red Passion Dark/Light with instant switching
+- **5 UI Styles** — Default, Liquid Glass, Material 3, Alivated, Neon — all rewritten to match their real-world design systems with authentic colors, typography, shadows, and component styling
 - **17 Font Options** — Sans-Serif, Serif, and Monospace fonts including JetBrains Mono, Fira Code, and more
 - **40+ Unit Conversions** — Length, mass, volume, temperature, time, and 30+ live currencies
 - **Function Graphing** — Auto-detect plot expressions and render live charts
 - **Plugin System** — 12 built-in plugins with expression-based custom functions, themes, and variables
 - **Notes & History** — Multi-note notebooks with searchable history, PDF export, and undo/redo
 - **Cross-Platform** — Native builds for Linux, macOS (Intel & Apple Silicon), and Windows
-
-## Screenshots
-
-<p align="center">
-  <img src="Screenshots/01-dark-welcome-screen-on-first-open.png" alt="Dark mode welcome screen" width="80%">
-</p>
-
-<p align="center">
-  <img src="Screenshots/02-light-mode-screen.png" alt="Light mode with calculations" width="80%">
-</p>
-
-<p align="center">
-  <img src="Screenshots/03-light-mode-notes-panel-screen.png" alt="Light mode notes panel" width="80%">
-</p>
-
-<p align="center">
-  <img src="Screenshots/04-dark-mode-notes-panel-screen.png" alt="Dark mode notes panel" width="80%">
-</p>
-
-<p align="center">
-  <img src="Screenshots/05-history-panel-screen.png" alt="History panel with search" width="80%">
-</p>
-
-<p align="center">
-  <img src="Screenshots/06-veriables-panel-screen.png" alt="Variable explorer panel" width="80%">
-</p>
-
-<p align="center">
-  <img src="Screenshots/07-steps-panel-screen.png" alt="Step-by-step evaluation panel" width="80%">
-</p>
-
-<p align="center">
-  <img src="Screenshots/08-docs-screen.png" alt="Built-in documentation viewer" width="80%">
-</p>
-
-<p align="center">
-  <img src="Screenshots/09-plugins-screen.png" alt="Plugin marketplace" width="80%">
-</p>
-
-<p align="center">
-  <img src="Screenshots/10-plugins-details-screen.png" alt="Plugin details with README" width="80%">
-</p>
-
-<p align="center">
-  <img src="Screenshots/11-settings-screen.png" alt="Settings screen" width="80%">
-</p>
 
 ## Features
 
@@ -87,7 +49,7 @@ Built with **Wails v2** (Go + WebView), **Vite**, **TypeScript**, and **CSS cust
 | --------------------------- | --------------------------------------------- | ---------------------------------- |
 | **Natural Language**        | Type conversational math phrases              | `what is twenty five plus three`   |
 | **Basic Arithmetic**        | Full PEMDAS with `+`, `-`, `*`, `/`, `%`, `^` | `2 + 3 * 4`                        |
-| **Number Words**            | spelled-out numbers up toillions              | `twenty five times pi`             |
+| **Number Words**            | spelled-out numbers up to billions            | `twenty five times pi`             |
 | **Fraction Input**          | Mixed numbers and fraction words              | `2 1/2 + 1.5`, `three quarters`    |
 | **Scale Words**             | `double`, `triple`, `half`, `quarter`         | `double 5`, `half of 20`           |
 | **Power Words**             | `squared`, `cubed`, `square root of`          | `5 squared`, `cube root of 27`     |
@@ -199,34 +161,34 @@ Auto-detect plot/graph expressions and render live charts:
 
 ### Interface
 
-| Feature                     | Description                                                                                                                                  |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **17 Color Themes**         | Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light, Claude Dark, Claude Light |
-| **Multiple Notes**          | Create, rename, delete, export, import calculation notebooks                                                                                 |
-| **Notes Sidebar**           | Drag-and-drop reorder, search, PDF export                                                                                                    |
-| **History Panel**           | Searchable calculation history with timestamps                                                                                               |
-| **Variable Explorer**       | View and manage all assigned variables                                                                                                       |
-| **Steps Panel**             | Step-by-step evaluation with intermediate results                                                                                            |
-| **Documentation Viewer**    | Built-in docs with offline caching                                                                                                           |
-| **Plugin Marketplace**      | Browse, install, enable/disable plugins                                                                                                      |
-| **Settings**                | General, Theme, UI Style (7 styles with authentic design system styling), Keyboard Shortcuts, About tabs — all real-time, no Save button     |
-| **Configurable Font**       | 17 font options (Sans-Serif, Serif, Monospace) with live preview                                                                             |
-| **Window Opacity**          | Adjustable opacity slider (30%–100%, default 95%) for full-window transparency                                                               |
-| **Line Numbers Toggle**     | Show or hide line number gutter in the calculator editor                                                                                     |
-| **Result Panel Toggle**     | Show or hide the results column on the right side                                                                                            |
-| **Line Wrap Toggle**        | Toggle word wrapping in the editor (horizontal scroll when off)                                                                              |
-| **Customizable Shortcuts**  | Rebind any keyboard shortcut                                                                                                                 |
-| **PDF Export**              | Export notes as formatted A4 PDFs                                                                                                            |
-| **Print**                   | Print with A4 formatting, watermark, and date                                                                                                |
-| **Undo/Redo**               | 200-entry custom stack                                                                                                                       |
-| **Splash Loading Screen**   | Animated logo and loading bar during startup                                                                                                 |
-| **Toast Notifications**     | Non-modal feedback for actions (toggleable)                                                                                                  |
-| **Dirty-State Indicator**   | Accent dot shows unsaved changes                                                                                                             |
-| **Delete Confirmation**     | Optional "Don't ask again" preference                                                                                                        |
-| **Window Dragging**         | Drag title bar to move window                                                                                                                |
-| **Double-Click Fullscreen** | Double-click title bar to toggle maximize                                                                                                    |
-| **Text Selection**          | Select and copy text in docs and plugin details                                                                                              |
-| **Frameless Window**        | Clean, modern window chrome                                                                                                                  |
+| Feature                     | Description                                                                                                                                                                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **27 Color Themes**         | Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light, Blue Trust D/L, Orange Energy D/L, Green Growth D/L, Yellow Optimism D/L, Purple Innovation D/L, Red Passion D/L |
+| **Multiple Notes**          | Create, rename, delete, export, import calculation notebooks                                                                                                                                                                        |
+| **Notes Sidebar**           | Drag-and-drop reorder, search, PDF export                                                                                                                                                                                           |
+| **History Panel**           | Searchable calculation history with timestamps                                                                                                                                                                                      |
+| **Variable Explorer**       | View and manage all assigned variables                                                                                                                                                                                              |
+| **Steps Panel**             | Step-by-step evaluation with intermediate results                                                                                                                                                                                   |
+| **Documentation Viewer**    | Built-in docs with offline caching                                                                                                                                                                                                  |
+| **Plugin Marketplace**      | Browse, install, enable/disable plugins                                                                                                                                                                                             |
+| **Settings**                | General, Theme, UI Style (5 styles with authentic design system styling), Keyboard Shortcuts, About tabs — all real-time, no Save button                                                                                            |
+| **Configurable Font**       | 17 font options (Sans-Serif, Serif, Monospace) with live preview                                                                                                                                                                    |
+| **Window Opacity**          | Adjustable opacity slider (30%–100%, default 95%) for full-window transparency                                                                                                                                                      |
+| **Line Numbers Toggle**     | Show or hide line number gutter in the calculator editor                                                                                                                                                                            |
+| **Result Panel Toggle**     | Show or hide the results column on the right side                                                                                                                                                                                   |
+| **Line Wrap Toggle**        | Toggle word wrapping in the editor (horizontal scroll when off)                                                                                                                                                                     |
+| **Customizable Shortcuts**  | Rebind any keyboard shortcut                                                                                                                                                                                                        |
+| **PDF Export**              | Export notes as formatted A4 PDFs                                                                                                                                                                                                   |
+| **Print**                   | Print with A4 formatting, watermark, and date                                                                                                                                                                                       |
+| **Undo/Redo**               | 200-entry custom stack                                                                                                                                                                                                              |
+| **Splash Loading Screen**   | Animated logo and loading bar during startup                                                                                                                                                                                        |
+| **Toast Notifications**     | Non-modal feedback for actions (toggleable)                                                                                                                                                                                         |
+| **Dirty-State Indicator**   | Accent dot shows unsaved changes                                                                                                                                                                                                    |
+| **Delete Confirmation**     | Optional "Don't ask again" preference                                                                                                                                                                                               |
+| **Window Dragging**         | Drag title bar to move window                                                                                                                                                                                                       |
+| **Double-Click Fullscreen** | Double-click title bar to toggle maximize                                                                                                                                                                                           |
+| **Text Selection**          | Select and copy text in docs and plugin details                                                                                                                                                                                     |
+| **Frameless Window**        | Clean, modern window chrome                                                                                                                                                                                                         |
 
 ### Plugin System
 
@@ -440,7 +402,7 @@ LineSolv/
 │   │   ├── state.go        # Plugin state persistence
 │   │   └── state_test.go   # Plugin state tests
 │   ├── service/            # Wails-bound Go methods
-│   │   └── app.go          # 15+ service methods
+│   │   └── app.go          # 42+ service methods
 │   └── storage/            # Persistence layer
 │       ├── db.go           # SQLite database
 │       ├── config.go       # TOML configuration
@@ -459,7 +421,7 @@ LineSolv/
 │       │   ├── GraphPanel.ts         # Chart.js graphing
 │       │   ├── DocsViewer.ts         # Built-in documentation
 │       │   ├── PluginPanel.ts        # Plugin marketplace
-│   │   ├── SettingsModal.ts      # Settings (5 tabs)
+│       │   ├── SettingsModal.ts      # Settings (5 tabs)
 │       │   ├── ShortcutModal.ts      # Keyboard shortcuts
 │       │   ├── ConfirmDialog.ts      # Confirmation dialogs
 │       │   ├── AutocompletePopup.ts  # Autocomplete dropdown
@@ -481,7 +443,7 @@ LineSolv/
 ├── main.go                 # Entrypoint
 ├── wails.json              # Wails configuration
 ├── go.mod                  # Go module definition
-├── .version                # Current version (0.15.25)
+├── .version                # Current version (0.17.0)
 ├── logo.svg                # Project logo
 ├── docs/examples.txt       # Input examples
 ├── CHANGELOG.md            # Version history
@@ -495,27 +457,31 @@ LineSolv/
 
 ## Documentation
 
-| Guide                                                  | Description                                                             |
-| ------------------------------------------------------ | ----------------------------------------------------------------------- |
-| [User Guide](docs/user-guide.md)                       | Full user documentation with input syntax, themes, shortcuts, and notes |
-| [Getting Started](docs/getting-started.md)             | Quick start for new users                                               |
-| [Configuration](docs/configuration.md)                 | Settings, config file options, and data storage                         |
-| [FAQ & Troubleshooting](docs/faq.md)                   | Frequently asked questions and common issues                            |
-| [Architecture](docs/architecture.md)                   | High-level architecture and component overview                          |
-| [Frontend](docs/frontend.md)                           | Frontend component structure and styling guide                          |
-| [Plugin Development](docs/plugins.md)                  | How to create and install plugins                                       |
-| [Themes](docs/themes.md)                               | Theme customization guide                                               |
-| [Development](docs/development.md)                     | Development setup, build, and code standards                            |
-| [API Reference](docs/api-reference.md)                 | Wails-bound Go method reference                                         |
-| [Calculator Engine](docs/calculator-engine.md)         | How the natural-language calculation engine works                       |
-| [From Words to Numbers](docs/from-words-to-numbers.md) | End-to-end pipeline walkthrough                                         |
-| [Accessibility](ACCESSIBILITY.md)                      | WCAG 2.1 AA compliance and assistive technology support                 |
+| Guide                                                  | Description                                                         |
+| ------------------------------------------------------ | ------------------------------------------------------------------- |
+| [User Guide](docs/user-guide.md)                       | Beginner-friendly guide to using LineSolv                           |
+| [Expression Reference](docs/expression-reference.md)   | Complete expression syntax reference                                |
+| [Interface Details](docs/interface-details.md)         | Documentation viewer, plugin marketplace, settings, design tokens   |
+| [Screenshots](docs/screenshots.md)                     | All screenshots of the LineSolv interface                           |
+| [Getting Started](docs/getting-started.md)             | Quick start for new users                                           |
+| [Configuration](docs/configuration.md)                 | Settings, config file options, and data storage                     |
+| [FAQ & Troubleshooting](docs/faq.md)                   | Frequently asked questions and common issues                        |
+| [Architecture](docs/architecture.md)                   | High-level architecture and component overview                      |
+| [Frontend](docs/frontend.md)                           | Frontend component structure and styling guide                      |
+| [Plugin Development](docs/plugins.md)                  | How to create and install plugins                                   |
+| [Themes](docs/themes.md)                               | Theme customization guide                                           |
+| [Development](docs/development.md)                     | Development setup, build, and code standards                        |
+| [API Reference](docs/api-reference.md)                 | Wails-bound Go method reference                                     |
+| [Calculator Engine](docs/calculator-engine.md)         | How the natural-language calculation engine works                   |
+| [From Words to Numbers](docs/from-words-to-numbers.md) | End-to-end pipeline walkthrough                                     |
+| [Accessibility](ACCESSIBILITY.md)                      | WCAG 2.1 AA compliance and assistive technology support             |
+| [Future Features](extra/future.md)                     | Planned features: AI integration, self-updater, image/voice, mobile |
 
 ## Building from Source
 
 ### Prerequisites
 
-- [Go](https://go.dev) 1.23+
+- [Go](https://go.dev) 1.24+
 - [Wails CLI](https://wails.io) v2.12.0+
 - [Node.js](https://nodejs.org) 20+
 - Linux: `libwebkit2gtk-4.1-dev`, `libgtk-3-dev`

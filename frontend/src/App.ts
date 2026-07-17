@@ -999,7 +999,18 @@ export function renderApp(root: HTMLElement): void {
       }
     },
     getFolders: () =>
-      notesMgr.getFolders().map((f) => ({ id: f.id, name: f.name, parentId: f.parentId })),
+      notesMgr
+        .getFolders()
+        .map((f) => ({ id: f.id, name: f.name, parentId: f.parentId, icon: f.icon })),
+    getNotes: () => notesMgr.getNotes().map((n) => ({ id: n.id, folderId: n.folderId || '' })),
+    reorderNotes: (noteIds: string[]) => {
+      notesMgr.reorderNotes(noteIds);
+      refreshNotesUI();
+    },
+    reorderFolders: (folderIds: string[]) => {
+      notesMgr.reorderFolders(folderIds);
+      refreshNotesUI();
+    },
     isDragAndDropEnabled: () => settingsStore.getState().drag_and_drop,
     isContextMenuNotesEnabled: () => settingsStore.getState().context_menu_notes,
     isContextMenuFoldersEnabled: () => settingsStore.getState().context_menu_folders,

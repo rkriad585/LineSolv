@@ -1,5 +1,6 @@
 import type { HistoryEntry } from '../stores/calculator';
 import { escapeHtml } from '../utils/html';
+import { Icons } from './Icons';
 
 export class HistoryPanel {
   readonly el: HTMLElement;
@@ -15,14 +16,23 @@ export class HistoryPanel {
     this.el.id = 'history-panel';
     this.el.className =
       'shrink-0 flex flex-col overflow-hidden transition-all duration-150 ease-out';
-    this.el.style.cssText = 'width:0;border-right:0;background:var(--surface);order:-1;';
+    this.el.style.cssText = 'width:0px;border-right:0;background:var(--surface);order:-1;';
     this.el.style.borderRightWidth = '0';
 
     const header = document.createElement('div');
     header.className =
-      'px-4 py-2 text-[10px] font-semibold tracking-wider uppercase border-b shrink-0';
+      'px-4 py-2 text-[10px] font-semibold tracking-wider uppercase border-b shrink-0 flex items-center justify-between';
     header.style.cssText = 'color:var(--text-muted);border-color:var(--border);';
-    header.textContent = 'History';
+    const headerTitle = document.createElement('span');
+    headerTitle.textContent = 'History';
+    const closeHeaderBtn = document.createElement('button');
+    closeHeaderBtn.innerHTML = Icons.close();
+    closeHeaderBtn.title = 'Close history';
+    closeHeaderBtn.style.cssText =
+      'display:flex;align-items:center;justify-content:center;width:18px;height:18px;' +
+      'border:none;border-radius:3px;background:transparent;color:var(--text-muted);cursor:pointer;outline:none;';
+    closeHeaderBtn.addEventListener('click', () => this.close());
+    header.append(headerTitle, closeHeaderBtn);
     this.el.appendChild(header);
 
     this.searchInput = document.createElement('input');
@@ -33,6 +43,7 @@ export class HistoryPanel {
       'width:100%;padding:5px 8px;font-size:11px;background:var(--surface-secondary);' +
       'color:var(--text);border:1px solid var(--border);border-radius:4px;outline:none;' +
       'box-sizing:border-box;';
+    this.searchInput.className = 'no-focus-ring';
     this.searchInput.addEventListener('input', () => {
       this.applyFilter();
     });
@@ -127,7 +138,7 @@ export class HistoryPanel {
   }
 
   close(): void {
-    this.el.style.width = '0';
+    this.el.style.width = '0px';
     this.el.style.borderRightWidth = '0';
   }
 

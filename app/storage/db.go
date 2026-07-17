@@ -266,6 +266,16 @@ func (d *DB) SaveNoteContent(id, content string) error {
 var noteIcons = []string{
 	"document", "fileText", "code", "pencil", "star",
 	"lightbulb", "bookmark", "tag", "clock", "heart",
+	"mail", "message", "image", "music", "shield",
+	"gift", "flame", "zap", "target", "compass",
+	"globe", "lock", "eye", "bell", "flag",
+	"terminal", "database", "layers", "leaf", "moon",
+	"cloud", "cpu", "wifi", "checkCircle", "alertTriangle",
+	"helpCircle", "inbox", "calendar", "fileCode2", "trendingUp",
+	"award", "trophy", "gem", "sparkle", "crown",
+	"wand", "puzzle", "blocks", "dice", "gamepad",
+	"headphones", "volume2", "mic", "camera", "film",
+	"bookOpen", "penTool", "scissors", "stamp", "ruler", "medal",
 }
 
 func randomNoteIcon() string {

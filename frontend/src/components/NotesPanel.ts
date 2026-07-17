@@ -19,11 +19,14 @@ type NoteAction = {
   sort?: (field: SortField, dir: SortDir) => void;
   moveNoteToFolder?: (noteId: string, folderId: string) => void;
   moveFolder?: (folderId: string, newParentId: string) => void;
+  reorderNotes?: (noteIds: string[]) => void;
+  reorderFolders?: (folderIds: string[]) => void;
   updateFolderIcon?: (folderId: string, icon: string) => void;
   duplicateNote?: (noteId: string) => void;
   duplicateFolder?: (folderId: string) => void;
   updateNoteIcon?: (noteId: string, icon: string) => void;
-  getFolders?: () => Array<{ id: string; name: string; parentId: string }>;
+  getNotes?: () => Array<{ id: string; folderId: string }>;
+  getFolders?: () => Array<{ id: string; name: string; parentId: string; icon: string }>;
   isDragAndDropEnabled?: () => boolean;
   isContextMenuNotesEnabled?: () => boolean;
   isContextMenuFoldersEnabled?: () => boolean;
@@ -378,16 +381,63 @@ export class NotesPanel {
 
       const target = e.target as HTMLElement;
       const folderItem = target.closest('.folder-item') as HTMLElement | null;
+      const noteItem = target.closest('.note-item') as HTMLElement | null;
       const targetFolderId = folderItem?.dataset.folderId || '';
 
-      if (draggedType === 'note' && this.actions.moveNoteToFolder) {
-        this.actions.moveNoteToFolder(draggedId, targetFolderId);
-      } else if (
-        draggedType === 'folder' &&
-        this.actions.moveFolder &&
-        targetFolderId !== draggedId
-      ) {
-        this.actions.moveFolder(draggedId, targetFolderId);
+      if (draggedType === 'note') {
+        if (folderItem) {
+          // Dropped on a folder → move note into that folder
+          this.actions.moveNoteToFolder?.(draggedId, targetFolderId);
+        } else if (noteItem && noteItem.dataset.noteId !== draggedId) {
+          // Dropped on another note → reorder
+          const targetNoteId = noteItem.dataset.noteId || '';
+          const targetFolderId = noteItem.dataset.folderId || '';
+          // Move note to target's folder first, then reorder
+          this.actions.moveNoteToFolder?.(draggedId, targetFolderId);
+          // Build new order: place dragged note before target note
+          const allNotes = this.actions.getNotes ? this.actions.getNotes() : [];
+          const siblings = allNotes.filter((n) => n.folderId === targetFolderId);
+          const draggedIdx = siblings.findIndex((n) => n.id === draggedId);
+          const targetIdx = siblings.findIndex((n) => n.id === targetNoteId);
+          if (draggedIdx !== -1 && targetIdx !== -1 && draggedIdx !== targetIdx) {
+            const reordered = [...siblings];
+            const [moved] = reordered.splice(draggedIdx, 1);
+            const insertIdx = draggedIdx < targetIdx ? targetIdx - 1 : targetIdx;
+            reordered.splice(insertIdx, 0, moved);
+            this.actions.reorderNotes?.(reordered.map((n) => n.id));
+          }
+        } else {
+          // Dropped on root → move to root
+          this.actions.moveNoteToFolder?.(draggedId, '');
+        }
+      } else if (draggedType === 'folder') {
+        if (folderItem && folderItem.dataset.folderId !== draggedId) {
+          const targetParentId = folderItem.dataset.parentId || '';
+          const draggedParentId =
+            (folderItem.closest('.folder-item') as HTMLElement | null)?.dataset.parentId || '';
+          // Same parent → reorder
+          if (targetParentId === draggedParentId) {
+            const allFolders = this.actions.getFolders ? this.actions.getFolders() : [];
+            const siblings = allFolders.filter((f) => f.parentId === targetParentId);
+            const draggedIdx = siblings.findIndex((f) => f.id === draggedId);
+            const targetIdx = siblings.findIndex((f) => f.id === folderItem.dataset.folderId);
+            if (draggedIdx !== -1 && targetIdx !== -1 && draggedIdx !== targetIdx) {
+              const reordered = [...siblings];
+              const [moved] = reordered.splice(draggedIdx, 1);
+              const insertIdx = draggedIdx < targetIdx ? targetIdx - 1 : targetIdx;
+              reordered.splice(insertIdx, 0, moved);
+              this.actions.reorderFolders?.(reordered.map((f) => f.id));
+            }
+          } else {
+            // Different parent → move as child (with circular reference guard)
+            if (!this.isDescendant(folderItem.dataset.folderId || '', draggedId)) {
+              this.actions.moveFolder?.(draggedId, folderItem.dataset.folderId || '');
+            }
+          }
+        } else {
+          // Dropped on root → move to root
+          this.actions.moveFolder?.(draggedId, '');
+        }
       }
 
       draggedId = '';
@@ -552,7 +602,7 @@ export class NotesPanel {
 
     const childrenHtml = isExpanded ? this.renderNodes(children, activeId) : '';
 
-    return `<div class="folder-item px-2 py-1.5 text-sm cursor-pointer flex items-center" tabindex="-1" data-folder-id="${folder.id}" draggable="${isDraggable}" style="padding-left:${paddingLeft}px;color:var(--text-muted);">
+    return `<div class="folder-item px-2 py-1.5 text-sm cursor-pointer flex items-center" tabindex="-1" data-folder-id="${folder.id}" data-parent-id="${folder.parentId || ''}" draggable="${isDraggable}" style="padding-left:${paddingLeft}px;color:var(--text-muted);">
       <span class="drag-handle" style="width:14px;height:14px;display:flex;align-items:center;cursor:grab;opacity:0;transition:opacity 0.15s;flex-shrink:0;margin-right:2px;">${Icons.dragHandle()}</span>
       <span class="folder-chevron mr-1 flex-shrink-0" style="width:14px;height:14px;display:flex;align-items:center;">${chevron}</span>
       <span class="folder-icon mr-1.5 flex-shrink-0" style="width:14px;height:14px;display:flex;align-items:center;color:var(--accent);">${icon}</span>
@@ -575,7 +625,18 @@ export class NotesPanel {
       : true;
     const icon = note.icon ? getNoteIcon(note.icon) : '';
 
-    return `<div class="note-item px-3 py-1.5 text-sm cursor-pointer flex items-center" tabindex="-1" data-note-id="${note.id}" draggable="${isDraggable}" style="padding-left:${paddingLeft}px;color:${isActive ? 'var(--text)' : 'var(--text-muted)'};background:${isActive ? 'var(--note-bg)' : 'transparent'}"><span class="drag-handle" style="width:14px;height:14px;display:flex;align-items:center;cursor:grab;opacity:0;transition:opacity 0.15s;flex-shrink:0;margin-right:2px;">${Icons.dragHandle()}</span>${icon ? `<span class="note-icon mr-1.5 flex-shrink-0" style="width:14px;height:14px;display:flex;align-items:center;color:var(--accent);">${icon}</span>` : ''}${dot}<span class="truncate">${escapeHtml(note.name)}</span></div>`;
+    return `<div class="note-item px-3 py-1.5 text-sm cursor-pointer flex items-center" tabindex="-1" data-note-id="${note.id}" data-folder-id="${note.folderId || ''}" draggable="${isDraggable}" style="padding-left:${paddingLeft}px;color:${isActive ? 'var(--text)' : 'var(--text-muted)'};background:${isActive ? 'var(--note-bg)' : 'transparent'}"><span class="drag-handle" style="width:14px;height:14px;display:flex;align-items:center;cursor:grab;opacity:0;transition:opacity 0.15s;flex-shrink:0;margin-right:2px;">${Icons.dragHandle()}</span>${icon ? `<span class="note-icon mr-1.5 flex-shrink-0" style="width:14px;height:14px;display:flex;align-items:center;color:var(--accent);">${icon}</span>` : ''}${dot}<span class="truncate">${escapeHtml(note.name)}</span></div>`;
+  }
+
+  private isDescendant(childFolderId: string, ancestorFolderId: string): boolean {
+    const folders = this.actions.getFolders ? this.actions.getFolders() : [];
+    const map = new Map(folders.map((f) => [f.id, f]));
+    let current = map.get(childFolderId);
+    while (current) {
+      if (current.id === ancestorFolderId) return true;
+      current = current.parentId ? map.get(current.parentId) : undefined;
+    }
+    return false;
   }
 
   destroy(): void {
@@ -599,12 +660,16 @@ export class NotesPanel {
     }));
 
     const folders = this.actions.getFolders ? this.actions.getFolders() : [];
-    const moveToChildren: Array<{ label: string; action: () => void }> = folders.map((f) => ({
-      label: f.name,
-      action: () => this.actions.moveNoteToFolder?.(id, f.id),
-    }));
+    const moveToChildren: Array<{ label: string; icon?: string; action: () => void }> = folders.map(
+      (f) => ({
+        label: f.name,
+        icon: getFolderIcon(f.icon),
+        action: () => this.actions.moveNoteToFolder?.(id, f.id),
+      }),
+    );
     moveToChildren.unshift({
       label: 'Root',
+      icon: Icons.folder(),
       action: () => this.actions.moveNoteToFolder?.(id, ''),
     });
 
@@ -618,6 +683,59 @@ export class NotesPanel {
       { id: 'tag', label: 'Tag', icon: Icons.tag() },
       { id: 'clock', label: 'Clock', icon: Icons.clock() },
       { id: 'lightbulb', label: 'Idea', icon: Icons.lightbulb() },
+      { id: 'mail', label: 'Mail', icon: Icons.mail() },
+      { id: 'message', label: 'Message', icon: Icons.message() },
+      { id: 'image', label: 'Image', icon: Icons.image() },
+      { id: 'music', label: 'Music', icon: Icons.music() },
+      { id: 'shield', label: 'Shield', icon: Icons.shield() },
+      { id: 'gift', label: 'Gift', icon: Icons.gift() },
+      { id: 'flame', label: 'Fire', icon: Icons.flame() },
+      { id: 'zap', label: 'Bolt', icon: Icons.zap() },
+      { id: 'target', label: 'Target', icon: Icons.target() },
+      { id: 'compass', label: 'Compass', icon: Icons.compass() },
+      { id: 'globe', label: 'Globe', icon: Icons.globe() },
+      { id: 'lock', label: 'Lock', icon: Icons.lock() },
+      { id: 'eye', label: 'Eye', icon: Icons.eye() },
+      { id: 'bell', label: 'Bell', icon: Icons.bell() },
+      { id: 'flag', label: 'Flag', icon: Icons.flag() },
+      { id: 'map', label: 'Map', icon: Icons.map() },
+      { id: 'terminal', label: 'Terminal', icon: Icons.terminal() },
+      { id: 'database', label: 'Database', icon: Icons.database() },
+      { id: 'layers', label: 'Layers', icon: Icons.layers() },
+      { id: 'leaf', label: 'Leaf', icon: Icons.leaf() },
+      { id: 'moon', label: 'Moon', icon: Icons.moon() },
+      { id: 'cloud', label: 'Cloud', icon: Icons.cloud() },
+      { id: 'cpu', label: 'CPU', icon: Icons.cpu() },
+      { id: 'wifi', label: 'Wifi', icon: Icons.wifi() },
+      { id: 'checkCircle', label: 'Check', icon: Icons.checkCircle() },
+      { id: 'alertTriangle', label: 'Alert', icon: Icons.alertTriangle() },
+      { id: 'helpCircle', label: 'Help', icon: Icons.helpCircle2() },
+      { id: 'inbox', label: 'Inbox', icon: Icons.inbox() },
+      { id: 'calendar', label: 'Calendar', icon: Icons.calendar() },
+      { id: 'fileCode2', label: 'Code File', icon: Icons.fileCode2() },
+      { id: 'trendingUp', label: 'Trending Up', icon: Icons.trendingUp() },
+      { id: 'trendingDown', label: 'Trending Down', icon: Icons.trendingDown() },
+      { id: 'award', label: 'Award', icon: Icons.award() },
+      { id: 'trophy', label: 'Trophy', icon: Icons.trophy() },
+      { id: 'gem', label: 'Gem', icon: Icons.gem() },
+      { id: 'sparkle', label: 'Sparkle', icon: Icons.sparkle() },
+      { id: 'crown', label: 'Crown', icon: Icons.crown() },
+      { id: 'wand', label: 'Magic', icon: Icons.wand() },
+      { id: 'puzzle', label: 'Puzzle', icon: Icons.puzzle() },
+      { id: 'blocks', label: 'Blocks', icon: Icons.blocks() },
+      { id: 'dice', label: 'Dice', icon: Icons.dice() },
+      { id: 'gamepad', label: 'Game', icon: Icons.gamepad() },
+      { id: 'headphones', label: 'Audio', icon: Icons.headphones() },
+      { id: 'volume2', label: 'Volume', icon: Icons.volume2() },
+      { id: 'mic', label: 'Mic', icon: Icons.mic2() },
+      { id: 'camera', label: 'Camera', icon: Icons.camera2() },
+      { id: 'film', label: 'Film', icon: Icons.film() },
+      { id: 'bookOpen', label: 'Book', icon: Icons.bookOpen() },
+      { id: 'penTool', label: 'Design', icon: Icons.penTool() },
+      { id: 'scissors', label: 'Edit', icon: Icons.scissors2() },
+      { id: 'stamp', label: 'Stamp', icon: Icons.stamp() },
+      { id: 'ruler', label: 'Measure', icon: Icons.ruler() },
+      { id: 'medal', label: 'Medal', icon: Icons.medal() },
     ];
     const iconChildren: Array<{ label: string; icon?: string; action: () => void }> =
       iconOptions.map((opt) => ({
@@ -735,14 +853,16 @@ export class NotesPanel {
       }));
 
     const folders = this.actions.getFolders ? this.actions.getFolders() : [];
-    const moveToChildren: Array<{ label: string; action: () => void }> = folders
+    const moveToChildren: Array<{ label: string; icon?: string; action: () => void }> = folders
       .filter((f) => f.id !== folderId)
       .map((f) => ({
         label: f.name,
+        icon: getFolderIcon(f.icon),
         action: () => this.actions.moveFolder?.(folderId, f.id),
       }));
     moveToChildren.unshift({
       label: 'Root',
+      icon: Icons.folder(),
       action: () => this.actions.moveFolder?.(folderId, ''),
     });
 

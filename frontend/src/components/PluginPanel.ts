@@ -1,4 +1,5 @@
 import * as serviceBindings from '../../wailsjs/go/service/AppService';
+import { Icons } from './Icons';
 import { toast } from '../utils/toast';
 
 interface RemotePlugin {
@@ -46,24 +47,15 @@ interface PluginManifest {
 const PLUGINS_REPO_URL = 'https://raw.githubusercontent.com/rkriad585/linesolv-plugins/main';
 const PLUGINS_INDEX_URL = `${PLUGINS_REPO_URL}/plugins.json`;
 
-const CLOSE_ICON =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-const SEARCH_ICON =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
-const REFRESH_ICON =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
-const DOWNLOAD_ICON =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
-const CHECK_ICON =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-const TRASH_ICON =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
-const UPDATE_ICON =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
-const PLUGIN_ICON =
-  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="15" x2="14" y2="15"/></svg>';
-const BACK_ICON =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+const CLOSE_ICON = Icons.close();
+const SEARCH_ICON = Icons.search();
+const REFRESH_ICON = Icons.refresh();
+const DOWNLOAD_ICON = Icons.download();
+const CHECK_ICON = Icons.check();
+const TRASH_ICON = Icons.trash();
+const UPDATE_ICON = Icons.refresh();
+const PLUGIN_ICON = Icons.logo(16, 16);
+const BACK_ICON = Icons.chevronLeft();
 const SPINNER =
   '<div style="width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;"></div>';
 
@@ -75,10 +67,8 @@ function esc(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
-const COPY_ICON =
-  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-const CHECK_CIRCLE_ICON =
-  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+const COPY_ICON = Icons.copy();
+const CHECK_CIRCLE_ICON = Icons.checkCircle();
 
 function md(text: string, codeBlocks?: string[]): string {
   const blocks: string[] = [];
@@ -266,6 +256,7 @@ export class PluginPanel {
     this.searchInput = document.createElement('input');
     this.searchInput.type = 'text';
     this.searchInput.placeholder = 'Search plugins...';
+    this.searchInput.className = 'no-focus-ring';
     this.searchInput.style.cssText =
       'width:250px;padding:6px 10px 6px 30px;border:1px solid var(--border);border-radius:var(--ui-radius-sm);' +
       'background:var(--surface);color:var(--text);font-size:13px;outline:none;';

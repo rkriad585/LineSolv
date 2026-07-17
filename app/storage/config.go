@@ -34,6 +34,10 @@ type Config struct {
 		UIStyle             string `toml:"ui_style"`
 		ThemeManuallySet    string `toml:"theme_manually_set"`
 		Noise               string `toml:"noise"`
+		ContextMenuNotes    string `toml:"context_menu_notes"`
+		ContextMenuFolders  string `toml:"context_menu_folders"`
+		DragAndDrop         string `toml:"drag_and_drop"`
+		ConfirmDialog       string `toml:"confirm_dialog"`
 	} `toml:"settings"`
 }
 
@@ -61,6 +65,10 @@ func DefaultConfig() *Config {
 	c.Settings.UIStyle = "default"
 	c.Settings.ThemeManuallySet = "false"
 	c.Settings.Noise = "0"
+	c.Settings.ContextMenuNotes = "true"
+	c.Settings.ContextMenuFolders = "true"
+	c.Settings.DragAndDrop = "true"
+	c.Settings.ConfirmDialog = "true"
 	return c
 }
 
@@ -125,6 +133,10 @@ func SaveConfig(cfg *Config) error {
 	fmt.Fprintf(&buf, "ui_style = %q\n", cfg.Settings.UIStyle)
 	fmt.Fprintf(&buf, "theme_manually_set = %q\n", cfg.Settings.ThemeManuallySet)
 	fmt.Fprintf(&buf, "noise = %q\n", cfg.Settings.Noise)
+	fmt.Fprintf(&buf, "context_menu_notes = %q\n", cfg.Settings.ContextMenuNotes)
+	fmt.Fprintf(&buf, "context_menu_folders = %q\n", cfg.Settings.ContextMenuFolders)
+	fmt.Fprintf(&buf, "drag_and_drop = %q\n", cfg.Settings.DragAndDrop)
+	fmt.Fprintf(&buf, "confirm_dialog = %q\n", cfg.Settings.ConfirmDialog)
 
 	// Atomic write: write to temp file, then rename
 	tmp := dir + ".tmp"
@@ -231,6 +243,14 @@ func parseConfigTOML(data string, cfg *Config) {
 				cfg.Settings.ThemeManuallySet = val
 			case "noise":
 				cfg.Settings.Noise = val
+			case "context_menu_notes":
+				cfg.Settings.ContextMenuNotes = val
+			case "context_menu_folders":
+				cfg.Settings.ContextMenuFolders = val
+			case "drag_and_drop":
+				cfg.Settings.DragAndDrop = val
+			case "confirm_dialog":
+				cfg.Settings.ConfirmDialog = val
 			}
 		default:
 			switch key {

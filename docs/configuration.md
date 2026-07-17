@@ -21,7 +21,7 @@ The configuration file uses TOML format. A typical `config.toml` looks like:
 
 [app]
 theme = "dark"
-version = "0.15.25"
+version = "0.17.0"
 
 [notes]
 last_active = "abc123-def456"
@@ -51,10 +51,10 @@ theme_manually_set = "false"
 
 Controls application-level preferences.
 
-| Key       | Type   | Default  | Description                                                                                                                                                                                                                  |
-| --------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `theme`   | string | `"dark"` | Active theme. Options: `dark`, `light`, `neon`, `red`, `obsidian`, `plasma`, `blood`, `midnight`, `aurora`, `mono`, `frost`, `prism`, `lavender`, `sage`, `warm-light`, `claude-dark`, `claude-light`. Plugins may add more. |
-| `version` | string | —        | Last-run LineSolv version. Managed automatically.                                                                                                                                                                            |
+| Key       | Type   | Default  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| --------- | ------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `theme`   | string | `"dark"` | Active theme. Options: `dark`, `light`, `neon`, `red`, `obsidian`, `plasma`, `blood`, `midnight`, `aurora`, `mono`, `frost`, `prism`, `lavender`, `sage`, `warm-light`, `blue-trust-dark`, `blue-trust-light`, `orange-energy-dark`, `orange-energy-light`, `green-growth-dark`, `green-growth-light`, `yellow-optimism-dark`, `yellow-optimism-light`, `purple-innovation-dark`, `purple-innovation-light`, `red-passion-dark`, `red-passion-light`. Plugins may add more. |
+| `version` | string | —        | Last-run LineSolv version. Managed automatically.                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 ### `[notes]`
 
@@ -89,8 +89,13 @@ Controls display and input preferences.
 | `autocomplete_enabled` | string | `"true"`               | Enable variable/function autocomplete suggestions.                                                |
 | `animations_enabled`   | string | `"true"`               | Enable UI animations (transitions, toast slide-ins).                                              |
 | `toast_enabled`        | string | `"true"`               | Show toast notifications for actions and errors.                                                  |
-| `ui_style`             | string | `"default"`            | UI style. Options: `default`, `nothing`, `glass`, `material`, `alivated`, `neon`, `claude`.       |
+| `ui_style`             | string | `"default"`            | UI style. Options: `default`, `glass`, `material`, `alivated`, `neon`.                            |
 | `theme_manually_set`   | string | `"false"`              | Whether the user manually selected a theme (vs. auto-selected by UI style).                       |
+| `noise`                | string | `"0.0"`                | Background noise overlay intensity (0.0 = off, higher = more visible grain).                      |
+| `context_menu_notes`   | string | `"true"`               | Show the context menu when right-clicking notes in the sidebar.                                   |
+| `context_menu_folders` | string | `"true"`               | Show the context menu when right-clicking folders in the sidebar.                                 |
+| `drag_and_drop`        | string | `"true"`               | Enable drag and drop for reordering notes and folders in the sidebar.                             |
+| `confirm_dialog`       | string | `"true"`               | Show confirmation dialogs for destructive actions (delete, overwrite, etc.).                      |
 
 ## Data Directory
 

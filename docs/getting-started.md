@@ -40,6 +40,18 @@ When you open LineSolv for the first time you'll see a splash screen with the Li
 
 The title bar is draggable (double-click to maximize). Panels and settings are accessible via keyboard shortcuts — press `?` to see them all. Documentation and Settings can also be reached from the `...` dropdown menu in the title bar (`Ctrl/Cmd + J` for Docs, `` Ctrl/Cmd + ` `` for Settings).
 
+## Notes and Folders
+
+The notes sidebar (`Ctrl/Cmd + B`) lets you organize calculations into multiple notebooks. Notes can be organized into hierarchical folders with drag-and-drop reordering. Right-click any note or folder for options to rename, duplicate, change icons (63 note icons, 47 folder icons), move, export (6 formats), import, and delete. New notes get fun "Adjective Noun" names automatically.
+
+## Autocomplete
+
+As you type, a real-time autocomplete popup suggests functions, constants, units, variables, and keywords from a pool of 236+ entries across 6 categories. Navigate with arrow keys and select with Enter, or dismiss with Escape. Toggle it in **Settings > General > Autocomplete**.
+
+## Customization
+
+LineSolv offers **27 built-in themes** (Dark, Light, Neon, Red, Obsidian, Plasma, Blood, Midnight, Aurora, Mono, Frost, Prism, Lavender, Sage, Warm Light, plus 12 psychology-themed variants) and **5 UI styles** (Default, Liquid Glass, Material 3, Alivated, Neon). Switch themes and styles instantly in **Settings**. You can also choose from 17 fonts and adjust font size, opacity, and more.
+
 ## Your First Calculation
 
 Type any math expression and the result appears instantly in the results column to the right.
@@ -148,7 +160,8 @@ Purchase math with tax and discounts:
 
 ## What's Next?
 
-- [User Guide](user-guide.md) — Full reference for all input patterns, functions, and features
+- [User Guide](user-guide.md) — Beginner-friendly guide to using LineSolv
+- [Expression Reference](expression-reference.md) — Complete expression syntax reference
 - [Plugins](plugins.md) — Browse, install, and create plugins
 - [FAQ](faq.md) — Troubleshooting and frequently asked questions
 - [Configuration](configuration.md) — Customize themes, fonts, shortcuts, and data storage

@@ -5,13 +5,6 @@ import (
 	"math/rand/v2"
 )
 
-var fancyEmoji = []string{
-	"🚀", "🌊", "🌟", "🌿", "🔥", "💡", "🎯", "🌈", "⚡", "🌙",
-	"☀️", "🍃", "📐", "🎨", "🔬", "🎵", "📝", "🌌", "🏔️", "🌴",
-	"🐚", "🦋", "🍀", "✨", "🎭", "🎪", "🎠", "🎡", "🏗️", "🧩",
-	"💎", "🔮", "🎆", "🌺", "🪐", "🌋", "🏝️", "🎄", "🍁", "🌸",
-}
-
 var fancyAdjectives = []string{
 	"Cosmic", "Ocean", "Stellar", "Verdant", "Blazing", "Bright",
 	"Focused", "Prismatic", "Electric", "Lunar", "Solar", "Zen",
@@ -31,8 +24,7 @@ var fancyNouns = []string{
 }
 
 func GenerateFancyName() string {
-	emoji := fancyEmoji[rand.IntN(len(fancyEmoji))]         //nolint:gosec // intentionally weak PRNG for name generation
-	adj := fancyAdjectives[rand.IntN(len(fancyAdjectives))] //nolint:gosec
+	adj := fancyAdjectives[rand.IntN(len(fancyAdjectives))] //nolint:gosec // intentionally weak PRNG for name generation
 	noun := fancyNouns[rand.IntN(len(fancyNouns))]          //nolint:gosec
-	return fmt.Sprintf("%s %s %s", emoji, adj, noun)
+	return fmt.Sprintf("%s %s", adj, noun)
 }

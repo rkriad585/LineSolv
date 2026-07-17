@@ -12,28 +12,28 @@ LineSolv is committed to making its calculator accessible to all users, includin
 
 ### Global Shortcuts
 
-| Key | Action |
-|-----|--------|
-| `Tab` | Insert 2 spaces in textarea (see Limitations) |
-| `Shift+Tab` | Insert 2 spaces in textarea (see Limitations) |
-| `Enter` | Activate buttons, submit calculation |
-| `Space` | Toggle checkboxes and switches |
-| `Escape` | Close sidebar panels, dismiss errors, close modals |
-| `Arrow keys` | Navigate within sidebar tabs and history list |
-| `Ctrl/Cmd + Z` | Undo |
-| `Ctrl/Cmd + Shift + Z` / `Ctrl/Cmd + Y` | Redo |
-| `Ctrl/Cmd + D` | Duplicate line |
-| `Ctrl/Cmd + L` | Select current line |
-| `Ctrl/Cmd + Shift + K` | Delete current line |
-| `Alt + Shift` | Toggle case |
-| `Alt + Arrow Up/Down` | Move line up/down |
-| `F11` | Toggle fullscreen |
-| `Ctrl/Cmd + F` | Search notes |
-| `Ctrl/Cmd + P` | Print |
-| `Ctrl/Cmd + J` | Open docs panel |
-| `Ctrl/Cmd + /` | Show shortcuts reference |
-| `Ctrl/Cmd + ,` | Open settings |
-| `Ctrl/Cmd + `` ` | Open settings (alternate) |
+| Key                                     | Action                                             |
+| --------------------------------------- | -------------------------------------------------- |
+| `Tab`                                   | Insert 2 spaces in textarea (see Limitations)      |
+| `Shift+Tab`                             | Insert 2 spaces in textarea (see Limitations)      |
+| `Enter`                                 | Activate buttons, submit calculation               |
+| `Space`                                 | Toggle checkboxes and switches                     |
+| `Escape`                                | Close sidebar panels, dismiss errors, close modals |
+| `Arrow keys`                            | Navigate within sidebar tabs and history list      |
+| `Ctrl/Cmd + Z`                          | Undo                                               |
+| `Ctrl/Cmd + Shift + Z` / `Ctrl/Cmd + Y` | Redo                                               |
+| `Ctrl/Cmd + D`                          | Duplicate line                                     |
+| `Ctrl/Cmd + L`                          | Select current line                                |
+| `Ctrl/Cmd + Shift + K`                  | Delete current line                                |
+| `Alt + Shift`                           | Toggle case                                        |
+| `Alt + Arrow Up/Down`                   | Move line up/down                                  |
+| `F11`                                   | Toggle fullscreen                                  |
+| `Ctrl/Cmd + F`                          | Search notes                                       |
+| `Ctrl/Cmd + P`                          | Print                                              |
+| `Ctrl/Cmd + J`                          | Open docs panel                                    |
+| `Ctrl/Cmd + /`                          | Show shortcuts reference                           |
+| `Ctrl/Cmd + ,`                          | Open settings                                      |
+| `Ctrl/Cmd + `` `                        | Open settings (alternate)                          |
 
 ### Component Keyboard Patterns
 
@@ -70,20 +70,24 @@ LineSolv is committed to making its calculator accessible to all users, includin
 
 ### Theme Contrast Ratios
 
-LineSolv offers 7 UI styles (6 theme families plus Claude Code) and 17 built-in themes (including claude-dark and claude-light). The Claude Code style uses a terracotta accent (`#c96442`) which provides good contrast against both its dark surface (`#141413`) and light surface (`#f5f4ed`). The Material 3 style implements proper state layers with hover, focus, and press opacity feedback.
+LineSolv offers 5 UI styles and 27 built-in themes. The Material 3 style implements proper state layers with hover, focus, and press opacity feedback.
 
-Each of the 17 built-in themes is designed to meet WCAG 2.1 AA contrast requirements:
+Each of the 27 built-in themes is designed to meet WCAG 2.1 AA contrast requirements:
 
-| Content Type | Minimum Ratio |
-|-------------|---------------|
-| Normal text (< 18pt) | 4.5:1 |
-| Large text (18pt+ or 14pt+ bold) | 3:1 |
-| UI components and borders | 3:1 |
-| Focus indicators | 3:1 against adjacent colors |
+| Content Type                     | Minimum Ratio               |
+| -------------------------------- | --------------------------- |
+| Normal text (< 18pt)             | 4.5:1                       |
+| Large text (18pt+ or 14pt+ bold) | 3:1                         |
+| UI components and borders        | 3:1                         |
+| Focus indicators                 | 3:1 against adjacent colors |
 
 ### Color as Information
 
 Color is never the sole means of conveying information. Error states include text labels alongside color changes.
+
+### CVD-Safe Status Tokens
+
+All 27 built-in themes include standardized CVD-safe (color-vision-deficiency safe) status tokens — `--color-error`, `--color-success`, `--color-warning`, `--color-info` — that use luminance-safe color pairs with sufficient contrast against both dark and light surfaces. These ensure status indicators are distinguishable by users with protanopia, deuteranopia, and tritanopia.
 
 ## Visual Accommodations
 
@@ -101,20 +105,20 @@ The `forced-colors` media query is not yet implemented. Custom toggle switches, 
 
 ## Current Known Limitations
 
-| Issue | Status |
-|-------|--------|
-| Tab key inserts spaces in textarea, preventing standard focus navigation out of the editor | Known limitation |
-| Custom toggle switches (Autocomplete, Animations, Toast, Line Numbers, Result Panel, Line Wrap) use `display:none` checkboxes — not keyboard accessible | Planned |
-| No `role="dialog"` or focus trapping in Settings, Shortcuts, or Confirm modals | Planned |
-| No ARIA tab pattern on settings modal tabs | Planned |
-| Autocomplete popup lacks ARIA combobox pattern (`role="listbox"`, `role="option"`) | Planned |
-| Context menu items lack `role="menuitem"` and arrow key navigation | Planned |
-| Toast notifications not announced to screen readers (no `aria-live`) | Planned |
-| Graph panel chart has no text alternative for screen readers | Planned |
-| Font select dropdown lacks keyboard navigation and ARIA attributes | Planned |
-| No `forced-colors` CSS for Windows High Contrast Mode | Planned |
-| Frameless window may not receive focus on initial activation (Wails limitation #3783) | Under investigation |
-| Theme contrast ratios not yet formally audited with automated tools | Planned for v1.0 |
+| Issue                                                                                                                                                   | Status              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| Tab key inserts spaces in textarea, preventing standard focus navigation out of the editor                                                              | Known limitation    |
+| Custom toggle switches (Autocomplete, Animations, Toast, Line Numbers, Result Panel, Line Wrap) use `display:none` checkboxes — not keyboard accessible | Planned             |
+| No `role="dialog"` or focus trapping in Settings, Shortcuts, or Confirm modals                                                                          | Planned             |
+| No ARIA tab pattern on settings modal tabs                                                                                                              | Planned             |
+| Autocomplete popup lacks ARIA combobox pattern (`role="listbox"`, `role="option"`)                                                                      | Planned             |
+| Context menu items lack `role="menuitem"` and arrow key navigation                                                                                      | Planned             |
+| Toast notifications not announced to screen readers (no `aria-live`)                                                                                    | Planned             |
+| Graph panel chart has no text alternative for screen readers                                                                                            | Planned             |
+| Font select dropdown lacks keyboard navigation and ARIA attributes                                                                                      | Planned             |
+| No `forced-colors` CSS for Windows High Contrast Mode                                                                                                   | Planned             |
+| Frameless window may not receive focus on initial activation (Wails limitation #3783)                                                                   | Under investigation |
+| Theme contrast ratios not yet formally audited with automated tools                                                                                     | Planned for v1.0    |
 
 ## Feedback
 
@@ -133,8 +137,9 @@ We aim to respond to accessibility reports within 5 business days.
 
 ## Revision History
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2026-07-15 | 1.2 | Added Ctrl+J, Ctrl+` shortcuts; documented "..." dropdown menu ARIA, splash screen, new toggle switches |
-| 2026-07-15 | 1.1 | Updated to match actual implementation; added known limitations |
-| 2026-07-12 | 1.0 | Initial accessibility statement |
+| Date       | Version | Changes                                                                                                 |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------------- |
+| 2026-07-16 | 1.3     | Added CVD-safe status tokens, tinted gray scale; updated to 27 themes and 5 UI styles                   |
+| 2026-07-15 | 1.2     | Added Ctrl+J, Ctrl+` shortcuts; documented "..." dropdown menu ARIA, splash screen, new toggle switches |
+| 2026-07-15 | 1.1     | Updated to match actual implementation; added known limitations                                         |
+| 2026-07-12 | 1.0     | Initial accessibility statement                                                                         |

@@ -2,6 +2,19 @@
 
 ## [Released]
 
+## [0.17.0] — 2026-07-17
+
+### Added
+
+- **9 New Feature Sections for future.md** — Rich Note Editor (#22), Spreadsheet Export (#23), Document Export (#24), Smart Templates (#25), Calculation History Analytics (#26), Multi-language Support (#27), Offline AI (#28), Smart Suggestions (#29), Data Visualization Dashboard (#30).
+- **CLI Interface Expanded** — Added `self-uninstall` (with `--purge`), `update`/`u` (self-update + plugin shorthand), `i`/`install` shorthand, `doctor` diagnostics, `config` management, `plugin update`/`plugin search`/`plugin info` commands with full usage examples.
+- **Implementation Roadmap Extended** — Expanded from 5 phases (25 items) to 6 phases (34 items) spanning 2026 Q3 → 2027 Q4.
+- **Dependencies & Security Tables Expanded** — 31 dependency entries (13 new), 24 security considerations (9 new).
+
+### Changed
+
+- **Docs Restructured** — Created `docs/screenshots.md`, `docs/expression-reference.md`, `docs/interface-details.md` as standalone files; rewrote `README.md` and `docs/user-guide.md` as clean beginner-friendly guides with footer TOC linking all 23 docs.
+
 ## [0.16.0] — 2026-07-16
 
 ### Added
@@ -12,9 +25,9 @@
 
 ### Changed
 
-- **Status Colors Standardized** — All 29 themes now use consistent CVD-safe status colors: dark themes (`#f87171`/`#4ade80`), light themes (`#dc2626`/`#16a34a`).
+- **Status Colors Standardized** — All 27 built-in themes now use consistent CVD-safe status colors: dark themes (`#f87171`/`#4ade80`), light themes (`#dc2626`/`#16a34a`).
 - **Accent Color Adjusted** — Warm Light theme accent changed from `#fbbf24` to `#d4a017` for better contrast on warm dark background.
-- **Theme Count** — 17 → 29 themes (12 new + 17 existing).
+- **Theme Count** — 17 → 27 themes (12 new + 15 existing).
 
 ## [0.15.25] — 2026-07-16
 
@@ -443,6 +456,8 @@
 - Error handling now returns descriptive `"Error: ..."` strings instead of silent empty strings
 - `println` replaced with `log.Println` for structured logging
 
+[0.17.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.17.0
+[0.16.0]: https://github.com/rkriad585/LineSolv/releases/tag/v0.16.0
 [0.15.25]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.25
 [0.15.20]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.20
 [0.15.10]: https://github.com/rkriad585/LineSolv/releases/tag/v0.15.10
