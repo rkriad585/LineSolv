@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,6 +34,17 @@ type Note struct {
 	CreatedAt int64  `json:"createdAt"`
 	UpdatedAt int64  `json:"updatedAt"`
 	Position  int    `json:"position"`
+	FolderID  string `json:"folderId"`
+}
+
+type Folder struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	ParentID  string `json:"parentId"`
+	Icon      string `json:"icon"`
+	Position  int    `json:"position"`
+	CreatedAt int64  `json:"createdAt"`
+	UpdatedAt int64  `json:"updatedAt"`
 }
 
 type DB struct {
@@ -50,6 +62,9 @@ func NewDB() (*DB, error) {
 	conn.SetMaxOpenConns(1)
 	if _, err := conn.Exec(`PRAGMA journal_mode=WAL`); err != nil {
 		return nil, fmt.Errorf("enable wal: %w", err)
+	}
+	if _, err := conn.Exec(`PRAGMA foreign_keys = ON`); err != nil {
+		return nil, fmt.Errorf("enable foreign keys: %w", err)
 	}
 	if _, err := conn.Exec(`CREATE TABLE IF NOT EXISTS notes (
 		id TEXT PRIMARY KEY,
@@ -69,6 +84,26 @@ func NewDB() (*DB, error) {
 	if _, err := conn.Exec(`ALTER TABLE notes ADD COLUMN position INTEGER NOT NULL DEFAULT 0`); err == nil {
 		_, _ = conn.Exec(`UPDATE notes SET position = rowid`) //nolint:errcheck
 	}
+	if _, err := conn.Exec(`ALTER TABLE notes ADD COLUMN folder_id TEXT DEFAULT NULL`); err == nil { //nolint:errcheck
+	}
+	if _, err := conn.Exec(`CREATE TABLE IF NOT EXISTS folders (
+		id TEXT PRIMARY KEY,
+		name TEXT NOT NULL,
+		parent_id TEXT DEFAULT NULL,
+		icon TEXT DEFAULT 'folder',
+		position INTEGER NOT NULL DEFAULT 0,
+		created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+		updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+		FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE
+	)`); err != nil {
+		return nil, fmt.Errorf("create folders table: %w", err)
+	}
+	if _, err := conn.Exec(`CREATE INDEX IF NOT EXISTS idx_folders_parent ON folders(parent_id, position)`); err != nil {
+		return nil, fmt.Errorf("create folders index: %w", err)
+	}
+	if _, err := conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_folder ON notes(folder_id, position)`); err != nil {
+		return nil, fmt.Errorf("create notes folder index: %w", err)
+	}
 	if _, err := conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_sort ON notes(position, updated_at)`); err != nil {
 		return nil, fmt.Errorf("create sort index: %w", err)
 	}
@@ -81,9 +116,12 @@ func NewTestDB() *DB {
 	if err != nil {
 		panic(err)
 	}
-	_, _ = conn.Exec(`CREATE TABLE IF NOT EXISTS notes (id TEXT PRIMARY KEY, name TEXT NOT NULL, content TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, position INTEGER NOT NULL DEFAULT 0)`) //nolint:errcheck
-	_, _ = conn.Exec(`CREATE TABLE IF NOT EXISTS currency_cache (rates TEXT NOT NULL, updated_at INTEGER NOT NULL)`)                                                                                                                //nolint:errcheck
-	_, _ = conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_sort ON notes(position, updated_at)`)                                                                                                                                    //nolint:errcheck
+	_, _ = conn.Exec(`CREATE TABLE IF NOT EXISTS notes (id TEXT PRIMARY KEY, name TEXT NOT NULL, content TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, position INTEGER NOT NULL DEFAULT 0, folder_id TEXT DEFAULT NULL)`)                                                               //nolint:errcheck
+	_, _ = conn.Exec(`CREATE TABLE IF NOT EXISTS folders (id TEXT PRIMARY KEY, name TEXT NOT NULL, parent_id TEXT DEFAULT NULL, icon TEXT DEFAULT 'folder', position INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE)`) //nolint:errcheck
+	_, _ = conn.Exec(`CREATE TABLE IF NOT EXISTS currency_cache (rates TEXT NOT NULL, updated_at INTEGER NOT NULL)`)                                                                                                                                                                                                           //nolint:errcheck
+	_, _ = conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_sort ON notes(position, updated_at)`)                                                                                                                                                                                                                               //nolint:errcheck
+	_, _ = conn.Exec(`CREATE INDEX IF NOT EXISTS idx_folders_parent ON folders(parent_id, position)`)                                                                                                                                                                                                                          //nolint:errcheck
+	_, _ = conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_folder ON notes(folder_id, position)`)                                                                                                                                                                                                                              //nolint:errcheck
 	return &DB{conn: conn}
 }
 
@@ -92,7 +130,7 @@ func (d *DB) Close() error {
 }
 
 func (d *DB) GetAllNotes() ([]Note, error) {
-	rows, err := d.conn.Query(`SELECT id, name, content, created_at, updated_at, position FROM notes ORDER BY position ASC, updated_at DESC`)
+	rows, err := d.conn.Query(`SELECT id, name, content, created_at, updated_at, position, COALESCE(folder_id, '') FROM notes ORDER BY position ASC, updated_at DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +138,7 @@ func (d *DB) GetAllNotes() ([]Note, error) {
 	var notes []Note
 	for rows.Next() {
 		var n Note
-		if err := rows.Scan(&n.ID, &n.Name, &n.Content, &n.CreatedAt, &n.UpdatedAt, &n.Position); err != nil {
+		if err := rows.Scan(&n.ID, &n.Name, &n.Content, &n.CreatedAt, &n.UpdatedAt, &n.Position, &n.FolderID); err != nil {
 			return nil, err
 		}
 		notes = append(notes, n)
@@ -110,8 +148,8 @@ func (d *DB) GetAllNotes() ([]Note, error) {
 
 func (d *DB) GetNote(id string) (*Note, error) {
 	var n Note
-	err := d.conn.QueryRow(`SELECT id, name, content, created_at, updated_at, position FROM notes WHERE id = ?`, id).
-		Scan(&n.ID, &n.Name, &n.Content, &n.CreatedAt, &n.UpdatedAt, &n.Position)
+	err := d.conn.QueryRow(`SELECT id, name, content, created_at, updated_at, position, COALESCE(folder_id, '') FROM notes WHERE id = ?`, id).
+		Scan(&n.ID, &n.Name, &n.Content, &n.CreatedAt, &n.UpdatedAt, &n.Position, &n.FolderID)
 	if err != nil {
 		return nil, err
 	}
@@ -119,34 +157,54 @@ func (d *DB) GetNote(id string) (*Note, error) {
 }
 
 func (d *DB) CreateNote(name string) (*Note, error) {
+	return d.CreateNoteInFolder(name, "")
+}
+
+func (d *DB) CreateNoteInFolder(name, folderID string) (*Note, error) {
 	now := time.Now().UnixMilli()
 	id := uuid.NewString()
 	var pos int
 	_ = d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM notes`).Scan(&pos) //nolint:errcheck
-	_, err := d.conn.Exec(`INSERT INTO notes (id, name, content, created_at, updated_at, position) VALUES (?, ?, '', ?, ?, ?)`,
-		id, name, now, now, pos)
+	var fid *string
+	if folderID != "" {
+		fid = &folderID
+	}
+	_, err := d.conn.Exec(`INSERT INTO notes (id, name, content, created_at, updated_at, position, folder_id) VALUES (?, ?, '', ?, ?, ?, ?)`,
+		id, name, now, now, pos, fid)
 	if err != nil {
 		return nil, err
 	}
-	return &Note{ID: id, Name: name, Content: "", CreatedAt: now, UpdatedAt: now, Position: pos}, nil
+	return &Note{ID: id, Name: name, Content: "", CreatedAt: now, UpdatedAt: now, Position: pos, FolderID: folderID}, nil
 }
 
 func (d *DB) CreateNoteWithContent(name, content string) (*Note, error) {
+	return d.CreateNoteWithContentInFolder(name, content, "")
+}
+
+func (d *DB) CreateNoteWithContentInFolder(name, content, folderID string) (*Note, error) {
 	now := time.Now().UnixMilli()
 	id := uuid.NewString()
 	var pos int
 	_ = d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM notes`).Scan(&pos) //nolint:errcheck
-	_, err := d.conn.Exec(`INSERT INTO notes (id, name, content, created_at, updated_at, position) VALUES (?, ?, ?, ?, ?, ?)`,
-		id, name, content, now, now, pos)
+	var fid *string
+	if folderID != "" {
+		fid = &folderID
+	}
+	_, err := d.conn.Exec(`INSERT INTO notes (id, name, content, created_at, updated_at, position, folder_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		id, name, content, now, now, pos, fid)
 	if err != nil {
 		return nil, err
 	}
-	return &Note{ID: id, Name: name, Content: content, CreatedAt: now, UpdatedAt: now, Position: pos}, nil
+	return &Note{ID: id, Name: name, Content: content, CreatedAt: now, UpdatedAt: now, Position: pos, FolderID: folderID}, nil
 }
 
 // CreateNoteWithContentAndDates creates a note preserving original timestamps.
 // If createdAt or updatedAt is 0, current time is used.
 func (d *DB) CreateNoteWithContentAndDates(name, content string, createdAt, updatedAt int64) (*Note, error) {
+	return d.CreateNoteWithContentAndDatesInFolder(name, content, createdAt, updatedAt, "")
+}
+
+func (d *DB) CreateNoteWithContentAndDatesInFolder(name, content string, createdAt, updatedAt int64, folderID string) (*Note, error) {
 	now := time.Now().UnixMilli()
 	id := uuid.NewString()
 	var pos int
@@ -157,12 +215,16 @@ func (d *DB) CreateNoteWithContentAndDates(name, content string, createdAt, upda
 	if updatedAt == 0 {
 		updatedAt = now
 	}
-	_, err := d.conn.Exec(`INSERT INTO notes (id, name, content, created_at, updated_at, position) VALUES (?, ?, ?, ?, ?, ?)`,
-		id, name, content, createdAt, updatedAt, pos)
+	var fid *string
+	if folderID != "" {
+		fid = &folderID
+	}
+	_, err := d.conn.Exec(`INSERT INTO notes (id, name, content, created_at, updated_at, position, folder_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		id, name, content, createdAt, updatedAt, pos, fid)
 	if err != nil {
 		return nil, err
 	}
-	return &Note{ID: id, Name: name, Content: content, CreatedAt: createdAt, UpdatedAt: updatedAt, Position: pos}, nil
+	return &Note{ID: id, Name: name, Content: content, CreatedAt: createdAt, UpdatedAt: updatedAt, Position: pos, FolderID: folderID}, nil
 }
 
 func (d *DB) ReorderNotes(noteIDs []string) error {
@@ -198,6 +260,164 @@ func (d *DB) NoteCount() (int, error) {
 	var count int
 	err := d.conn.QueryRow(`SELECT COUNT(*) FROM notes`).Scan(&count)
 	return count, err
+}
+
+func (d *DB) MoveNoteToFolder(noteID, folderID string) error {
+	var fid *string
+	if folderID != "" {
+		fid = &folderID
+	}
+	var pos int
+	_ = d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM notes WHERE COALESCE(folder_id, '') = COALESCE(?, '')`, folderID).Scan(&pos) //nolint:errcheck
+	_, err := d.conn.Exec(`UPDATE notes SET folder_id = ?, position = ?, updated_at = ? WHERE id = ?`, fid, pos, time.Now().UnixMilli(), noteID)
+	return err
+}
+
+func (d *DB) CreateFolder(name, parentID string) (*Folder, error) {
+	now := time.Now().UnixMilli()
+	id := uuid.NewString()
+	var pos int
+	var pid *string
+	if parentID != "" {
+		pid = &parentID
+	}
+	_ = d.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) + 1 FROM folders WHERE COALESCE(parent_id, '') = COALESCE(?, '')`, parentID).Scan(&pos) //nolint:errcheck
+	_, err := d.conn.Exec(`INSERT INTO folders (id, name, parent_id, icon, position, created_at, updated_at) VALUES (?, ?, ?, 'folder', ?, ?, ?)`,
+		id, name, pid, pos, now, now)
+	if err != nil {
+		return nil, err
+	}
+	return &Folder{ID: id, Name: name, ParentID: parentID, Icon: "folder", Position: pos, CreatedAt: now, UpdatedAt: now}, nil
+}
+
+func (d *DB) GetAllFolders() ([]Folder, error) {
+	rows, err := d.conn.Query(`SELECT id, name, COALESCE(parent_id, ''), icon, position, created_at, updated_at FROM folders ORDER BY position ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var folders []Folder
+	for rows.Next() {
+		var f Folder
+		if err := rows.Scan(&f.ID, &f.Name, &f.ParentID, &f.Icon, &f.Position, &f.CreatedAt, &f.UpdatedAt); err != nil {
+			return nil, err
+		}
+		folders = append(folders, f)
+	}
+	return folders, rows.Err()
+}
+
+func (d *DB) RenameFolder(id, name string) error {
+	_, err := d.conn.Exec(`UPDATE folders SET name = ?, updated_at = ? WHERE id = ?`, name, time.Now().UnixMilli(), id)
+	return err
+}
+
+func (d *DB) DeleteFolder(id string) error {
+	tx, err := d.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback() //nolint:errcheck
+
+	// Collect all descendant folder IDs (BFS)
+	var allFolderIDs []string
+	queue := []string{id}
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		allFolderIDs = append(allFolderIDs, current)
+
+		rows, err := tx.Query(`SELECT id FROM folders WHERE parent_id = ?`, current)
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			var cid string
+			if err := rows.Scan(&cid); err != nil {
+				rows.Close()
+				return err
+			}
+			queue = append(queue, cid)
+		}
+		rows.Close()
+	}
+
+	// Delete all notes in the folder and its descendants
+	placeholders := make([]string, len(allFolderIDs))
+	args := make([]interface{}, len(allFolderIDs))
+	for i, fid := range allFolderIDs {
+		placeholders[i] = "?"
+		args[i] = fid
+	}
+	if _, err := tx.Exec(`DELETE FROM notes WHERE folder_id IN (`+strings.Join(placeholders, ",")+`)`, args...); err != nil {
+		return err
+	}
+
+	// Delete all descendant folders (deepest first is handled by FK or order doesn't matter since we have all IDs)
+	if _, err := tx.Exec(`DELETE FROM folders WHERE id IN (`+strings.Join(placeholders, ",")+`)`, args...); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (d *DB) MoveFolder(id, newParentID string) error {
+	if newParentID != "" && newParentID != id {
+		if d.isAncestor(id, newParentID) {
+			return fmt.Errorf("cannot move folder into its own descendant")
+		}
+	}
+	var pid *string
+	if newParentID != "" {
+		pid = &newParentID
+	}
+	_, err := d.conn.Exec(`UPDATE folders SET parent_id = ?, updated_at = ? WHERE id = ?`, pid, time.Now().UnixMilli(), id)
+	return err
+}
+
+// isAncestor returns true if ancestorID is an ancestor of childID in the folder tree.
+func (d *DB) isAncestor(ancestorID, childID string) bool {
+	rows, err := d.conn.Query(`SELECT parent_id FROM folders WHERE id = ?`, childID)
+	if err != nil {
+		return false
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var pid sql.NullString
+		if err := rows.Scan(&pid); err != nil {
+			return false
+		}
+		if !pid.Valid {
+			return false
+		}
+		if pid.String == ancestorID {
+			return true
+		}
+		// Walk up recursively
+		if d.isAncestor(ancestorID, pid.String) {
+			return true
+		}
+	}
+	return false
+}
+
+func (d *DB) UpdateFolderIcon(id, icon string) error {
+	_, err := d.conn.Exec(`UPDATE folders SET icon = ?, updated_at = ? WHERE id = ?`, icon, time.Now().UnixMilli(), id)
+	return err
+}
+
+func (d *DB) ReorderFolders(folderIDs []string) error {
+	tx, err := d.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback() //nolint:errcheck
+	for i, id := range folderIDs {
+		if _, err := tx.Exec(`UPDATE folders SET position = ? WHERE id = ?`, i, id); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 type CachedRates struct {

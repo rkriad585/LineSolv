@@ -657,7 +657,7 @@ export function renderApp(root: HTMLElement): void {
     }
     confirmDialog.show(
       'Delete Folder',
-      'Are you sure you want to delete this folder? Notes inside will be moved to the root.',
+      'Are you sure you want to delete this folder and all its contents? This action cannot be undone.',
       'Delete',
       async (result) => {
         if (result.confirmed) {
